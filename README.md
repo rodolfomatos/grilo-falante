@@ -4,376 +4,262 @@
 
 ### 1.1 Para Que Sirve (Versão Simples)
 
-O Grilo Falante é um sistema que ajuda a pensar melhor sobre qualquer assunto.
+O Grilo Falante é como um amigo que nunca aceita uma ideia sem perguntar: *"De onde sabes isso? Tens provas?"*
 
-Imagina que tens um amigo que nunca aceita uma ideia sem perguntar: *"De onde sabes isso? Tens provas?"*
-
-Esse amigo é o Grilo Falante.
+Esse amigo é o Grilo Falante — um sistema de governação cognitiva assistida.
 
 ---
 
-### 1.2 Visão Detalhada
+### 1.2 Sistema Integrado
 
-O Grilo Falante é um **regime de governação cognitiva assistida** que:
+O Grilo Falante agora inclui três sistemas principais:
 
-1. **Extrai conceitos** de código ou documentos (como um bibliotecário)
-2. **Classifica** cada conceito por quão certo parece (GMIF M1-M7)
-3. **Guarda** tudo em memória para pesquisa futura
-4. **Gera identificadores únicos** (GF-IDs) para cada conceito
-
----
-
-## 2. REQUISITOS
-
-### 2.1 Requisitos Funcionais
-
-| ID | Requisito | Descrição |
-|----|----------|----------|
-| RF-01 | Extrair conceitos | Usar graphify para extrair nós e arestas |
-| RF-02 | Classificar GMIF | Classificar por M1-M7 |
-| RF-03 | Gerar GF-IDs | Criar identificadores únicos |
-| RF-04 | Guardar memória | Persistir em MemPalace |
-| RF-05 | Pesquisar | Buscar conceitos guardados |
-| RF-06 | Output JSON | Exportar grafo annotado |
-
-### 2.2 Requisitos Não-Funcionais
-
-| ID | Requisito | Critério |
-|----|----------|--------|
-| RNF-01 | Portabilidade | Funciona em Python 3.9+ |
-| RNF-02 | Latência | < 30s para 100 ficheiros |
-| RNF-03 | Dependências | graphify + MemPalace (opcional) |
-| RNF-04 | Fallback | Funciona sem dependências externas |
+| Sistema | Função |
+|---------|-------|
+| **Extração + GMIF** | Extrai conceitos e classifica por confiança |
+| **Ir à Escola** | Quando não sabe, vai procurar fontes |
+| **Scientific Compiler** | Analisa artigos científicos |
 
 ---
 
-## 3. ARQUITETURA
-
-### 3.1 Componentes
+## 2. ARQUITETURA
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    GRILO FALANTE SKILL                      │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  INPUT: path ou texto                                           │
-│    │                                                        │
-│    ▼                                                        │
-│  ┌─────────────────┐                                        │
-│  │ 1. Extract    │ ← graphify (extrai nós + arestas)       │
-│  │    (graphify) │                                        │
-│  └─────────────────┘                                        │
-│    │                                                        │
-│    ▼                                                        │
-│  ┌─────────────────┐                                        │
-│  │ 2. Classify  │ ← GMIF (M1-M7)                    │
-│  │    GMIF     │                                        │
-│  └─────────────────┘                                        │
-│    │                                                        │
-│    ▼                                                        │
-│  ┌─────────────────┐                                        │
-│  │ 3. Store     │ ← MemPalace ou JSON              │
-│  │    Memory   │                                        │
-│  └─────────────────┘                                        │
-│    │                                                        │
-│    ▼                                                        │
-│  OUTPUT: grafo + GF-IDs + MemPalace                             │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 3.2 Ficheiros do Projeto
-
-```
-grilo-falante-skill/
-├── grilo_pipeline.py        # Executável principal
-├── api.py                # FastAPI para ChatGPT
-├── chatgpt_action.yaml     # OpenAPI schema
-├── chatgpt_instructions.md  # Instruções GPT
-├── app/
-│   ├── data/memory/graph/
-│   │   ├── gmif.py
-│   │   ├── claims.py
-│   │   └── builder.py
-│   └── skills/
-└── pyproject.toml
+┌─────────────────────────────────────────────────────────────────────────┐
+│              GRILO FALANTE SKILL v2.0               │
+├─────────────────────────────────────────────────────────────────┤
+│                                                    │
+│  INPUT                                                 │
+│    │                                                  │
+│    ▼                                                  │
+│  ┌──────────────────┐     ┌──────────────────┐      │
+│  │ Extração     │     │ Ir à Escola    │      │
+│  │ (graphify)  │     │ (procura)     │      │
+│  └──────────────┘     └──────────────┘      │
+│    │                          │               │
+│    ▼                          ▼               │
+│  ┌──────────────────────────────────┐      │
+│  │     GMIF Classification (M1-M7)   │      │
+│  └──────────────────────────────────┘      │
+│    │                                                  │
+│    ▼                                                  │
+│  ┌──────────────────────────────────┐      │
+│  │     Scientific Compiler           │      │
+│  │     (12 stages)                 │      │
+│  └──────────────────────────────────┘      │
+│    │                                                  │
+│    ▼                                                  │
+│  OUTPUT: GF-IDs + MemPalace + DOT Graph          │
+│                                                    │
+└─────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 4. GMIF — O Sistema de Classificação
+## 3. INSTALAÇÃO
 
-### 4.1 O Que É (Explicação de Feynman)
-
-**Feynman para uma criança:**
-Quando somebody says algo, podes perguntar: "Tens a certeza?"
-
-- Se essa pessoa mostra many many provas → **M1** (muito certo)
-- Se mostra só uma prova → **M5** (certeza mediana)
-- Se não mostra provas → **M3** (não sabes)
-- Se shows duas provas que contradizem → **M4** (uidado!)
-
-**Feynman para especialista:**
-GMIF é uma taxonomia epistemológica baseada em força de evidência:
-- M1: Multiple EXTRACTED sources
-- M2: Assumptions present
-- M3: No evidence
-- M4: Contradictions detected
-- M5: Clear single source
-- M6: Derived from inference
-- M7: Aggregated synthesis
-
-### 4.2 tabela de Cores
-
-| Type | Cor | Significado | Ação |
-|------|-----|-----------|------|
-| M1 | Verde | Muitas provas | Usar com confiança |
-| M2 | Amarelo | Com suposições | Requer validação |
-| M3 | Laranja | Sem provas | Investigar mais |
-| M4 | Vermelho | Contradições | NÃO usar |
-| M5 | Verde claro | Uma prova clara | Usar com cuidado |
-| M6 | Azul | Derivado | Ver proveniência |
-| M7 | Roxo | Síntese | Ver componentes |
-
----
-
-## 5. GF-ID — Identificador Único
-
-### 5.1 Formato
-
-`GF-{YYMMDD}-{TYPE}-{HASH}`
-
-Exemplo: `GF-260412-M1-authmo`
-
-- GF: Prefixo Grilo Falante
-- 260412: Data (12 Abril 2026)
-- M1: Tipo GMIF
-- authmo: Primeiros 6 caracteres do ID
-
----
-
-## 6. PLATAFORMAS SUPORTADAS
-
-### 6.1 OpenCode
-
-**Ficheiro:** `~/.config/opencode/skills/grilo_falante/SKILL.md`
-
-**Invocação:** `/grilo <path>`
-
-### 6.2 ChatGPT
-
-**Ficheiros:**
-- `chatgpt_action.yaml` (OpenAPI schema)
-- `chatgpt_instructions.md` (Instruções)
-
-**Setup:**
-1. Criar Custom GPT
-2. Adicionar Actions com o schema YAML
-3. Colar as instruções
-
-### 6.3 Standalone
+### 3.1 Dependências
 
 ```bash
-python3 grilo_pipeline.py <path>
+# Necessárias
+pip install graphifyy
+pip install mempalace
+
+# API (opcional)
+pip install fastapi uvicorn
 ```
 
----
-
-## 7. ANÁLISE HOSTIL — ERROS E OMISSÕES
-
-### 7.1 Problemas Identificados
-
-| # | Problema | Severidade | Impacto |
-|---|---------|-----------|--------|
-| 1 | graphify pode dar timeout em large corpus | Alta | Não completa |
-| 2 | MemPalace pode não estar instalado | Média | Fallback mas sem persistência |
-| 3 | GH-IDs podem ter hash curto (cols) | Baixa | IDs duplicados |
-| 4 | Sem sistema de "desbloqueio" | Alta | Usuário fica preso |
-| 5 | GMIF usar só edge types é simplista | Média | Classificação imprecisa |
-| 6 | Sem integration com ambrosio docs | Alta | Regime não executa |
-| 7 | Sem validação humana integrada | Alta | Usuário non sabe se certo |
-
-### 7.2 O Que Falta
-
-1. **_TIMEOUT handling** — graphify pode ficar preso
-2. **Retry logic** — se algo falha, tentar novamente
-3. **Human-in-the-loop** — não há verificação humana
-4. **Ambrosio integration** — regime não executa
-5. **Grafo visual** — não há HTML exportado
-6. **Cache semantics** — re-extract é sempre completo
-
-### 7.3 O Que Não Deve Estar Aqui
-
-1. Lógica de validação de verdade (não é competência)
-2. Decisões automáticas (só analiza)
-3. Acesso a bases de dados externas
-4. Autenticação complexa
-
----
-
-## 8. TESTES E VALIDAÇÃO
-
-### 8.1 Testes Unitários
-
-| Teste | Entrada | Saída Esperada |
-|-------|--------|--------------|
-| GMIF M1 | edge EXTRACTED | gmif_type = M1 |
-| GMIF M4 | edge AMBIGUOUS | gmif_type = M4 |
-| GMIF M3 | no edges | gmif_type = M3 |
-| GF-ID format | node_id | GF-YYMMDD-TYPE-xxxx |
-
-### 8.2 Teste End-to-End
-
-```bash
-cd /home/rodolfo/src/grilo-falante-skill
-python3 grilo_pipeline.py ./app --no-store
-```
-
-**Esperado:**
-- Extrai conceitos
-- Classifica GMIF
-- Output JSON
-
----
-
-## 9. INSTALAÇÃO
-
-### 9.1 Dependências
-
-```bash
-pip install graphifyy      # Extração
-pip install mempalace    # Memória (opcional)
-pip install fastapi uvicorn  # API (opcional)
-```
-
-### 9.2 Sem Dependências
+### 3.2 Sem dependências
 
 O sistema funciona sem elas — usa fallback JSON.
 
 ---
 
-## 10. USO
+## 4. USO
 
-### 10.1 Linha de Comandos
+### 4.1 Ir à Escola (qualquer conversa)
 
 ```bash
-# Analisar diretório
-python3 grilo_pipeline.py ./src
-
-# Apenas extrair (sem guardar)
-python3 grilo_pipeline.py ./docs --no-store
-
-# Ajuda
-python3 grilo_pipeline.py --help
+python3 -m app.services.ir_a_escola
+# ou
+python3 -c "from app.services.ir_a_escola import IrAEscolaOrchestrator; print(IrAEscolaOrchestrator().run('Alan Turing nasceu em 1912').feynman_child)"
 ```
 
-### 10.2 API
+### 4.2 Scientific Compiler (artigos)
 
 ```bash
-# Iniciar servidor
+python3 -m app.services.scientific_compiler /path/to/article.md
+```
+
+### 4.3 Pipeline completo
+
+```python
+from app.services.scientific_compiler import ScientificCompiler
+from app.services.ir_a_escola import IrAEscolaOrchestrator
+
+# 1. Analisa artigo
+compiler = ScientificCompiler()
+result = compiler.compile('article.md')
+
+# 2. Se há gaps, preenche
+for claim in result['claim_registry']:
+    escola = IrAEscolaOrchestrator()
+    r = escola.run(claim['text'])
+    print(f"GF-ID: {r.gf_id}")
+```
+
+### 4.4 API
+
+```bash
+# Start
 python3 api.py
 
-# Testar
-curl -X POST http://localhost:8000/analyze -H "Content-Type: application/json" -d '{"path": "./app"}'
+# Endpoints
+POST /ir-a-escola           # Loop de aprendizagem
+POST /scientific-compiler   # Compila artigos
+POST /analyze            # Extrai conceitos
+POST /search            # Pesquisa memórias
+GET /status            # Estado
 ```
 
 ---
 
-## 11. CHATGPT — SETUP
+## 5. GMIF — Sistema de Classificação
 
-### 11.1 Criar Custom GPT
+### 5.1 Tipos
 
-1. Vai a chatgpt.com > Create
-2. Nome: "Grilo Falante"
-3. Instruções: copia de `chatgpt_instructions.md`
-4. Actions: importa `chatgpt_action.yaml`
-5. Save
+| Type | Cor | Significado |
+|------|-----|-----------|
+| M1 | Verde | Muitas provas (úsável) |
+| M2 | Amarelo | Com suposições |
+| M3 | Laranja | Sem provas |
+| M4 | Vermelho | Contradições (NÃO usar) |
+| M5 | Verde claro | Uma prova clara |
+| M6 | Azul | Derivado |
+| M7 | Roxo | Síntese |
 
-### 11.2 Testar
+### 5.2 GF-ID
 
-- "Analisa a pasta src"
-- "O que sabes sobre autenticacao?"
+`GF-{YYMMDD}-{TYPE}-{HASH}`
+
+Exemplo: `GF-260413-ESCOLA-Alan T`
 
 ---
 
-## 12. EXEMPLOS
+## 6. IR À ESCOLA
 
-### 12.1 Exemplo de Output
+### 6.1 Conceito
 
-```json
-{
-  "total_nodes": 186,
-  "total_edges": 222,
-  "gmif_distribution": {
-    "M1": 81,
-    "M3": 105
-  },
-  "gf_ids": [
-    "GF-260412-M1-authmo",
-    "GF-260412-M3-init"
-  ]
+Quando o Grilo Falante não sabe algo:
+1. **Deteta gaps** (factos desconhecidos)
+2. **Procura** (MemPalace → docs → web)
+3. **Sintetiza** (Feynman: criança + especialista)
+4. **Pergunta** ("porquê?" até entender)
+5. **Guarda** (GF-ID + MemPalace)
+
+### 6.2 Componentes
+
+| Ficheiro | Função |
+|---------|-------|
+| `gap_detector.py` | Deteta factos unknown |
+| `active_search.py` | Procura em 3 fontes |
+| `feynman_synthesize.py` | Síntese dual |
+| `why_loop.py` | Loop de "porquês?" |
+| `ir_a_escola.py` | Orquestrador |
+
+---
+
+## 7. SCIENTIFIC COMPILER
+
+### 7.1 12 Stages
+
+| Stage | Função |
+|-------|--------|
+| 1 | GF Initialization |
+| 2 | Article Ingestion |
+| 3 | Citation Verification |
+| 4 | Shadow Document Acquisition |
+| 5 | Claim Extraction |
+| 6 | Evidence Extraction |
+| 7 | GMIF Classification |
+| 8 | Graph Construction |
+| 9 | Graph Lint (L1-L8) |
+| 10 | Critical Path Computation |
+| 11 | Fragility Analysis |
+| 12 | Compilation Report |
+
+### 7.2 GMIF Graph (DOT)
+
+```dot
+digraph EpistemicGraph {
+A [label="M1: Primary Data", fillcolor="green"];
+B [label="M4: Doubtful", fillcolor="red"];
+A -> B;
 }
 ```
 
-### 12.2 Exemplo de Uso
+---
 
-```
-Utilizador: Analisa o meu projeto
-Grilo: Vou analisar o diretório./app
+## 8. TESTES
 
-[Executa pipeline]
+### 8.1 Teste Unitário
 
-Encontrei 186 conceitos,classificados assim:
-- 81 com provas (M1)
-- 105 sem provas (M3)
-
-Os mais sólidos são:
-- GF-260412-M1-authmo: módulo de autenticacao
-- GF-260412-M1-token: gestão de tokens
-
-Nota: 105 conceitos precisam de verificação.
+```bash
+cd /home/rodolfo/src/grilo-falante-skill
+python3 -m app.services.ir_a_escola
 ```
 
----
+### 8.2 Teste Artigo
 
-## 13. TENSÃO — LIMITES CONHECIDOS
+```bash
+python3 -m app.services.scientific_compiler test_article.md
+```
 
-| Tensão | PorQue | Workaround |
-|-------|-------|------------|
-| Large corpus | Timeout | Usar subdirectórios |
-| graphify não disponível | Import error | Fallback JSON |
-| MemPalace não disponível | Import error | JSON file |
-| Sem verificação humana | Não há humano | Usuário verifica M4 |
-| GMIF simplista | Só usa edges | Usar mais fontes |
-
----
-
-## 14. REFERÊNCIAS
-
-### 14.1 Projetos Base
-
-- **ambrosio_v2.5.0** — Regime documentado
-- **epistemic-memory-architecture** — Backend GMIF
-- **graphify** — Extração de conceitos
-- **MemPalace** — Memória persistente
-
-### 14.2 Documentos Relacionados
-
-- INSTALLER.md (regime)
-- LOADER.md (ativação)
-- KERNEL.md (autoridade)
-- GMIF.md (classificação)
+Esperado:
+- Claims extraídas
+- Evidence detectada
+- GMIF graph gerado
+- Lint errors (se houver)
 
 ---
 
-## 15. CHANGELOG
+## 9. Ficheiros do Projeto
+
+```
+grilo-falante-skill/
+├── README.md                    # Este ficheiro
+├── api.py                    # FastAPI endpoints
+├── grilo_pipeline.py         # Pipeline original
+├── test_article.md           # Artigo de teste
+├── app/
+│   └── services/
+│       ├── gap_detector.py           # Detetor de gaps
+│       ├── active_search.py        # Procura ativa
+│       ├── feeynman_synthesize.py # Síntese Feynman
+│       ├── why_loop.py           # Loop de porquês
+│       ├── ir_a_escola.py        # Orquestrador
+│       └── scientific_compiler.py  # 12 stages
+├── docs/
+│   ├── IR_A_ESCOLA_CONCEITO.md
+│   ├── gf_scientific_compiler_v_2_spec.md
+│   ├── ANALISE_HOSTIL_IR_A_ESCOLA.md
+│   ├── ANALISE_HOSTIL_SC_V2.md
+│   └── INTEGRACAO_COMPLETA.md
+└── graphify-out/            # Outputs
+    └── ir_a_escola_*.json
+```
+
+---
+
+## 10. CHANGELOG
 
 | Data | Versão | Mudança |
 |------|--------|---------|
-| 2026-04-12 | 1.0.0 | Versão inicial |
+| 2026-04-12 | 1.0.0 | Extração + GMIF |
+| 2026-04-13 | 2.0.0 | Ir à Escola + Scientific Compiler |
 
 ---
 
-## 16. LICENÇA
+## 11. LICENÇA
 
 MIT — Rodolfo

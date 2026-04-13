@@ -1,0 +1,115 @@
+openapi: 3.1.0
+info:
+  title: Grilo Falante API
+  description: |
+    Análise epistemológica com GMIF - extrai conceitos de código/docs,
+    classifica por força epistémica (M1-M7), e guarda em memória.
+  version: 1.0.0
+servers:
+  - url: https://grilo-falante-api.vercel.app
+    description: Production
+  - url: http://localhost:8000
+    description: Local dev
+
+paths:
+  /analyze:
+    post:
+      operationId: analyze_path
+      summary: Analisa um diretório com GMIF
+      description: |
+        Extrai conceitos usando graphify, classifica com GMIF (M1-M7),
+        e guarda em MemPalace se disponível.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                path:
+                  type: string
+                  description: Caminho do diretório ou ficheiro a analisar
+                store:
+                  type: boolean
+                  description: Guardar em MemPalace (default: true)
+              required:
+                - path
+      responses:
+        '200':
+          description: Análise concluída
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_nodes:
+                    type: integer
+                  total_edges:
+                    type: integer
+                  gmif_distribution:
+                    type: object
+                    description: Contagem M1-M7
+                  gf_ids:
+                    type: array
+                    items:
+                      type: string
+                    description: Primeiros 10 GF-IDs gerados
+                  status:
+                    type: string
+        '400':
+          description: Erro na análise
+
+  /search:
+    post:
+      operationId: search_memories
+      summary: Pesquisa em memórias guardadas
+      description: |
+        Pesquisa em conceitos guardados no MemPalace ou ficheiro local.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Query de pesquisa
+                limit:
+                  type: integer
+                  description: Máximo de resultados (default: 5)
+              required:
+                - query
+      responses:
+        '200':
+          description: Resultados da pesquisa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                  count:
+                    type: integer
+
+  /status:
+    get:
+      operationId: get_status
+      summary: Estado do sistema
+      responses:
+        '200':
+          description: Estado atual
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  version:
+                    type: string
+                  services:
+                    type: object

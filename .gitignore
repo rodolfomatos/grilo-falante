@@ -1,0 +1,19 @@
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Cache
+graphify-out/cache/
+app/data/memory/graphify-out/cache/
+app/graphify-out/cache/
+
+# Outputs
+graphify-out/*.json
+graphify-out/*.html
+
+# Logs
+*.log
+
+# OS
+.DS_Store
