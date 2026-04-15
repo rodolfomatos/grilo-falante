@@ -1,0 +1,46 @@
+digraph Cognitive_Model_Canonical_v3 {
+
+    rankdir=LR;
+    node [shape=box, style=rounded];
+
+    /* ===== ESTADO MATERIALIZADO ===== */
+    ESTADO_MATERIALIZADO [
+        label="ESTADO MATERIALIZADO\n(código • texto • dados • tabuleiro)",
+        style="rounded,bold"
+    ];
+
+    /* ===== INFERÊNCIA / NARRATIVA ===== */
+    INFERENCIA [
+        label="INFERÊNCIA / NARRATIVA\n(coerência interna)",
+        style=rounded
+    ];
+
+    /* ===== REVALIDAÇÃO FACTUAL ===== */
+    REVALIDACAO_FACTUAL [
+        label="REVALIDAÇÃO FACTUAL\n(rederivação explícita)",
+        shape=box,
+        style="rounded,bold"
+    ];
+
+    /* ===== PROMOÇÃO ===== */
+    PROMOCAO [
+        label="PROMOÇÃO / CONCLUSÃO\n(decisão • resultado)",
+        style="rounded,bold"
+    ];
+
+    /* ===== FLUXOS VÁLIDOS ===== */
+    ESTADO_MATERIALIZADO -> REVALIDACAO_FACTUAL
+        [label="rederivação factual"];
+
+    REVALIDACAO_FACTUAL -> PROMOCAO
+        [label="validação explícita"];
+
+    INFERENCIA -> REVALIDACAO_FACTUAL
+        [label="hipótese a validar"];
+
+    /* ===== FLUXOS PROIBIDOS ===== */
+    INFERENCIA -> PROMOCAO
+        [style=dashed, color=red,
+         label="PROIBIDO\n(narrativa ≠ facto)"];
+
+}
