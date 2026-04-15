@@ -1,6 +1,9 @@
 version: '3.8'
 
 services:
+  # =============================================================================
+  # DATABASE
+  # =============================================================================
   db:
     image: postgres:16-alpine
     environment:
@@ -9,6 +12,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./docker/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./docker/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
     ports:
       - "5432:5432"
     healthcheck:
@@ -17,13 +22,56 @@ services:
       timeout: 5s
       retries: 5
 
+  # =============================================================================
+  # OLLAMA (Local LLM)
+  # =============================================================================
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # =============================================================================
+  # OPENWEBUI (Interface)
+  # =============================================================================
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:latest
+    ports:
+      - "8080:8080"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_AUTH: "true"
+    depends_on:
+      - ollama
+    volumes:
+      - openwebui_data:/app/backend/data
+
+  # =============================================================================
+  # API (FastAPI + Auth)
+  # =============================================================================
   api:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/grilo_falante
+      API_TOKEN: ${API_TOKEN:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      IAEDU_API_KEY: ${IAEDU_API_KEY:-}
+      OPENWEBUI_BASE_URL: http://openwebui:8080
+      OPENWEBUI_API_KEY: ${OPENWEBUI_API_KEY:-}
     ports:
       - "8000:8000"
     depends_on:
@@ -31,12 +79,18 @@ services:
         condition: service_healthy
     command: uvicorn grilo_falante.backend.api.main:app --host 0.0.0.0 --port 8000
 
+  # =============================================================================
+  # MCP SERVER
+  # =============================================================================
   mcp:
     build:
       context: ..
       dockerfile: docker/Dockerfile
     environment:
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-postgres}@db:5432/grilo_falante
+      API_TOKEN: ${API_TOKEN:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: http://ollama:11434
     depends_on:
       db:
         condition: service_healthy
@@ -44,5 +98,41 @@ services:
     stdin_open: true
     tty: true
 
+  # =============================================================================
+  # KNOWLEDGE LAKE (File Browser)
+  # =============================================================================
+  lake:
+    image: filebrowser/filebrowser:latest
+    ports:
+      - "8082:8082"
+    volumes:
+      - lake_data:/srv
+      - ./lake:/srv/root
+    environment:
+      FB_BASEURL: /lake
+      FB_PORT: 8082
+
+  # =============================================================================
+  # IAEDU ADAPTER (Node.js)
+  # =============================================================================
+  iaedu-adapter:
+    image: node:20-alpine
+    ports:
+      - "4000:4000"
+    environment:
+      IAEDU_API_KEY: ${IAEDU_API_KEY:-}
+    volumes:
+      - ./iaedu-adapter:/app
+    command: >
+      sh -c "npm install && node /app/adapter-server.mjs"
+    depends_on:
+      - api
+
+# =============================================================================
+# VOLUMES
+# =============================================================================
 volumes:
   postgres_data:
+  ollama_data:
+  openwebui_data:
+  lake_data:

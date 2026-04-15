@@ -2,13 +2,16 @@
 FastAPI REST API for Grilo Falante v3.0
 """
 
+import hashlib
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from grilo_falante.config import settings
+from grilo_falante.backend.api.auth import AuthMiddleware, verify_api_key
 from grilo_falante.backend.db.connection import init_pool, close_pool, check_health, init_schema
 from grilo_falante.backend.db.repositories import (
     ClaimRepository,
@@ -17,6 +20,8 @@ from grilo_falante.backend.db.repositories import (
     SourceRepository,
     SessionPreferencesRepository,
     GovernanceRepository,
+    ShadowDocumentRepository,
+    StudyPlanRepository,
     generate_key,
     generate_gfid,
 )
@@ -30,6 +35,7 @@ from grilo_falante.backend.services import (
     SchoolModeService,
     CognitiveLint,
 )
+from grilo_falante.backend.services.llm import get_llm_service
 from grilo_falante.models import (
     GovernedClaim,
     Gap,
@@ -42,27 +48,14 @@ from grilo_falante.models import (
     CuratorType,
     ValidationState,
     LegitimacyState,
+    GovernanceRecord,
 )
-
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Startup and shutdown events."""
-    await init_pool()
-    try:
-        async with close_pool.__self__.acquire_connection() as conn:
-            await init_schema(conn)
-    except Exception:
-        pass  # Schema might already exist
-    yield
-    await close_pool()
 
 
 app = FastAPI(
     title="Grilo Falante v3.0",
     description="Epistemic Governance Regime API",
     version="3.0.0",
-    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -72,6 +65,26 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+if settings.requires_api_token:
+    app.add_middleware(AuthMiddleware)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Initialize resources on startup."""
+    await init_pool()
+    try:
+        async with close_pool.__self__.acquire_connection() as conn:
+            await init_schema(conn)
+    except Exception:
+        pass
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleanup resources on shutdown."""
+    await close_pool()
 
 
 # Request/Response models
@@ -427,6 +440,3 @@ async def get_governance_history(entity_type: str, entity_id: int):
     repo = GovernanceRepository()
     records = await repo.get_by_entity(entity_type, entity_id)
     return {"records": [r.to_ledger_entry() for r in records], "count": len(records)}
-
-
-import hashlib
