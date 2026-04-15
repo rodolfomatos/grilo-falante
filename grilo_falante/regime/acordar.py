@@ -64,13 +64,13 @@ class Acordar:
 
         ctx = self.state_machine.current_cycle
 
-        if not temporal_anchor:
+        if not temporal_anchor or not temporal_anchor.strip():
             return AcordarResult(
                 success=False,
                 message="Temporal anchor is required"
             )
 
-        if not intention:
+        if not intention or not intention.strip():
             return AcordarResult(
                 success=False,
                 message="Intention declaration is required"

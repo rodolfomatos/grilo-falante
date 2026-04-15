@@ -197,8 +197,6 @@ class Loader:
     def _normalize_command(self, command: str) -> str:
         """Normalize LOAD command."""
         command = command.strip()
-        if command == 'LOAD ""':
-            return self.VALID_LOAD_COMMAND
         return command
 
     def _materialize_use(

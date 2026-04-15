@@ -111,13 +111,20 @@ class StateMachine:
         return True
 
     def _get_valid_transitions(self, from_state: CycleState) -> list[CycleState]:
-        """Get valid transitions from a given state"""
+        """Get valid transitions from a given state.
+
+        Regime lifecycle:
+            INACTIVE → LOADED → ACTIVE → GOVERNING ↔ HIBERNATED
+
+        Note: ACTIVE is only reachable through GOVERNING. Direct transitions
+        to ACTIVE bypass the ACORDAR wake-up ritual and are not allowed.
+        """
         transitions = {
             CycleState.INACTIVE: [CycleState.LOADED],
             CycleState.LOADED: [CycleState.ACTIVE, CycleState.INACTIVE],
-            CycleState.ACTIVE: [CycleState.GOVERNING, CycleState.HIBERNATED, CycleState.LOADED],
+            CycleState.ACTIVE: [CycleState.GOVERNING, CycleState.LOADED],
             CycleState.GOVERNING: [CycleState.HIBERNATED, CycleState.ACTIVE],
-            CycleState.HIBERNATED: [CycleState.GOVERNING, CycleState.ACTIVE],
+            CycleState.HIBERNATED: [CycleState.GOVERNING],
         }
         return transitions.get(from_state, [])
 
