@@ -798,3 +798,170 @@ async def run_radiografia(req: RadiografiaRequest):
     workflows = PromptWorkflows()
     result = workflows.radiografia_workflow(req.conversation_content)
     return result
+
+
+# ============================================================================
+# MANUAL API - RAG-ready documentation server
+# ============================================================================
+
+import os
+from pathlib import Path
+
+MANUAL_PATH = Path(__file__).parent.parent.parent.parent / "docs" / "manual"
+
+
+@app.get("/api/v1/manual/")
+async def get_manual_index():
+    """
+    Get index of all manual chapters for navigation.
+
+    Returns:
+        List of chapters with titles and paths
+    """
+    if not MANUAL_PATH.exists():
+        return {"error": "Manual not found", "chapters": []}
+
+    chapters = []
+    for part_dir in sorted(MANUAL_PATH.iterdir()):
+        if part_dir.is_dir() and part_dir.name.startswith("PARTE"):
+            for md_file in sorted(part_dir.glob("*.md")):
+                chapters.append({
+                    "path": str(md_file.relative_to(MANUAL_PATH)),
+                    "file": md_file.name,
+                    "title": _extract_title(md_file),
+                    "part": part_dir.name,
+                })
+        elif part_dir.name == "APENDICES":
+            for md_file in sorted(part_dir.glob("*.md")):
+                chapters.append({
+                    "path": str(md_file.relative_to(MANUAL_PATH)),
+                    "file": md_file.name,
+                    "title": _extract_title(md_file),
+                    "part": "APENDICES",
+                })
+        elif part_dir.name == "00_INDICE.md":
+            chapters.insert(0, {
+                "path": "00_INDICE.md",
+                "file": "00_INDICE.md",
+                "title": "Índice Geral",
+                "part": "ROOT",
+            })
+
+    return {
+        "chapters": chapters,
+        "count": len(chapters),
+    }
+
+
+@app.get("/api/v1/manual/{chapter_path:path}")
+async def get_manual_chapter(chapter_path: str):
+    """
+    Get specific manual chapter content.
+
+    Supports RAG by returning structured content.
+    """
+    if ".." in chapter_path:
+        raise HTTPException(status_code=400, detail="Invalid path")
+
+    file_path = MANUAL_PATH / chapter_path
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail=f"Chapter not found: {chapter_path}")
+
+    if not file_path.is_file():
+        raise HTTPException(status_code=400, detail="Not a file")
+
+    content = file_path.read_text(encoding="utf-8")
+
+    sections = _extract_sections(content)
+
+    return {
+        "path": chapter_path,
+        "title": _extract_title(file_path),
+        "content": content,
+        "sections": sections,
+        "word_count": len(content.split()),
+    }
+
+
+@app.get("/api/v1/manual/search")
+async def search_manual(q: str = Query(..., min_length=2)):
+    """
+    Search within manual content.
+
+    For RAG integration - returns relevant sections.
+    """
+    if not MANUAL_PATH.exists():
+        return {"error": "Manual not found", "results": []}
+
+    results = []
+    search_lower = q.lower()
+
+    for md_file in MANUAL_PATH.rglob("*.md"):
+        try:
+            content = md_file.read_text(encoding="utf-8")
+            lines = content.split("\n")
+
+            for i, line in enumerate(lines, 1):
+                if search_lower in line.lower():
+                    context_before = "\n".join(lines[max(0, i-3):i])
+                    context_after = "\n".join(lines[i:min(len(lines), i+2)])
+
+                    results.append({
+                        "file": str(md_file.relative_to(MANUAL_PATH)),
+                        "line": i,
+                        "match": line.strip(),
+                        "context_before": context_before,
+                        "context_after": context_after,
+                    })
+
+                    if len(results) >= 20:
+                        break
+        except Exception:
+            continue
+
+    results.sort(key=lambda x: x["line"])
+
+    return {
+        "query": q,
+        "results": results,
+        "count": len(results),
+    }
+
+
+def _extract_title(file_path: Path) -> str:
+    """Extract title from markdown file."""
+    try:
+        content = file_path.read_text(encoding="utf-8")
+        for line in content.split("\n")[:10]:
+            line = line.strip()
+            if line.startswith("# "):
+                return line[2:].strip()
+        return file_path.stem
+    except Exception:
+        return file_path.stem
+
+
+def _extract_sections(content: str) -> list[dict]:
+    """Extract sections from markdown for RAG."""
+    sections = []
+    current_section = {"level": 0, "title": "", "content": []}
+
+    for line in content.split("\n"):
+        if line.startswith("#"):
+            if current_section["content"] or current_section["title"]:
+                sections.append(current_section)
+
+            level = len(line) - len(line.lstrip("#"))
+            current_section = {
+                "level": level,
+                "title": line.strip("# ").strip(),
+                "content": [],
+            }
+        else:
+            current_section["content"].append(line)
+
+    if current_section["content"] or current_section["title"]:
+        sections.append(current_section)
+
+    return sections
