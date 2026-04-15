@@ -1,0 +1,114 @@
+digraph GF_System {
+
+rankdir=TB;
+node [shape=box, style=rounded];
+
+
+
+/* ================================
+   ROOT AUTHORITY
+================================ */
+
+INSTALLER [label="INSTALLER\n(Regime Constitution)"];
+LOADER [label="LOADER\n(Runtime Activation)"];
+
+INSTALLER -> LOADER [label="paired governance"];
+
+
+
+/* ================================
+   CORE GOVERNANCE
+================================ */
+
+PIPELINE [label="Pipeline Canonico v3"];
+AUDIT [label="Auditoria Epistemica"];
+
+INSTALLER -> PIPELINE;
+INSTALLER -> AUDIT;
+
+
+
+/* ================================
+   GRAPH KERNEL
+================================ */
+
+G1 [label="g1\nEpistemic Phases"];
+G2 [label="g2\nAgency Responsibility"];
+G3 [label="g3\nLearning Without Memory"];
+G4 [label="g4\nBlocking Gate"];
+G5 [label="g5\nGrilo Falante Regime"];
+
+G6 [label="g6\nCognitive Model v6"];
+G7 [label="g7\nCognitive Model v7"];
+G8 [label="g8\nUnified Cognitive Model"];
+G9 [label="g9\nUnified Architecture"];
+
+PIPELINE -> G1;
+PIPELINE -> G4;
+
+AUDIT -> G4;
+
+INSTALLER -> G5;
+
+
+
+/* ================================
+   ARCHITECTURE LAYER
+================================ */
+
+G6 -> G7;
+G7 -> G8;
+G8 -> G9;
+
+
+
+/* ================================
+   RUNTIME ENTRY
+================================ */
+
+ACORDAR [label="ACORDAR\nCycle Bootstrap"];
+
+LOADER -> ACORDAR;
+
+
+
+/* ================================
+   ARTIFACT SYSTEM
+================================ */
+
+CAPSULES [label="Capsules"];
+DOCUMENTS [label="Documents"];
+LEDGER [label="Ledger"];
+
+PIPELINE -> CAPSULES;
+CAPSULES -> DOCUMENTS;
+DOCUMENTS -> LEDGER;
+
+
+
+/* ================================
+   PASSIVE DOCUMENTS
+================================ */
+
+CHANGELOG [label="CHANGELOG\n(history)", shape=ellipse];
+BACKLOG [label="BACKLOG\n(work tracking)", shape=ellipse];
+CAP [label="CAPSULE REGISTRY", shape=ellipse];
+ADN [label="ADN\n(system DNA)", shape=ellipse];
+
+LEDGER -> CHANGELOG;
+LEDGER -> BACKLOG;
+
+ADN -> INSTALLER [style=dashed];
+CAP -> CAPSULES [style=dashed];
+
+
+
+/* ================================
+   UNUSED / WEAK LINKS
+================================ */
+
+OLD_PIPELINE [label="Pipeline Normativo v1.8", shape=ellipse];
+
+OLD_PIPELINE -> PIPELINE [style=dashed, label="historical"];
+
+}

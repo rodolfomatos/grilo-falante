@@ -1,0 +1,16 @@
+digraph G2 {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  LLM [label="LLM\n(Non-Agent)"];
+  Human [label="Human Agent"];
+
+  Proposal [label="Textual\nProposals"];
+  Acceptance [label="Acceptance\nDecision"];
+
+  LLM -> Proposal [label="generates"];
+  Proposal -> Human [label="presents"];
+  Human -> Acceptance [label="authorises"];
+
+  LLM -> Acceptance [style=dashed, color=red, label="non-delegable"];
+}

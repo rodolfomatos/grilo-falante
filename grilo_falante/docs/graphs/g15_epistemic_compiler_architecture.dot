@@ -1,0 +1,36 @@
+digraph Epistemic_Compiler_Architecture {
+
+rankdir=LR;
+node [shape=box, style=rounded];
+
+Input [label="Input Hypothesis / Question"];
+
+Exploration [label="Exploration (MEX)"];
+
+GraphBuild [label="Epistemic Graph Construction (MEX-S)"];
+
+Analysis [label="Graph Structural Analysis (GMIF-A)"];
+
+Evaluation [label="Hypothesis Evaluation (GMIF-E)"];
+
+GraphGate [label="Graph Reconstruction Gate"];
+ExplainGate [label="Feynman Explanation Gate"];
+BiblioGate [label="Bibliographic Validation Gate"];
+
+Human [label="Human Validation"];
+
+Output [label="Governed Epistemic Conclusion", shape=hexagon];
+
+Input -> Exploration;
+Exploration -> GraphBuild;
+GraphBuild -> Analysis;
+Analysis -> Evaluation;
+
+Evaluation -> GraphGate;
+GraphGate -> ExplainGate;
+ExplainGate -> BiblioGate;
+
+BiblioGate -> Human;
+Human -> Output;
+
+}

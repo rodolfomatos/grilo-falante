@@ -1,0 +1,24 @@
+digraph Epistemic_Validation_Gates {
+
+rankdir=TB;
+node [shape=box, style=rounded];
+
+Reasoning [label="Reasoning Output\n(GMIF-E)"];
+
+GraphGate [label="Graph Reconstruction Gate\nRule must be reconstructable as\npremise–inference graph"];
+
+ExplainGate [label="Feynman Explanation Gate\nRule must be explainable\nwithout jargon"];
+
+BiblioGate [label="Bibliographic Validation Gate\nFeynman Reading + Shadow Document"];
+
+Human [label="Human Validation"];
+
+Promotion [label="Promotion to Governed Output", shape=hexagon];
+
+Reasoning -> GraphGate;
+GraphGate -> ExplainGate;
+ExplainGate -> BiblioGate;
+BiblioGate -> Human;
+Human -> Promotion;
+
+}

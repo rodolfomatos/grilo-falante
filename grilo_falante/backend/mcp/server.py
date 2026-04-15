@@ -46,6 +46,14 @@ from grilo_falante.models import (
     ValidationState,
     LegitimacyState,
 )
+from grilo_falante.regime import Loader, Acordar, Ledger, LedgerEntryType, StateMachine, PINAProtocol, TransitionValidator
+
+_ledger = Ledger()
+_loader = Loader(ledger=_ledger)
+_state_machine = _loader.state_machine
+_acordar = Acordar(state_machine=_state_machine, ledger=_ledger)
+_pina = PINAProtocol(state_machine=_state_machine, ledger=_ledger)
+_validator = TransitionValidator(state_machine=_state_machine)
 
 # Create server
 app = Server("grilo-falante")
@@ -55,7 +63,6 @@ app = Server("grilo-falante")
 async def list_tools() -> list[Tool]:
     """List all available MCP tools."""
     return [
-        # Regime tools
         Tool(
             name="grilo_status",
             description="Get current regime status",
@@ -65,6 +72,139 @@ async def list_tools() -> list[Tool]:
             name="grilo_health",
             description="Check system health",
             inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_load",
+            description="Load the Grilo Falante regime to start a new cycle",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_unload",
+            description="Unload the Grilo Falante regime to end the current cycle",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_acordar",
+            description="Execute ACORDAR wake-up ritual with temporal anchoring and intention",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "temporal_anchor": {"type": "string", "description": "Date/time context (e.g., '2026-04-15')"},
+                    "intention": {"type": "string", "description": "What the human intends to accomplish"},
+                    "mode": {"type": "string", "enum": ["exploratory", "committed"], "default": "exploratory"},
+                },
+                "required": ["temporal_anchor", "intention"],
+            },
+        ),
+        Tool(
+            name="grilo_vai_dormir",
+            description="Hibernate the regime (VAI_DORMIR)",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_resume",
+            description="Resume the regime from hibernation",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_get_ledger_stats",
+            description="Get ledger statistics",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_pina_propose",
+            description="Propose a Normative Candidate for PINA decision",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "source_document": {"type": "string", "description": "Source document reference"},
+                    "faithful_statement": {"type": "string", "description": "The normative statement"},
+                    "location": {"type": "string", "description": "Location in source"},
+                    "graph_scope": {"type": "string"},
+                },
+                "required": ["source_document", "faithful_statement", "location"],
+            },
+        ),
+        Tool(
+            name="grilo_pina_decide",
+            description="Record PINA decision for a Normative Candidate",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "nca_id": {"type": "string", "description": "The NCA-ID"},
+                    "decision": {"type": "string", "enum": ["A", "B", "C"], "description": "[A] Incorporate, [B] Do not incorporate, [C] Defer"},
+                },
+                "required": ["nca_id", "decision"],
+            },
+        ),
+        Tool(
+            name="grilo_pina_status",
+            description="Get PINA protocol status",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_validate_transition",
+            description="Validate a transition in an epistemic graph",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "from_node": {"type": "string", "description": "Current node ID"},
+                    "to_node": {"type": "string", "description": "Target node ID"},
+                    "graph_id": {"type": "string", "description": "Graph ID"},
+                },
+                "required": ["from_node", "to_node", "graph_id"],
+            },
+        ),
+        Tool(
+            name="grilo_list_graphs",
+            description="List all registered epistemic graphs",
+            inputSchema={"type": "object", "properties": {}},
+        ),
+        Tool(
+            name="grilo_stamp_capsule",
+            description="Add GF-ID and GMIF header to a capsule file",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "capsule_path": {"type": "string", "description": "Path to capsule file"},
+                    "gmif_level": {"type": "string", "description": "GMIF level (M1-M8)"},
+                    "force": {"type": "boolean", "default": False},
+                },
+                "required": ["capsule_path"],
+            },
+        ),
+        Tool(
+            name="grilo_run_auditoria_hostil",
+            description="Execute AUDITORIA_HOSTIL_CANONICO workflow",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "Content to audit"},
+                },
+                "required": ["content"],
+            },
+        ),
+        Tool(
+            name="grilo_run_autopsia_literatura",
+            description="Execute AUTOPSIA_LITERATURA workflow",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "Literature review content to autopsy"},
+                },
+                "required": ["content"],
+            },
+        ),
+        Tool(
+            name="grilo_run_triagem",
+            description="Execute TRIAGEM workflow",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "content": {"type": "string", "description": "Conversation content to triage"},
+                },
+                "required": ["content"],
+            },
         ),
         # GF-ID tools
         Tool(
@@ -326,11 +466,134 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
     try:
         if name == "grilo_status":
-            return [TextContent(type="text", text=json.dumps({"status": "active", "version": "3.0.0"}))]
+            status = _loader.get_status()
+            status["version"] = "3.0.0"
+            return [TextContent(type="text", text=json.dumps(status))]
 
         elif name == "grilo_health":
             health = await check_health()
             return [TextContent(type="text", text=json.dumps(health))]
+
+        elif name == "grilo_load":
+            result = _loader.load()
+            return [TextContent(type="text", text=json.dumps({
+                "success": result.success,
+                "message": result.message,
+                "cycle_id": result.cycle_id,
+                "state": result.state,
+            }))]
+
+        elif name == "grilo_unload":
+            result = _loader.unload()
+            return [TextContent(type="text", text=json.dumps({
+                "success": result.success,
+                "message": result.message,
+            }))]
+
+        elif name == "grilo_acordar":
+            result = _acordar.execute(
+                temporal_anchor=arguments["temporal_anchor"],
+                intention=arguments["intention"],
+                mode=arguments.get("mode", "exploratory"),
+            )
+            return [TextContent(type="text", text=json.dumps({
+                "success": result.success,
+                "message": result.message,
+                "temporal_anchor": result.temporal_anchor,
+                "intention_declared": result.intention_declared,
+            }))]
+
+        elif name == "grilo_vai_dormir":
+            result = _acordar.vai_dormir()
+            return [TextContent(type="text", text=json.dumps(result))]
+
+        elif name == "grilo_resume":
+            result = _acordar.resume()
+            return [TextContent(type="text", text=json.dumps(result))]
+
+        elif name == "grilo_get_ledger_stats":
+            stats = _ledger.get_stats()
+            return [TextContent(type="text", text=json.dumps(stats))]
+
+        elif name == "grilo_pina_propose":
+            result = _pina.propose_candidate(
+                source_document=arguments["source_document"],
+                faithful_statement=arguments["faithful_statement"],
+                location=arguments["location"],
+                graph_scope=arguments.get("graph_scope"),
+            )
+            return [TextContent(type="text", text=json.dumps({
+                "success": result.success,
+                "nca_id": result.nca_id,
+                "message": result.message,
+            }))]
+
+        elif name == "grilo_pina_decide":
+            result = _pina.decide(
+                nca_id=arguments["nca_id"],
+                decision=arguments["decision"],
+            )
+            return [TextContent(type="text", text=json.dumps({
+                "success": result.success,
+                "nca_id": result.nca_id,
+                "message": result.message,
+                "decision": result.decision,
+                "active_invariants": result.active_invariants,
+            }))]
+
+        elif name == "grilo_pina_status":
+            status = _pina.get_status()
+            return [TextContent(type="text", text=json.dumps(status))]
+
+        elif name == "grilo_validate_transition":
+            result = _validator.validate_transition(
+                from_node=arguments["from_node"],
+                to_node=arguments["to_node"],
+                graph_id=arguments["graph_id"],
+            )
+            return [TextContent(type="text", text=json.dumps({
+                "valid": result.valid,
+                "from_node": result.from_node,
+                "to_node": result.to_node,
+                "graph_id": result.graph_id,
+                "message": result.message,
+                "available_transitions": result.available_transitions,
+            }))]
+
+        elif name == "grilo_list_graphs":
+            graphs = _validator.list_graphs()
+            return [TextContent(type="text", text=json.dumps(graphs))]
+
+        elif name == "grilo_stamp_capsule":
+            from pathlib import Path
+            from grilo_falante.regime import stamp_capsule
+            capsule_path = Path(arguments["capsule_path"])
+            gmif_level = arguments.get("gmif_level")
+            force = arguments.get("force", False)
+            stamped = stamp_capsule(capsule_path, gmif_level, force)
+            return [TextContent(type="text", text=json.dumps({
+                "success": stamped,
+                "capsule_path": str(capsule_path),
+                "message": "Capsule stamped successfully" if stamped else "Capsule already has metadata or error occurred",
+            }))]
+
+        elif name == "grilo_run_auditoria_hostil":
+            from grilo_falante.cognitive import PromptWorkflows
+            workflow = PromptWorkflows()
+            result = workflow.auditoria_hostil_workflow(arguments["content"])
+            return [TextContent(type="text", text=json.dumps(result))]
+
+        elif name == "grilo_run_autopsia_literatura":
+            from grilo_falante.cognitive import PromptWorkflows
+            workflow = PromptWorkflows()
+            result = workflow.autopsia_literatura_workflow(arguments["content"])
+            return [TextContent(type="text", text=json.dumps(result))]
+
+        elif name == "grilo_run_triagem":
+            from grilo_falante.cognitive import PromptWorkflows
+            workflow = PromptWorkflows()
+            result = workflow.triagem_workflow(arguments["content"])
+            return [TextContent(type="text", text=json.dumps(result))]
 
         elif name == "grilo_generate_gfid":
             gfid = GFIDService.generate(

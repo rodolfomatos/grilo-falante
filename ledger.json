@@ -1,0 +1,69 @@
+[
+  {
+    "entry_id": "REG-260415165131575976",
+    "entry_type": "REGIME_EVENT",
+    "gf_id": null,
+    "content": "ACORDAR executed: anchor=2026-04-15, intention=Analyze quantum computing developments, mode=exploratory",
+    "metadata": {
+      "temporal_anchor": "2026-04-15",
+      "intention": "Analyze quantum computing developments",
+      "mode": "exploratory",
+      "cycle_id": "CYCLE-260415-6f71a939"
+    },
+    "timestamp": "2026-04-15T16:51:31.575996",
+    "cycle_id": "CYCLE-260415-6f71a939"
+  },
+  {
+    "entry_id": "REG-260415165131576392",
+    "entry_type": "REGIME_EVENT",
+    "gf_id": null,
+    "content": "VAI_DORMIR: Regime hibernated",
+    "metadata": {
+      "cycle_id": "CYCLE-260415-6f71a939"
+    },
+    "timestamp": "2026-04-15T16:51:31.576411",
+    "cycle_id": "CYCLE-260415-6f71a939"
+  },
+  {
+    "entry_id": "REG-260415165131576752",
+    "entry_type": "REGIME_EVENT",
+    "gf_id": null,
+    "content": "ACORDAR (resume): Regime resumed",
+    "metadata": {
+      "cycle_id": "CYCLE-260415-6f71a939"
+    },
+    "timestamp": "2026-04-15T16:51:31.576770",
+    "cycle_id": "CYCLE-260415-6f71a939"
+  },
+  {
+    "entry_id": "REG-260415165131577306",
+    "entry_type": "REGIME_EVENT",
+    "gf_id": null,
+    "content": "Regime unloaded",
+    "metadata": {},
+    "timestamp": "2026-04-15T16:51:31.577340",
+    "cycle_id": "CYCLE-260415-6f71a939"
+  },
+  {
+    "entry_id": "LOAD-260415165149",
+    "entry_type": "REGIME_EVENT",
+    "gf_id": null,
+    "content": "Regime loaded: v3.0",
+    "metadata": {},
+    "timestamp": "2026-04-15T16:51:49.826784",
+    "cycle_id": "CYCLE-260415-8a8e6171"
+  },
+  {
+    "entry_id": "NOR-260415165445047457",
+    "entry_type": "NORMATIVE_CANDIDATE",
+    "gf_id": "NCA-72a1d4-ec9b-260415165445",
+    "content": "All claims must have GMIF classification",
+    "metadata": {
+      "source": "test_doc.md",
+      "location": "line 42",
+      "graph_scope": null
+    },
+    "timestamp": "2026-04-15T16:54:45.047478",
+    "cycle_id": null
+  }
+]

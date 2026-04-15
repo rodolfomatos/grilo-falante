@@ -21,6 +21,8 @@ class PromptPhase(str, Enum):
 class PromptType(str, Enum):
     TRIAGEM = "triagem"
     RADIOGRAFIA = "radiografia"
+    AUDITORIA_HOSTIL = "auditoria_hostil"
+    AUTOPSIA_LITERATURA = "autopsia_literatura"
 
 
 @dataclass
@@ -39,6 +41,26 @@ class RadiografiaResult:
     errors: List[Dict[str, str]]
     corrections: List[Dict[str, str]]
     gray_zones: List[str]
+
+
+@dataclass
+class AuditoriaHostilResult:
+    """Result of AUDITORIA_HOSTIL_CANONICO workflow."""
+    fase_1_materializacao: Dict[str, Any]
+    fase_2_auditoria: Dict[str, Any]
+    fase_3_feynman: List[Dict[str, str]]
+    output_minimo: Dict[str, Any]
+
+
+@dataclass
+class AutopsiaLiteraturaResult:
+    """Result of AUTOPSIA_LITERATURA workflow."""
+    fase_1_estrutural: Dict[str, Any]
+    fase_2_fontes: List[Dict[str, Any]]
+    fase_3_teorica: Dict[str, Any]
+    fase_4_inferencial: List[Dict[str, str]]
+    fase_5_factual: List[Dict[str, str]]
+    fase_6_diagnostico: Dict[str, Any]
 
 
 class PromptWorkflows:
@@ -274,3 +296,137 @@ Antes de qualquer uso, requer triagem explícita."""
         elif "clarificar" in text or "clarify" in text:
             return "clarification"
         return "unknown"
+
+    def auditoria_hostil_workflow(self, content: str) -> Dict[str, Any]:
+        """
+        Execute AUDITORIA_HOSTIL_CANONICO workflow.
+
+        FASE 1: Integration and materialization
+        FASE 2: Hostile audit (5 axes)
+        FASE 3: Feynman audit
+        """
+        return {
+            "statute": "Template operativo fixo. Reutilizável.",
+            "modos_cognitivos": ["MPG", "D"],
+            "hierarquia": "D > MPG",
+            "fase_1_materializacao": {
+                "instruction": "Identificar todos os documentos, pipelines, esquemas ou propostas",
+                "action": "Materializar no canvas versões integradas, documentos novos, patches",
+                "prohibitions": ["Não assumir continuidade implícita"],
+                "resultado_esperado": "Conjunto fechado e rastreável de artefactos",
+            },
+            "fase_2_auditoria": {
+                "instruction": "Auditoria hostil completa sem suavização retórica",
+                "axes": {
+                    "A_completude_estrutural": [
+                        "Existem fases em falta?",
+                        "Existem pré-condições não explicitadas?",
+                        "Existe fecho de ciclo?",
+                    ],
+                    "B_correcao_categorial": [
+                        "Exploração vs decisão vs promoção estão separadas?",
+                        "Existe autoridade implícita indevida?",
+                    ],
+                    "C_coerencia_temporal": [
+                        "O sistema degrada com o tempo?",
+                        "Existem pontos de esquecimento estrutural?",
+                    ],
+                    "D_escalabilidade_cognitiva": [
+                        "O volume cresce de forma controlada?",
+                        "O modelo depende da conversa?",
+                    ],
+                },
+            },
+            "fase_3_feynman": {
+                "instruction": "Reexplicar cada fase como se ensinado a terceiro externo",
+                "action": "Usar reexplicação para identificar lacunas, ambiguidades ou saltos lógicos",
+            },
+            "regras_duras": [
+                "Não suavizar críticas",
+                "Não omitir falhas por cortesia",
+                "Cada falha identificada deve ter proposta concreta de correção",
+                "Todas as conclusões relevantes devem ser materializadas no canvas",
+            ],
+            "output_minimo": [
+                "O que está correto e sólido",
+                "O que está incompleto, errado ou perigoso",
+                "Patch mínimo necessário para tornar o sistema robusto",
+            ],
+        }
+
+    def autopsia_literatura_workflow(self, content: str) -> Dict[str, Any]:
+        """
+        Execute AUTOPSIA_LITERATURA workflow.
+
+        FASE 1: Structural mapping
+        FASE 2: Source and fidelity audit
+        FASE 3: Theoretical robustness
+        FASE 4: Inferential audit
+        FASE 5: Factual accuracy
+        FASE 6: Global diagnosis
+        """
+        return {
+            "statute": "Análise factual de revisão de literatura. Sem valor normativo.",
+            "fase_1_estrutural": {
+                "instruction": "Extrair teses centrais (explícitas e implícitas), sub-teses, encadeamento lógico",
+                "prohibitions": ["Não avaliativo nesta fase"],
+            },
+            "fase_2_fontes": {
+                "instruction": "Para cada afirmação que invoque literatura",
+                "source_classification": ["descritivo", "inferencial", "normativo", "retórico"],
+                "checks": [
+                    "Afirmação explicitamente suportada pela fonte citada?",
+                    "Overclaiming (conclusões além do que a fonte permite)?",
+                    "Under-specification (fonte citada mas papel ambíguo)?",
+                ],
+                "markers": ["citações frágeis", "citações decorativas", "dependência excessiva de autoridade"],
+            },
+            "fase_3_teorica": {
+                "instruction": "Avaliar compatibilidade entre quadros teóricos",
+                "frameworks": ["educação inclusiva", "sociocultural theory", "SLA", "psicologia cognitiva", "UDL"],
+                "identifications": [
+                    "Tensões não resolvidas",
+                    "Compatibilizações implícitas não justificadas",
+                    "Zonas de ecletismo teórico não controlado",
+                ],
+                "distinctions": [
+                    "Convergência legítima",
+                    "Justaposição pragmática",
+                    "Incoerência conceptual",
+                ],
+            },
+            "fase_4_inferencial": {
+                "instruction": "Identificar saltos inferenciais, pressupostos não declarados, circularidades",
+                "checks": [
+                    "Conclusões intermédias decorrem das premissas?",
+                    "Capítulo faz trabalho teórico real ou apenas acumulação de referências?",
+                ],
+            },
+            "fase_5_factual": {
+                "instruction": "Verificar precisão conceptual e factual",
+                "checks": [
+                    "Conceitos usados de forma imprecisa?",
+                    "Termos polissémicos não estabilizados?",
+                    "Usos anacrónicos ou diluídos de conceitos técnicos?",
+                ],
+            },
+            "fase_6_diagnostico": {
+                "instruction": "Produzir veredicto epistémico global",
+                "output": [
+                    "Pontos de elevada solidez",
+                    "Zonas estruturalmente frágeis",
+                    "Riscos sérios para defesa académica",
+                    "Afirmações que resistem a escrutínio",
+                    "Afirmações que exigem defesa oral cuidadosa",
+                    "Afirmações que deveriam ser reformuladas ou recuadas",
+                ],
+            },
+            "regras_duras": [
+                "Não reescrever o texto",
+                "Não melhorar estilo",
+                "Não suavizar críticas",
+                "Não introduzir novas fontes",
+                "Não assumir intenções do autor",
+                "Distiguir sempre descrição, avaliação e inferência",
+            ],
+        }

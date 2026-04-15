@@ -1,0 +1,36 @@
+digraph G5 {
+  rankdir=TB;
+  node [shape=box, style=rounded];
+
+  subgraph cluster_phases {
+    label="Epistemic Phases";
+    Generation;
+    Validation;
+    Synthesis;
+    Acceptance;
+  }
+
+  subgraph cluster_invariants {
+    label="Invariants";
+    ND [label="Non-Delegability"];
+    SP [label="Phase\nSeparation"];
+    BL [label="Blocking"];
+    AU [label="Auditability"];
+  }
+
+  Generation -> Validation;
+  Validation -> Synthesis;
+  Synthesis -> Acceptance;
+
+  ND -> Acceptance;
+  SP -> Validation;
+  BL -> Acceptance;
+  AU -> Acceptance;
+
+  node [shape=ellipse];
+  Artefacts;
+  Audit;
+
+  Validation -> Artefacts;
+  Acceptance -> Audit;
+}

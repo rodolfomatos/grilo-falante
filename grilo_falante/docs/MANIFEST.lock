@@ -1,0 +1,74 @@
+# MANIFEST.lock
+
+## Versão do Regime
+**Grilo Falante v1.9.3**
+
+## Estatuto
+Documento **canónico**. Define o conjunto exato de artefactos normativos do regime.
+
+---
+
+## Princípios de Governação
+
+- Apenas ficheiros listados neste manifesto possuem **autoridade normativa**.
+- Qualquer alteração a um ficheiro canónico exige:
+  1. materialização integral no canvas;
+  2. auditoria hostil;
+  3. incremento de versão;
+  4. registo em `CHANGELOG.md`.
+- Documentos históricos e documentos sombra **não possuem autoridade normativa**.
+
+---
+
+## Artefactos Canónicos (v1.9.3)
+
+### Documento Raiz
+- `INSTALLER.md` — **Objeto Digital raiz** do regime (v1.9.3)
+
+### Pipeline e Modelo Cognitivo
+- `DOCUMENTO_02_PIPELINE_CANONICO_v3.md` — Pipeline canónico v3 (inclui FASE −1: Objeto Digital)
+- `DOCUMENTO_13_GRAFO_MODELO_COGNITIVO_UNIFICADO.md` — Grafo do modelo cognitivo unificado
+
+### Invariantes e Gates
+- `DOCUMENTO_12_REVALIDACAO_FACTUAL_TRANSVERSAL.md` — Invariante transversal de revalidação factual
+- `DOCUMENTO_10_FALHAS_E_MECANISMOS_DE_BLOQUEIO.md` — Falhas cognitivas relevantes e bloqueios estruturais
+
+### Memória Normativa
+- `CAPSULAS/` — Cápsulas canónicas (normativas)
+- `LEDGER.md` — Ledger de preservação funcional
+
+### Meta e Operação
+- `CHANGELOG.md` — Histórico de versões
+
+---
+
+## Documentos Históricos (sem autoridade normativa)
+
+Os seguintes documentos pertencem a versões anteriores e **não possuem autoridade normativa ativa**:
+
+- `DOCUMENTO_02_Pipeline_Normativo.md` (≤ v1.9.2)
+- `DOCUMENTO_12_Validacao_Automatica.md` (≤ v1.9.2)
+- `DOCUMENTO_10_Falacias_e_Vieses_Cognitivos.md` (≤ v1.9.2)
+- `DOCUMENTO_13_Grafo_Epistemico.md` (≤ v1.9.2)
+
+---
+
+## Regras de Empacotamento
+
+- O sistema **não gera automaticamente** arquivos `.tgz`.
+- Todos os ficheiros canónicos são **materializados individualmente no canvas**.
+- O empacotamento (`system.tgz`, `extras.tgz`) é realizado **externamente por humano**, por copy–paste controlado.
+
+---
+
+## Versão Ativa
+
+Este MANIFEST fixa o regime **Grilo Falante v1.9.3**.
+
+Qualquer chat que declare adesão explícita a este MANIFEST herda automaticamente:
+- o pipeline canónico v3;
+- o Objeto Digital como FASE −1;
+- a revalidação factual transversal;
+- os mecanismos estruturais de bloqueio de falhas;
+- a separação rigorosa entre simulação e promoção.
+

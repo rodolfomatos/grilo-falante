@@ -1,0 +1,15 @@
+digraph G4 {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  Draft [label="Draft /\nExploratory Output"];
+  Gate [label="Epistemic\nGate"];
+  Accepted [label="Accepted\nClaim"];
+  Blocked [label="Blocked /\nRefused"];
+
+  Draft -> Gate [label="attempted\npromotion"];
+  Gate -> Accepted [label="conditions\nmet"];
+  Gate -> Blocked [label="conditions\nunmet"];
+
+  Blocked -> Draft [style=dotted, label="revision\npossible"];
+}

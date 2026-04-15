@@ -8,6 +8,16 @@ from grilo_falante.backend.services.curator import CuratorScoringService
 from grilo_falante.backend.services.query import QueryPipeline
 from grilo_falante.backend.services.school import SchoolModeService
 from grilo_falante.backend.services.lint import CognitiveLint, LintState
+from grilo_falante.backend.services.why_loop import WhyLoopService, WhyLoopResult
+from grilo_falante.backend.services.active_search import ActiveSearchService, SearchResult
+from grilo_falante.backend.services.utils import (
+    TimeoutError as GriloTimeoutError,
+    RetryResult,
+    with_timeout,
+    with_retry,
+    retry_operation,
+    export_html,
+)
 from grilo_falante.backend.services.governance import (
     governance,
     governance_with_blocking,
@@ -42,6 +52,16 @@ __all__ = [
     "SchoolModeService",
     "CognitiveLint",
     "LintState",
+    "WhyLoopService",
+    "WhyLoopResult",
+    "ActiveSearchService",
+    "SearchResult",
+    "GriloTimeoutError",
+    "RetryResult",
+    "with_timeout",
+    "with_retry",
+    "retry_operation",
+    "export_html",
     "governance",
     "governance_with_blocking",
     "verify_claims",

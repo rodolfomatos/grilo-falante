@@ -1,0 +1,24 @@
+digraph GMIF_Reasoning_Engine {
+
+rankdir=LR;
+node [shape=box, style=rounded];
+
+Input [label="Evidence Set"];
+
+Decomposition [label="Decomposition"];
+Classification [label="Classification"];
+Verification [label="Verification"];
+Integration [label="Graph Integration"];
+Conflict [label="Conflict Analysis"];
+Synthesis [label="Synthesis"];
+Conclusion [label="Qualified Conclusion", shape=hexagon];
+
+Input -> Decomposition;
+Decomposition -> Classification;
+Classification -> Verification;
+Verification -> Integration;
+Integration -> Conflict;
+Conflict -> Synthesis;
+Synthesis -> Conclusion;
+
+}

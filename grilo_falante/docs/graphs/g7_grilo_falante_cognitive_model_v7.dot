@@ -1,0 +1,63 @@
+digraph GriloFalante_v7 {
+
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  // Ambiente normativo
+  Regime [label="REGIME\nGovernação Cognitiva", shape=oval];
+
+  // Artefactos
+  Artifacts [
+    label="FASE -1\nObjetos Digitais\nDocumentos Sombra\nCápsulas",
+    shape=box3d
+  ];
+
+  // Pipeline cognitivo
+  F0 [label="FASE 0\nIntenção / Contexto"];
+  F1 [label="FASE 1\nInterpretação"];
+  F2 [label="FASE 2\nInferência\n(zona de risco)"];
+  F3 [label="FASE 3\nEstruturação"];
+  F4 [label="FASE 4\nLINT Cognitivo", shape=diamond];
+  F5 [label="FASE 5\nReexecução"];
+  F6 [label="FASE 6\nValidação Humana"];
+  F7 [label="FASE 7\nPromotion Gate"];
+  F8 [label="FASE 8\nPersistência"];
+
+  // Fluxo governado
+  Regime -> Artifacts;
+  Artifacts -> F0;
+  F0 -> F1;
+  F1 -> F2;
+  F2 -> F3;
+  F3 -> F4;
+
+  // LINT outcomes
+  F4 -> F6 [label="ACCEPT"];
+  F4 -> F5 [label="REEXECUTE"];
+  F4 -> Artifacts [label="REJECT"];
+
+  // Correção
+  F5 -> F2;
+
+  // Validação e promoção
+  F6 -> F7;
+  F7 -> F8 [label="PROMOTE"];
+  F7 -> Artifacts [label="BLOCK"];
+
+  // Proibições explícitas
+  F2 -> F7 [label="FORBIDDEN", style=dashed, color=red];
+  F2 -> F8 [label="FORBIDDEN", style=dashed, color=red];
+
+  // Modos cognitivos (operadores transversais)
+  MEX   [label="MEX\nExploração"];
+  MEXS  [label="MEX-S\nSíntese"];
+  AUDIT [label="A\nHostile Audit"];
+  MULTI [label="D\nMulti-Agent"];
+  MTS   [label="MTS\nInterface"];
+
+  MEX   -> F2;
+  MEXS  -> F3;
+  AUDIT -> F4;
+  MULTI -> F2;
+  MTS   -> F0;
+}

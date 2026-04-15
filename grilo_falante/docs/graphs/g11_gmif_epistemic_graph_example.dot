@@ -1,0 +1,27 @@
+digraph GMIF_Epistemic_Graph {
+
+rankdir=LR;
+node [style=filled];
+
+M1 [label="Primary Data (Complete)", fillcolor="green"];
+M2 [label="Contextual Condition (Conditioned)", fillcolor="yellow"];
+M3 [label="Partial Description (Weak)", fillcolor="orange"];
+M4 [label="Doubtful Testimony", fillcolor="red"];
+
+I1 [label="Interpretation", shape=ellipse, fillcolor="yellow"];
+D1 [label="Derived Evidence", fillcolor="orange"];
+S1 [label="Synthesis", shape=ellipse, fillcolor="yellow"];
+C1 [label="Provisional Conclusion", shape=hexagon, fillcolor="white"];
+
+M1 -> I1;
+M2 -> I1 [style=dashed];
+
+M3 -> D1;
+M4 -> D1 [style=dotted];
+
+I1 -> S1;
+D1 -> S1;
+
+S1 -> C1;
+
+}

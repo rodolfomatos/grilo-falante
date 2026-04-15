@@ -1,0 +1,17 @@
+digraph GMIF_Modes_Architecture {
+
+rankdir=TB;
+node [shape=box, style=rounded];
+
+MEX [label="MEX\nExploration"];
+MEXS [label="MEX-S\nEpistemic Graph Construction"];
+GMIFA [label="GMIF-A\nEpistemic Graph Analysis"];
+GMIFE [label="GMIF-E\nHypothesis Evaluation"];
+MPG [label="MPG\nGoverned Production"];
+
+MEX -> MEXS;
+MEXS -> GMIFA;
+GMIFA -> GMIFE;
+GMIFE -> MPG;
+
+}

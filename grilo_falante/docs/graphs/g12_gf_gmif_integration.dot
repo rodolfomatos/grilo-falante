@@ -1,0 +1,24 @@
+digraph GF_GMIF_Integration {
+
+rankdir=TB;
+node [shape=box, style=rounded];
+
+User [label="User"];
+GF [label="Grilo Falante Governance"];
+Pipeline [label="GF Cognitive Pipeline"];
+MEXS [label="MEX-S Mode
+Structured Exploration"];
+GMIF [label="GMIF Reasoning Engine"];
+Grafo [label="Epistemic Evidence Grafo"];
+Interval [label="Interval Plausibility Model"];
+Conclusion [label="Qualified Conclusion", shape=hexagon];
+
+User -> GF;
+GF -> Pipeline;
+Pipeline -> MEXS;
+MEXS -> GMIF;
+GMIF -> Grafo;
+Grafo -> Interval;
+Interval -> Conclusion;
+
+}

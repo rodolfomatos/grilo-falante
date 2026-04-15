@@ -1,0 +1,16 @@
+digraph G1 {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  Generation [label="Exploratory\nGeneration"];
+  Validation [label="Evidential\nValidation"];
+  Synthesis  [label="Interpretative\nSynthesis"];
+  Acceptance [label="Epistemic\nAcceptance"];
+
+  Generation -> Validation [label="candidate\nassessment"];
+  Validation -> Synthesis  [label="validated\nmaterial"];
+  Synthesis  -> Acceptance [label="authorised\ncommitment"];
+
+  Generation -> Acceptance [style=dashed, color=red, label="blocked"];
+  Validation -> Acceptance [style=dashed, color=red, label="blocked"];
+}

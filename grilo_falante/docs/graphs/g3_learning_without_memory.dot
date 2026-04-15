@@ -1,0 +1,15 @@
+digraph G3 {
+  rankdir=LR;
+  node [shape=box, style=rounded];
+
+  LLM [label="LLM\n(No Memory\nof Commitments)"];
+  Artefacts [label="Externalised\nArtefacts"];
+  Ledger [label="Audit /\nMemory"];
+  System [label="Governed\nEpistemic System"];
+
+  LLM -> Artefacts [label="outputs"];
+  Artefacts -> Ledger [label="persisted"];
+  Ledger -> System [label="supports\ncontinuity"];
+
+  LLM -> System [style=dashed, color=red, label="no learning"];
+}

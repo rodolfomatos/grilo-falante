@@ -1,0 +1,176 @@
+digraph Grilo_Falante_Cognitive_Model {
+
+    /* =====================================================
+       GLOBAL LAYOUT
+    ===================================================== */
+    rankdir=TB;
+    compound=true;
+
+    graph [
+        ranksep = 1.2,
+        nodesep = 0.6,
+        // splines = ortho
+    ];
+
+    node [
+        shape=box,
+        style=rounded,
+        fontsize=10
+    ];
+
+    /* =====================================================
+       TOP: AUTHORITY & GOVERNANCE
+    ===================================================== */
+    USER [
+        label="User\n(factual authority)"
+    ];
+
+    ACORDAR [
+        label="ACORDAR\n(anchoring + bootstrap)"
+    ];
+
+    DIGITAL_OBJECT [
+        label="DIGITAL OBJECT\n(governing socio-technical entity)\n• identity\n• boundaries\n• authority\n• lifecycle",
+        style="rounded,bold"
+    ];
+
+    GATES [
+        label="NORMATIVE GATES\n(phase • mode • promotion)",
+        style="rounded,bold"
+    ];
+
+    { rank = min;
+      USER;
+      ACORDAR;
+      DIGITAL_OBJECT;
+      GATES;
+    }
+
+    USER -> ACORDAR;
+    ACORDAR -> DIGITAL_OBJECT;
+    DIGITAL_OBJECT -> GATES;
+
+    /* =====================================================
+       CANONICAL PIPELINE (VERTICAL SPINE)
+    ===================================================== */
+    subgraph cluster_pipeline {
+        label="CANONICAL PIPELINE (governed)";
+        style=dashed;
+
+        F_M1 [label="PHASE -1\nOntological Lock"];
+        F_0  [label="PHASE 0\nFraming"];
+        F_1  [label="PHASE 1\nSnapshot"];
+        F_2  [label="PHASE 2\nIndexing"];
+        F_3  [label="PHASE 3\nWorking Set"];
+        F_4  [label="PHASE 4\nInference / Exploration"];
+        F_5  [label="PHASE 5\nAudit"];
+        F_6  [label="PHASE 6\nDecision / Diffs"];
+        F_7  [label="PHASE 7\nPromotion Gate"];
+        F_8  [label="PHASE 8\nCycle Closure"];
+
+        F_M1 -> F_0 -> F_1 -> F_2 -> F_3 ->
+        F_4 -> F_5 -> F_6 -> F_7 -> F_8;
+    }
+
+    GATES -> F_M1;
+    DIGITAL_OBJECT -> F_M1;
+
+    /* =====================================================
+       COGNITIVE MODES (BEHAVIOURAL CONTROL, NOT AGENTS)
+    ===================================================== */
+    subgraph cluster_modes {
+        label="COGNITIVE MODES\n(behavioural control, not agents)";
+        style=dotted;
+
+        MTS  [label="MTS\nSimulated Terminal"];
+        MEX  [label="MEX\nFree Exploration"];
+        MEXS [label="MEX-S\nStructured Exploration"];
+        MPG  [label="MPG\nGoverned Production"];
+        D    [label="D\nMulti-Agent"];
+        A    [label="A\nHostile Audit"];
+
+        MTS -> MPG;
+        MEX -> MEXS -> MPG;
+        MPG -> D;
+        MPG -> A;
+    }
+
+    F_4 -> MEX;
+    F_5 -> A;
+
+    /* =====================================================
+       MODEL (PERIPHERAL, NON-LEARNING)
+    ===================================================== */
+    LLM [
+        label="LLM\n(base model)\nNON-LEARNING\nNO AUTHORITY"
+    ];
+
+    OUTPUTS [
+        label="Outputs\n(non-legitimate)"
+    ];
+
+    { rank = same;
+      MPG;
+      LLM;
+      OUTPUTS;
+    }
+
+    MPG -> LLM;
+    LLM -> OUTPUTS [xlabel="outputs"];
+
+    /* =====================================================
+       GMIF — INTERNAL INFERENCE (ENCAPSULATED, NOT LEGITIMATE)
+    ===================================================== */
+    subgraph cluster_GMIF {
+        label="GMIF\nStructured Internal Inference\n(NOT LEGITIMATE)";
+        style=dashed;
+
+        GMIF [
+            label="Inferential Graph\n(meta-information,\ndependencies,\nprovisional syntheses)\n!= acceptance"
+        ];
+    }
+
+    OUTPUTS -> GMIF;
+    GMIF -> F_4;
+
+    /* =====================================================
+       EXTERNAL MEMORY (ACTUAL LEARNING)
+    ===================================================== */
+    subgraph cluster_memory {
+        label="NORMATIVE EXTERNAL MEMORY\n(actual learning)";
+        style=bold;
+
+        CAPSULES  [label="Capsules"];
+        DOCUMENTS [label="Documents"];
+        LEDGER    [label="Ledger"];
+    }
+
+    { rank = max;
+      CAPSULES;
+      DOCUMENTS;
+      LEDGER;
+    }
+
+    F_5 -> CAPSULES;
+    CAPSULES -> DOCUMENTS;
+    DOCUMENTS -> LEDGER;
+
+    /* =====================================================
+       FEEDBACK & CONTROL
+    ===================================================== */
+    LEDGER -> GATES [label="new norms"];
+    LEDGER -> DIGITAL_OBJECT [label="state fixation"];
+
+    A -> DIGITAL_OBJECT [label="drift detection"];
+
+    /* =====================================================
+       EXPLICIT BLOCKING (PROHIBITED PROMOTION)
+    ===================================================== */
+    GMIF -> F_7
+        [style=dashed, color=red,
+         xlabel="FORBIDDEN\n(inference != promotion)"];
+
+    LLM -> F_7
+        [style=dashed, color=red,
+         label="FORBIDDEN\n(model != authority)"];
+}

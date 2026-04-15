@@ -25,6 +25,8 @@ from grilo_falante.cognitive.prompt_workflows import (
     PromptType,
     TriagemResult,
     RadiografiaResult,
+    AuditoriaHostilResult,
+    AutopsiaLiteraturaResult,
 )
 
 __all__ = [
@@ -44,4 +46,6 @@ __all__ = [
     "PromptType",
     "TriagemResult",
     "RadiografiaResult",
+    "AuditoriaHostilResult",
+    "AutopsiaLiteraturaResult",
 ]

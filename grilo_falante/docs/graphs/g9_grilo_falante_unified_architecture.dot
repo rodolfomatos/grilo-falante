@@ -1,0 +1,109 @@
+digraph GriloFalante_G9 {
+
+rankdir=TB;
+compound=true;
+node [shape=box, style=rounded];
+
+/* =====================================================
+   LAYER 1 — CONSTITUTION (from v6)
+===================================================== */
+
+subgraph cluster_constitution {
+label="LAYER 1 — CONSTITUTIONAL GOVERNANCE";
+style=bold;
+
+USER [label="User\n(factual authority)"];
+ACORDAR [label="ACORDAR\nanchoring / bootstrap"];
+DIGITAL_OBJECT [label="DIGITAL OBJECT\n(governing entity)"];
+GATES [label="NORMATIVE GATES"];
+
+USER -> ACORDAR;
+ACORDAR -> DIGITAL_OBJECT;
+DIGITAL_OBJECT -> GATES;
+}
+
+/* =====================================================
+   LAYER 2 — COGNITIVE PIPELINE (from v7)
+===================================================== */
+
+subgraph cluster_pipeline {
+label="LAYER 2 — COGNITIVE PIPELINE";
+style=dashed;
+
+ARTIFACTS [label="Artifacts / Shadow Docs / Capsules", shape=box3d];
+
+F0 [label="F0 Context"];
+F1 [label="F1 Interpretation"];
+F2 [label="F2 Inference"];
+F3 [label="F3 Structuring"];
+F4 [label="F4 LINT", shape=diamond];
+F5 [label="F5 Reexecution"];
+F6 [label="F6 Human Validation"];
+F7 [label="F7 Promotion Gate"];
+F8 [label="F8 Persistence"];
+
+ARTIFACTS -> F0 -> F1 -> F2 -> F3 -> F4;
+
+F4 -> F6 [label="ACCEPT"];
+F4 -> F5 [label="REEXECUTE"];
+F4 -> ARTIFACTS [label="REJECT"];
+
+F5 -> F2;
+
+F6 -> F7;
+F7 -> F8;
+F7 -> ARTIFACTS [label="BLOCK"];
+}
+
+GATES -> ARTIFACTS;
+
+/* =====================================================
+   LAYER 3 — COGNITIVE MODES (from v6)
+===================================================== */
+
+subgraph cluster_modes {
+label="COGNITIVE MODES (behavior control)";
+style=dotted;
+
+MTS [label="MTS\nInterface"];
+MEX [label="MEX\nExploration"];
+MEXS [label="MEX-S\nStructured Exploration"];
+MPG [label="MPG\nGoverned Production"];
+MULTI [label="D\nMulti-Agent"];
+AUDIT [label="A\nHostile Audit"];
+
+MTS -> F0;
+MEX -> F2;
+MEXS -> F3;
+AUDIT -> F4;
+MULTI -> F2;
+}
+
+/* =====================================================
+   LAYER 4 — EPISTEMIC SYSTEM (from v8)
+===================================================== */
+
+subgraph cluster_epistemic {
+label="LAYER 4 — EPISTEMIC STABILIZATION";
+style=bold;
+
+LEDGER [label="Ledger"];
+PARADIGM_MAP [label="Paradigm Map"];
+ANOMALY_BUFFER [label="Anomaly Buffer"];
+FOUNDATION_AUDIT [label="Foundation Audit", shape=diamond];
+DRIFT_AUDIT [label="Drift Audit", shape=diamond];
+LINEAGE [label="Evidence Lineage"];
+
+}
+
+F8 -> LEDGER;
+
+LEDGER -> PARADIGM_MAP;
+PARADIGM_MAP -> ANOMALY_BUFFER;
+ANOMALY_BUFFER -> FOUNDATION_AUDIT;
+FOUNDATION_AUDIT -> DRIFT_AUDIT;
+DRIFT_AUDIT -> LINEAGE;
+
+LINEAGE -> GATES;
+
+}

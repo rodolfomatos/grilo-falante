@@ -1,0 +1,179 @@
+digraph GriloFalante_v8 {
+
+rankdir=TB;
+node [shape=box, style=rounded];
+
+/* =====================================================
+   AUTHORITY & GOVERNANCE LAYER
+===================================================== */
+
+USER [label="USER\n(factual authority)"];
+ACORDAR [label="ACORDAR\nbootstrap / anchoring"];
+DIGITAL_OBJECT [label="DIGITAL OBJECT\n(governing socio-technical entity)"];
+GATES [label="NORMATIVE GATES\n(phase / mode / promotion)"];
+
+USER -> ACORDAR;
+ACORDAR -> DIGITAL_OBJECT;
+DIGITAL_OBJECT -> GATES;
+
+/* =====================================================
+   COGNITIVE PIPELINE
+===================================================== */
+
+subgraph cluster_pipeline {
+
+label="COGNITIVE PIPELINE";
+style=dashed;
+
+F_M1 [label="PHASE -1\nArtifacts"];
+
+F0 [label="PHASE 0\nIntention / Context"];
+F1 [label="PHASE 1\nInterpretation"];
+
+F15 [label="PHASE 1.5\nClaim Classification", shape=diamond];
+
+F2 [label="PHASE 2\nInference\n(Risk Zone)"];
+
+EXPLORATION_CONTROL [label="Exploration Control"];
+
+F3 [label="PHASE 3\nStructuring"];
+
+F4 [label="PHASE 4\nCognitive LINT", shape=diamond];
+
+VALIDATION_QUEUE [label="Validation Queue"];
+VALIDATION_TIERS [label="Validation Tiers"];
+
+F5 [label="PHASE 5\nRe-execution"];
+
+F6 [label="PHASE 6\nHuman Validation"];
+
+F7 [label="PHASE 7\nPromotion Gate"];
+
+F8 [label="PHASE 8\nPersistence"];
+
+F_M1 -> F0 -> F1 -> F15 -> F2 -> EXPLORATION_CONTROL -> F3 -> F4;
+
+F4 -> VALIDATION_QUEUE;
+VALIDATION_QUEUE -> VALIDATION_TIERS;
+VALIDATION_TIERS -> F6;
+
+F4 -> F5 [label="REEXECUTE"];
+F4 -> F_M1 [label="REJECT"];
+
+F5 -> F2;
+
+}
+
+/* =====================================================
+   CLAIM TYPES
+===================================================== */
+
+GROUND [label="Grounded Claim", shape=oval];
+DERIVED [label="Derived Claim", shape=oval];
+HYPOTHESIS [label="Hypothesis", shape=oval];
+
+F15 -> GROUND;
+F15 -> DERIVED;
+F15 -> HYPOTHESIS;
+
+GROUND -> F2;
+DERIVED -> F2;
+HYPOTHESIS -> F2;
+
+/* =====================================================
+   GROUNDING LAYER
+===================================================== */
+
+subgraph cluster_grounding {
+
+label="GROUNDING";
+style=bold;
+
+EVIDENCE [label="Evidence Sources"];
+VERIFY [label="Verification"];
+CONFIDENCE [label="Confidence Assessment"];
+
+}
+
+F6 -> EVIDENCE;
+EVIDENCE -> VERIFY -> CONFIDENCE -> F7;
+
+/* =====================================================
+   PROMOTION
+===================================================== */
+
+F7 -> F8 [label="PROMOTE"];
+F7 -> F_M1 [label="BLOCK"];
+
+/* =====================================================
+   EXTERNAL MEMORY
+===================================================== */
+
+subgraph cluster_memory {
+
+label="NORMATIVE EXTERNAL MEMORY";
+style=bold;
+
+CAPSULES [label="Capsules"];
+DOCUMENTS [label="Documents"];
+LEDGER [label="Ledger"];
+
+}
+
+F8 -> CAPSULES;
+CAPSULES -> DOCUMENTS;
+DOCUMENTS -> LEDGER;
+
+/* =====================================================
+   PARADIGM STRUCTURE
+===================================================== */
+
+PARADIGM_MAP [label="Paradigm Map\n(theory clusters)"];
+
+LEDGER -> PARADIGM_MAP;
+PARADIGM_MAP -> GATES [label="context for reasoning"];
+
+/* =====================================================
+   ANOMALY MANAGEMENT
+===================================================== */
+
+ANOMALY_BUFFER [label="Anomaly Buffer\n(paradigm tensions)"];
+
+PARADIGM_MAP -> ANOMALY_BUFFER;
+
+/* =====================================================
+   FOUNDATION CONTROL
+===================================================== */
+
+FOUNDATION_AUDIT [label="Foundation Audit\n(re-ground critical claims)", shape=diamond];
+
+ANOMALY_BUFFER -> FOUNDATION_AUDIT;
+FOUNDATION_AUDIT -> F6 [label="re-validation"];
+
+/* =====================================================
+   EPISTEMIC DRIFT CONTROL
+===================================================== */
+
+DRIFT_AUDIT [label="Epistemic Drift Audit", shape=diamond];
+LINEAGE [label="Evidence Lineage Tracking"];
+
+FOUNDATION_AUDIT -> DRIFT_AUDIT;
+DRIFT_AUDIT -> LINEAGE [label="trace claims"];
+LINEAGE -> GATES [label="validated knowledge"];
+
+DRIFT_AUDIT -> F_M1 [label="drift detected\nre-grounding"];
+
+/* =====================================================
+   GOVERNANCE FEEDBACK
+===================================================== */
+
+LINEAGE -> DIGITAL_OBJECT [label="state fixation"];
+
+/* =====================================================
+   EXPLICIT BLOCKING RULES
+===================================================== */
+
+DERIVED -> F7 [style=dashed, color=red, label="cannot auto-promote"];
+HYPOTHESIS -> F7 [style=dashed, color=red, label="requires grounding"];
+
+}
