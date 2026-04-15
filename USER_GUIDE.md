@@ -117,6 +117,11 @@ O Grilo Falante v3.0 oferece **4 interfaces** para o utilizador:
 - `POST /api/v1/ingest/pdf` - Upload PDF
 - `GET /api/v1/shadow/{source_id}` - Shadow document
 
+### 3.6 PINA Protocol (Normative Candidates)
+- `GET /api/v1/pina/pending` - List pending NCAs
+- `GET /api/v1/pina/invariants` - List active invariants
+- `GET /api/v1/pina/status` - Full PINA status
+
 ---
 
 ## 4. SKILL OpenCode (`/grilo`)
@@ -320,6 +325,6 @@ Regime (load/acordar/vai_dormir)
 ```
 
 ###尚未完成 (Remaining):
-1. **MÉDIA**: PINA dashboard/UI
+1. ~~PINA dashboard/UI~~ ✅ CONCLUÍDO (REST + MCP tools)
 2. **BAIXA**: Unificar auditoria tools
 3. **BAIXA**: Tool hierarchy no SKILL.md
