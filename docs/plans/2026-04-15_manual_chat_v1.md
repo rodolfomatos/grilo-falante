@@ -42,12 +42,14 @@ User → ChatShell → Extract Claims → GMIF → Governance Gate → LLM Respo
 
 ### 5. Manual MD
 - [x] 00_INDICE.md
-- [x] 01_o_que_e_o_grilo.md
-- [x] 03_instalacao.md
-- [x] 06_chat_gobernado.md
-- [x] 11_todas_mcp_tools.md
-- [x] A1_session_resume.md
-- [ ] Resto: partes 2,4,5,6,7
+- [x] 01-04 (PARTE_1)
+- [x] 05,07-10 (PARTE_2)
+- [x] 11-14 (PARTE_3)
+- [x] 15 (PARTE_4)
+- [x] 22 (PARTE_5)
+- [x] 23-24,27 (PARTE_6-7)
+- [x] A1 (APENDICES)
+- [ ] Faltam: 16-21, 25-26, 28, A2-A3
 
 ## Progresso
 
@@ -60,14 +62,19 @@ User → ChatShell → Extract Claims → GMIF → Governance Gate → LLM Respo
 - MCP tools: grilo_chat_start, grilo_chat_send, grilo_chat_end, grilo_export_session
 - CLI: /grilo chat
 
+### Manual MD (20+ ficheiros)
+- PARTE_1: 01-04 ✅
+- PARTE_2: 05,07-10 ✅
+- PARTE_3: 11-14 ✅
+- PARTE_4: 15 ✅
+- PARTE_5: 22 ✅
+- PARTE_6: 23-25, 27 ✅
+- APENDICES: A1 ✅
+
 ### Commits Feitos
 - 3d25930 - fix: asyncio.run() bug
 - f9f7400 - feat: ChatShell class
-
-### Manual
-- docs/manual/00_INDICE.md
-- docs/manual/PARTE_1_FUNDAMENTOS/01_o_que_e_o_grilo.md
-- docs/manual/PARTE_1_FUNDAMENTOS/03_instalacao.md
-- docs/manual/PARTE_2_UTILIZADOR/06_chat_gobernado.md
-- docs/manual/PARTE_3_ESPECIALISTA/11_todas_mcp_tools.md
-- docs/manual/APENDICES/A1_session_resume.md
+- 2b717c5 - docs: manual start
+- e3e731b - docs: MemPalace, Graphify, Cheatsheet
+- 2d17966 - docs: Regime, Claims, REST, Troubleshooting
+- c8f7652 - docs: Gaps/PINA, Exemplos, Fluxo, Primeiro Ciclo
