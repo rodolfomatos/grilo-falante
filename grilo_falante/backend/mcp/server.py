@@ -578,10 +578,29 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             }))]
 
         elif name == "grilo_run_auditoria_hostil":
-            from grilo_falante.cognitive import PromptWorkflows
-            workflow = PromptWorkflows()
-            result = workflow.auditoria_hostil_workflow(arguments["content"])
-            return [TextContent(type="text", text=json.dumps(result))]
+            from grilo_falante.cognitive import AuditoriaHostil
+            import asyncio
+
+            content = arguments["content"]
+            lines = [l.strip() for l in content.split("\n") if l.strip()]
+
+            claims = []
+            for i, line in enumerate(lines):
+                if len(line) > 20:
+                    claims.append({
+                        "id": f"claim_{i}",
+                        "claim_text": line,
+                        "gmif_level": "M3",
+                        "validation_status": "pending",
+                    })
+
+            if not claims:
+                claims = [{"id": "claim_0", "claim_text": content[:500], "gmif_level": "M3", "validation_status": "pending"}]
+
+            auditoria = AuditoriaHostil()
+            report = asyncio.run(auditoria.run_full_audit(claims=claims, governance_records=[]))
+
+            return [TextContent(type="text", text=json.dumps(report.to_dict()))]
 
         elif name == "grilo_run_autopsia_literatura":
             from grilo_falante.cognitive import PromptWorkflows
