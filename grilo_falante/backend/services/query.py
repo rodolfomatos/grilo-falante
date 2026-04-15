@@ -5,9 +5,9 @@ Implements:
 1. Query parsing
 2. Hybrid retrieval (vector + text)
 3. Gap detection
-4. Graph lint
-5. Epistemic policy evaluation
-6. Governance decision
+4. Graph lint (using governance services)
+5. Epistemic policy evaluation (using governance services)
+6. Governance decision (using governance_layer)
 """
 
 from dataclasses import dataclass, field
@@ -17,6 +17,17 @@ from grilo_falante.models import GovernedClaim, Gap, SessionPreferences, GMIFLev
 from grilo_falante.backend.db.repositories import ClaimRepository, GapRepository
 from grilo_falante.backend.services.gap import GapDetectionService
 from grilo_falante.backend.services.gmif import GMIFClassifier
+from grilo_falante.backend.services.governance import (
+    governance,
+    governance_with_blocking,
+    evaluate_text_constraints,
+    evaluate_lint_for_promotion,
+)
+from grilo_falante.backend.services.governance.epistemic_objects import (
+    Proposition,
+    PropositionRole,
+    PropositionLegitimacy,
+)
 
 
 @dataclass
@@ -30,6 +41,7 @@ class QueryResult:
     m4_count: int
     lint_passed: bool
     lint_issues: list[str] = field(default_factory=list)
+    governance_decision: dict = field(default_factory=dict)
 
 
 class QueryPipeline:
@@ -40,9 +52,9 @@ class QueryPipeline:
     1. Parse query
     2. Search claims (hybrid)
     3. Detect gaps
-    4. Run graph lint
-    5. Evaluate policy
-    6. Return decision
+    4. Run graph lint (using governance constraint_layer)
+    5. Evaluate policy (using governance falsifiability_lint)
+    6. Governance decision (using governance_layer)
     """
 
     def __init__(self):
@@ -88,14 +100,22 @@ class QueryPipeline:
             )
             gaps.append(gap)
 
-        # Step 4: Graph lint (simplified)
-        lint_passed, lint_issues = self._run_lint(claims)
+        # Step 4: Run lint using governance constraint_layer
+        lint_passed, lint_issues = self._run_governance_lint(claims)
 
-        # Step 5: Policy evaluation
+        # Step 5: Run governance policy evaluation
         m4_count = sum(1 for c in claims if c.gmif_level == GMIFLevel.M4_DOUBTFUL)
-        status, reason = self._evaluate_policy(claims, m4_count, lint_passed)
 
-        # Step 6: Return result
+        # Step 6: Get governance decision using governance_layer
+        gov_decision = governance(
+            claims=self._claims_to_dict(claims),
+            query=query,
+        )
+
+        status = gov_decision.decision
+        reason = gov_decision.reason
+
+        # Return result
         return QueryResult(
             status=status,
             reason=reason,
@@ -104,61 +124,51 @@ class QueryPipeline:
             m4_count=m4_count,
             lint_passed=lint_passed,
             lint_issues=lint_issues,
+            governance_decision=gov_decision.details,
         )
 
-    def _run_lint(self, claims: list[GovernedClaim]) -> tuple[bool, list[str]]:
-        """
-        Run graph lint on claims.
+    def _claims_to_dict(self, claims: list[GovernedClaim]) -> list[dict]:
+        """Convert claims to dict format for governance service."""
+        return [
+            {
+                "id": c.claim_key,
+                "claim_text": c.claim_text,
+                "gmif_type": c.gmif_level.value if c.gmif_level else "M3",
+                "score": c.gmif_confidence or 0.5,
+                "source_id": c.source_id,
+            }
+            for c in claims
+        ]
 
-        Simplified L1-L8 checks.
+    def _run_governance_lint(self, claims: list[GovernedClaim]) -> tuple[bool, list[str]]:
+        """
+        Run graph lint using governance constraint_layer.
+
+        Uses the real constraint evaluation from constraint_layer.py.
         """
         issues = []
 
         for claim in claims:
-            # L1: Check for blocking patterns
-            text_lower = claim.claim_text.lower()
-            if any(
-                word in text_lower
-                for word in ["obviously", "clearly", "just trust me"]
-            ):
+            text = claim.claim_text
+
+            # Run constraint evaluation
+            passed, violations = evaluate_text_constraints(text)
+
+            if not passed:
+                for v in violations:
+                    issues.append(f"Constraint {v.constraint_id}: {v.message}")
+
+            # Check for blocking patterns
+            text_lower = text.lower()
+            blocking_patterns = ["obviously", "clearly", "just trust me", "believe me"]
+            if any(word in text_lower for word in blocking_patterns):
                 issues.append(f"Blocking pattern in claim {claim.claim_key}")
 
-            # L2: Check for unsupported generalizations
-            if any(
-                word in text_lower for word in ["all", "always", "never", "everyone"]
-            ):
+            # Check for unsupported generalizations
+            if any(word in text_lower for word in ["all", "always", "never", "everyone"]):
                 if claim.gmif_level not in [GMIFLevel.M1_PRIMARY, GMIFLevel.M4_DOUBTFUL]:
                     issues.append(
                         f"Generalization without primary evidence: {claim.claim_key}"
                     )
 
-            # Additional lint rules would go here...
-
         return len(issues) == 0, issues
-
-    def _evaluate_policy(
-        self, claims: list[GovernedClaim], m4_count: int, lint_passed: bool
-    ) -> tuple[str, str]:
-        """
-        Evaluate epistemic policy.
-
-        Returns:
-            Tuple of (status, reason)
-        """
-        if not claims:
-            return "blocked", "No epistemic backing available"
-
-        if m4_count > len(claims) / 2:
-            return "review", f"High proportion of doubtful claims ({m4_count}/{len(claims)})"
-
-        if not lint_passed:
-            return "review", "Lint issues detected"
-
-        # Check for blocking claims
-        blocking_claims = [
-            c for c in claims if self.gmif_classifier.is_blocking(c.gmif_level, c.gmif_confidence)
-        ]
-        if blocking_claims:
-            return "blocked", f"Blocking claims with low confidence: {len(blocking_claims)}"
-
-        return "allowed", "Epistemic policy satisfied"
