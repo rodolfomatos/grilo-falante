@@ -41,15 +41,16 @@ User → ChatShell → Extract Claims → GMIF → Governance Gate → LLM Respo
 - [ ] Pesquisa full-text
 
 ### 5. Manual MD
-- [x] 00_INDICE.md
-- [x] 01-04 (PARTE_1)
-- [x] 05,07-10 (PARTE_2)
-- [x] 11-14 (PARTE_3)
-- [x] 15 (PARTE_4)
-- [x] 22 (PARTE_5)
-- [x] 23-24,27 (PARTE_6-7)
-- [x] A1 (APENDICES)
-- [ ] Faltam: 16-21, 25-26, 28, A2-A3
+- [x] 00_INDICE.md ✅
+- [x] PARTE_1_FUNDAMENTOS (01-04) ✅
+- [x] PARTE_2_UTILIZADOR (05-10) ✅
+- [x] PARTE_3_ESPECIALISTA (11-14) ✅
+- [x] PARTE_4_ADMINISTRADOR (15-18) ✅
+- [x] PARTE_5_PROFUNDIDADE (19-22) ✅
+- [x] PARTE_6_INTEGRACOES (23-26) ✅
+- [x] PARTE_7_REFERENCIA (27-29) ✅
+- [x] APENDICES (A1-A3) ✅
+- [x] **TOTAL: 32 ficheiros**
 
 ## Progresso
 
