@@ -752,34 +752,34 @@ NÃO APAGAR NUNCA — apenas reduzir prioridade de recuperação
 
 ---
 
-## Fase 2: Sistema de Ilhas
+## Fase 2: Sistema de Ilhas ✅ COMPLETED
 
-### TODO 2.1: Implementar Gestão de Ilhas
-- [ ] Criar `app/ilhas/gerenciador.py`
-- [ ] Implementar `criar_ilha(pedra)`
-- [ ] Implementar `adicionar_membro(ilha_id, membro)`
-- [ ] Implementar `remover_membro(ilha_id, membro_id)`
-- [ ] Implementar `combinar_ilhas(ilha1_id, ilha2_id)`
+### TODO 2.1: Implementar Gestão de Ilhas ✅ IMPLEMENTADO
+- [x] Criar `app/ilhas/gerenciador.py`
+- [x] Implementar `criar_ilha(pedra)`
+- [x] Implementar `adicionar_membro(ilha_id, membro)`
+- [x] Implementar `remover_membro(ilha_id, membro_id)`
+- [x] Implementar `combinar_ilhas(ilha1_id, ilha2_id)`
 
-### TODO 2.2: Implementar Cálculo de Saliência
-- [ ] Criar `app/ilhas/saliência.py`
-- [ ] Implementar `calcular_frequência(interações)`
-- [ ] Implementar `calcular_intensidade(eventos)`
-- [ ] Implementar `calcular_novidade(conteúdo)`
-- [ ] Implementar `calcular_relevância(embedding)`
-- [ ] Implementar `saliência_total(componentes)`
+### TODO 2.2: Implementar Cálculo de Saliência ✅ IMPLEMENTADO
+- [x] Criar `app/ilhas/saliência.py`
+- [x] Implementar `calcular_frequência(interações)`
+- [x] Implementar `calcular_intensidade(eventos)`
+- [x] Implementar `calcular_novidade(conteúdo)`
+- [x] Implementar `calcular_relevância(embedding)`
+- [x] Implementar `saliência_total(componentes)`
 
-### TODO 2.3: Implementar Dinâmica de Erosão
-- [ ] Criar `app/ilhas/erosão.py`
-- [ ] Implementar `decay_score(ilha, dias)`
-- [ ] Implementar `verificar_estado(ilha)`
-- [ ] NÃO implementar apagamento — só prioridade
+### TODO 2.3: Implementar Dinâmica de Erosão ✅ IMPLEMENTADO
+- [x] Criar `app/ilhas/erosão.py`
+- [x] Implementar `decay_score(ilha, dias)`
+- [x] Implementar `verificar_estado(ilha)`
+- [x] NÃO implementar apagamento — só prioridade
 
-### TODO 2.4: Implementar Relações entre Ilhas
-- [ ] Criar `app/ilhas/relacoes.py`
-- [ ] Implementar `encontrar_ilhas_relacionadas(ilha_id)`
-- [ ] Implementar `calcular_similaridade(ilha1, ilha2)`
-- [ ] Implementar `sugerir_agregação(pedra)`
+### TODO 2.4: Implementar Relações entre Ilhas ✅ IMPLEMENTADO
+- [x] Criar `app/ilhas/relacoes.py`
+- [x] Implementar `encontrar_ilhas_relacionadas(ilha_id)`
+- [x] Implementar `calcular_similaridade(ilha1, ilha2)`
+- [x] Implementar `sugerir_agregação(pedra)`
 
 ---
 
@@ -927,23 +927,30 @@ Fase 5 (Interfaces)
 
 ## 85. Priorização Recomendada
 
-### Alta Prioridade ( foundations) ✅ COMPLETED
-1. ~~TODO 0.1 - Ontologia Nuclear~~ ✅
-2. ~~TODO 0.2 - Modelo de Dados~~ ✅
-3. ~~TODO 1.1 - ir_dormir() básico~~ ✅
-4. ~~TODO 1.2 - acordar() básico~~ ✅
-5. TODO 1.3 - ChatShell atualizado
-6. TODO 1.4 - CLI ciclos manuais
+### Fase 0-1 ✅ COMPLETED
+- ~~TODO 0.1 - Ontologia Nuclear~~ ✅
+- ~~TODO 0.2 - Modelo de Dados~~ ✅
+- ~~TODO 0.3 - MemPalace~~ ✅
+- ~~TODO 1.1 - ir_dormir()~~ ✅
+- ~~TODO 1.2 - acordar()~~ ✅
+- ~~TODO 1.3 - ChatShell~~ ✅
+- ~~TODO 1.4 - CLI ciclos~~ ✅
 
-### Média Prioridade ( core memory)
-7. TODO 2.1 - Gestão de Ilhas
-8. TODO 2.2 - Cálculo de Saliência
-9. TODO 2.3 - Dinâmica de Erosão
+### Fase 2 ✅ COMPLETED
+- ~~TODO 2.1 - Gestão de Ilhas~~ ✅
+- ~~TODO 2.2 - Cálculo de Saliência~~ ✅
+- ~~TODO 2.3 - Dinâmica de Erosão~~ ✅
+- ~~TODO 2.4 - Relações~~ ✅
 
-### Baixa Prioridade ( enrichement)
-10. TODO 3.1-3.4 - Índices
-11. TODO 4.1-4.3 - Estudo Dirigido
-12. TODO 5.1-5.4 - Interfaces
+### Fase 3 🔄 PENDING
+- TODO 3.1 - Índice Canónico
+- TODO 3.2 - Índice Pragmático
+- TODO 3.3 - Coverage Map
+- TODO 3.4 - Bundle de Reentrada
+
+### Fase 4-5 🔄 PENDING
+- Fase 4: Estudo Dirigido
+- Fase 5: Interfaces
 
 ---
 
