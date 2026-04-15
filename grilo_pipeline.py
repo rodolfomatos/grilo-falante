@@ -949,14 +949,14 @@ if __name__ == "__main__":
             try:
                 DEFAULT_TIMEOUT = int(args[i + 1])
                 i += 1
-            except:
-                pass
+            except ValueError:
+                logger.warning(f"Invalid timeout value: {args[i + 1]}")
         elif arg == "--retry" and i + 1 < len(args):
             try:
                 DEFAULT_MAX_RETRIES = int(args[i + 1])
                 i += 1
-            except:
-                pass
+            except ValueError:
+                logger.warning(f"Invalid retry value: {args[i + 1]}")
         elif arg == "--log" and i + 1 < len(args):
             set_log_file(args[i + 1])
             i += 1
