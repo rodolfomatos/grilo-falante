@@ -914,17 +914,35 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             }))]
 
         elif name == "grilo_audit":
+            from grilo_falante.cognitive import AuditoriaHostil
+
             claim_repo = ClaimRepository()
-            gov_repo = GovernanceRepository()
             claims = await claim_repo.search("", limit=arguments.get("limit", 50))
-            findings = []
-            for claim in claims:
-                if claim.gmif_level == GMIFLevel.M4_DOUBTFUL and claim.gmif_confidence < 0.3:
-                    findings.append(f"M4 with low confidence: {claim.claim_key}")
+
+            claims_data = [
+                {
+                    "id": c.claim_key,
+                    "claim_text": c.claim_text,
+                    "gmif_level": c.gmif_level.value if c.gmif_level else "M4",
+                    "validation_status": c.validation_state.value if c.validation_state else "pending",
+                }
+                for c in claims
+            ]
+
+            if not claims_data:
+                return [TextContent(type="text", text=json.dumps({
+                    "claims_audited": 0,
+                    "findings": [],
+                    "audit_result": {"status": "no_claims", "message": "No claims to audit"},
+                }))]
+
+            auditoria = AuditoriaHostil()
+            report = await auditoria.run_full_audit(claims=claims_data, governance_records=[])
+
             return [TextContent(type="text", text=json.dumps({
                 "claims_audited": len(claims),
-                "findings": findings,
-                "finding_count": len(findings),
+                "findings": report.findings,
+                "audit_result": report.to_dict(),
             }))]
 
         elif name == "grilo_lint":

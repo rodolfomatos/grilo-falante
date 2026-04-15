@@ -326,5 +326,5 @@ Regime (load/acordar/vai_dormir)
 
 ###尚未完成 (Remaining):
 1. ~~PINA dashboard/UI~~ ✅ CONCLUÍDO (REST + MCP tools)
-2. **BAIXA**: Unificar auditoria tools
+2. ~~Unificar auditoria tools~~ ✅ CONCLUÍDO (grilo_audit agora usa AuditoriaHostil)
 3. **BAIXA**: Tool hierarchy no SKILL.md
