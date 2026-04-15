@@ -535,6 +535,20 @@ async def list_tools() -> list[Tool]:
                 },
             },
         ),
+        Tool(
+            name="grilo_import_session",
+            description="Import session from bash script or JSON",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_script": {
+                        "type": "string",
+                        "description": "Bash script from export_session or JSON string",
+                    },
+                },
+                "required": ["session_script"],
+            },
+        ),
     ]
 
 
@@ -1093,6 +1107,31 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 "cycle_id": status.get("cycle_id"),
                 "messages_count": status.get("messages_count"),
                 "claims_count": status.get("claims_count"),
+            }))]
+
+        elif name == "grilo_import_session":
+            session_script = arguments.get("session_script")
+            if not session_script:
+                return [TextContent(type="text", text=json.dumps({
+                    "error": "session_script is required",
+                }))]
+
+            from app.skills.chat_shell import ChatShell
+
+            shell = ChatShell()
+            result = shell.import_session(session_script)
+
+            if not result.get("success"):
+                return [TextContent(type="text", text=json.dumps(result))]
+
+            _chat_sessions[shell.session_id] = shell
+            return [TextContent(type="text", text=json.dumps({
+                "success": True,
+                "session_id": shell.session_id,
+                "cycle_id": shell._cycle_id,
+                "state": shell.state,
+                "messages_count": len(shell.messages),
+                "claims_count": len(shell.claims),
             }))]
 
         else:

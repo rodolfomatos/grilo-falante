@@ -8,9 +8,11 @@ import asyncio
 import logging
 import json
 import uuid
+import os
+import re
 from datetime import datetime
 from typing import Dict, List, Optional, Any
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +52,8 @@ class ChatShell:
     - PostgreSQL: claims autoritativas
     """
 
-    AUTO_SAVE_INTERVAL = 5  # mensagens
+    AUTO_SAVE_INTERVAL = 5
+    SESSIONS_DIR = "/home/rodolfo/src/grilo_falante_v3.0/sessions"
 
     def __init__(self, session_id: Optional[str] = None):
         self.session_id = session_id or f"chat_{datetime.now().strftime('%y%m%d_%H%M%S')}"
@@ -61,6 +64,8 @@ class ChatShell:
         self._cycle_id: Optional[str] = None
         self._loader = None
         self._acordar = None
+        self._temporal_anchor: Optional[str] = None
+        self._intention: Optional[str] = None
 
     async def start(
         self,
@@ -105,6 +110,8 @@ class ChatShell:
         )
 
         temporal = temporal_anchor or datetime.now().strftime("%Y-%m-%d %H:%M")
+        self._temporal_anchor = temporal
+        self._intention = intention
 
         acordar_result = self._acordar.execute(
             temporal_anchor=temporal,
@@ -178,7 +185,7 @@ class ChatShell:
         await self._store_claims(claims)
 
         if self._message_count % self.AUTO_SAVE_INTERVAL == 0:
-            await self.save()
+            await self.save_to_file()
 
         return ChatResponse(
             message=response_msg,
@@ -283,13 +290,160 @@ class ChatShell:
             "saved_at": datetime.now().isoformat(),
         }
 
+    async def save_to_file(self) -> Dict[str, Any]:
+        """Guardar sessão completa num ficheiro JSON."""
+        os.makedirs(self.SESSIONS_DIR, exist_ok=True)
+
+        session_data = {
+            "session_id": self.session_id,
+            "cycle_id": self._cycle_id,
+            "state": self.state,
+            "temporal_anchor": self._temporal_anchor,
+            "intention": self._intention,
+            "messages": [
+                {
+                    "role": m.role,
+                    "content": m.content,
+                    "timestamp": m.timestamp.isoformat(),
+                    "claims": m.claims,
+                    "gmif_level": m.gmif_level,
+                }
+                for m in self.messages
+            ],
+            "claims": self.claims,
+            "saved_at": datetime.now().isoformat(),
+        }
+
+        filepath = os.path.join(self.SESSIONS_DIR, f"{self.session_id}.json")
+        with open(filepath, "w") as f:
+            json.dump(session_data, f, indent=2)
+
+        return {
+            "success": True,
+            "filepath": filepath,
+            "session_id": self.session_id,
+        }
+
+    @classmethod
+    def load_from_file(cls, session_id: str) -> Optional["ChatShell"]:
+        """Carregar sessão de um ficheiro JSON."""
+        filepath = os.path.join(cls.SESSIONS_DIR, f"{session_id}.json")
+
+        if not os.path.exists(filepath):
+            logger.error(f"Session file not found: {filepath}")
+            return None
+
+        with open(filepath) as f:
+            data = json.load(f)
+
+        shell = cls(session_id=data["session_id"])
+        shell._cycle_id = data.get("cycle_id")
+        shell.state = data.get("state", "INACTIVE")
+        shell._temporal_anchor = data.get("temporal_anchor")
+        shell._intention = data.get("intention")
+
+        shell.messages = [
+            ChatMessage(
+                role=m["role"],
+                content=m["content"],
+                timestamp=datetime.fromisoformat(m["timestamp"]),
+                claims=m.get("claims", []),
+                gmif_level=m.get("gmif_level", "M3"),
+            )
+            for m in data.get("messages", [])
+        ]
+
+        shell.claims = data.get("claims", [])
+        shell._message_count = len(shell.messages)
+
+        return shell
+
+    def import_session(self, script: str) -> Dict[str, Any]:
+        """
+        Importar sessão a partir de um script bash ou JSON.
+
+        Args:
+            script: Script bash exportado ou JSON string
+
+        Returns:
+            Resultado do import
+        """
+        session_id = None
+        cycle_id = None
+
+        if script.strip().startswith("{"):
+            try:
+                data = json.loads(script)
+                session_id = data.get("session_id")
+                cycle_id = data.get("cycle_id")
+            except json.JSONDecodeError:
+                return {"success": False, "error": "Invalid JSON"}
+        else:
+            match = re.search(r'GRILO_SESSION_ID="([^"]+)"', script)
+            if match:
+                session_id = match.group(1)
+            match = re.search(r'GRILO_CYCLE_ID="([^"]+)"', script)
+            if match:
+                cycle_id = match.group(1)
+
+        if not session_id:
+            return {"success": False, "error": "No session_id found in script"}
+
+        loaded = self.load_from_file(session_id)
+        if not loaded:
+            return {
+                "success": False,
+                "error": f"Session {session_id} not found in {self.SESSIONS_DIR}",
+                "hint": "Export the session first with grilo_export_session",
+            }
+
+        self.session_id = loaded.session_id
+        self._cycle_id = loaded._cycle_id
+        self.state = loaded.state
+        self._temporal_anchor = loaded._temporal_anchor
+        self._intention = loaded._intention
+        self.messages = loaded.messages
+        self.claims = loaded.claims
+        self._message_count = loaded._message_count
+
+        return {
+            "success": True,
+            "session_id": self.session_id,
+            "cycle_id": self._cycle_id,
+            "state": self.state,
+            "messages_count": len(self.messages),
+            "claims_count": len(self.claims),
+        }
+
     def export_session(self) -> str:
         """
         Exportar sessão para retomar.
 
         Returns:
-            Script bash para source
+            Script bash + JSON data embedded
         """
+        session_data = {
+            "session_id": self.session_id,
+            "cycle_id": self._cycle_id,
+            "state": self.state,
+            "temporal_anchor": self._temporal_anchor,
+            "intention": self._intention,
+            "messages": [
+                {
+                    "role": m.role,
+                    "content": m.content,
+                    "timestamp": m.timestamp.isoformat(),
+                    "claims": m.claims,
+                    "gmif_level": m.gmif_level,
+                }
+                for m in self.messages
+            ],
+            "claims": self.claims,
+            "exported_at": datetime.now().isoformat(),
+        }
+
+        json_data = json.dumps(session_data, indent=2)
+
         script = f'''#!/bin/bash
 # Grilo Falante Session Resume
 # Session: {self.session_id}
@@ -299,11 +453,16 @@ class ChatShell:
 export GRILO_SESSION_ID="{self.session_id}"
 export GRILO_CYCLE_ID="{self._cycle_id}"
 
+# JSON data (use grilo_import_session with this data)
+export GRILO_SESSION_JSON=\'{json_data}\'
+
 echo "Resuming Grilo Falante session: {self.session_id}"
 echo "Cycle: {self._cycle_id}"
+echo "Messages: {len(self.messages)}"
 echo ""
 echo "To resume, use:"
 echo "  grilo chat --session {self.session_id}"
+echo "  grilo chat --import-json \\$GRILO_SESSION_JSON"
 '''
 
         return script
