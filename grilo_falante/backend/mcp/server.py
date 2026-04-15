@@ -6,6 +6,7 @@ Provides tools for epistemic governance via MCP protocol.
 
 import json
 import sys
+from datetime import datetime
 from typing import Any
 
 from mcp.server import Server
@@ -54,6 +55,16 @@ _state_machine = _loader.state_machine
 _acordar = Acordar(state_machine=_state_machine, ledger=_ledger)
 _pina = PINAProtocol(state_machine=_state_machine, ledger=_ledger)
 _validator = TransitionValidator(state_machine=_state_machine)
+
+# Chat session management
+_chat_sessions: dict[str, "ChatShell"] = {}
+
+def get_chat_shell(session_id: str) -> "ChatShell":
+    """Get or create a chat shell session."""
+    from app.skills.chat_shell import ChatShell
+    if session_id not in _chat_sessions:
+        _chat_sessions[session_id] = ChatShell(session_id=session_id)
+    return _chat_sessions[session_id]
 
 # Create server
 app = Server("grilo-falante")
@@ -476,6 +487,52 @@ async def list_tools() -> list[Tool]:
                     "limit": {"type": "number", "default": 5, "description": "Maximum results"},
                 },
                 "required": ["query"],
+            },
+        ),
+        Tool(
+            name="grilo_chat_start",
+            description="Start a new governed chat session",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "Optional session ID (auto-generated if not provided)"},
+                    "temporal_anchor": {"type": "string", "description": "Date/time context (e.g., '2026-04-15')"},
+                    "intention": {"type": "string", "description": "What you intend to accomplish"},
+                    "mode": {"type": "string", "enum": ["exploratory", "committed"], "default": "exploratory"},
+                },
+            },
+        ),
+        Tool(
+            name="grilo_chat_send",
+            description="Send a message in a governed chat session",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "message": {"type": "string", "description": "Message content"},
+                    "session_id": {"type": "string", "description": "Session ID (required if only one session exists)"},
+                    "role": {"type": "string", "enum": ["user", "assistant"], "default": "user"},
+                },
+                "required": ["message"],
+            },
+        ),
+        Tool(
+            name="grilo_chat_end",
+            description="End a governed chat session",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "Session ID to end"},
+                },
+            },
+        ),
+        Tool(
+            name="grilo_export_session",
+            description="Export session data for resume",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "Session ID to export"},
+                },
             },
         ),
     ]
@@ -972,6 +1029,70 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 "results": results,
                 "count": len(results),
                 "source": "mempalace",
+            }))]
+
+        elif name == "grilo_chat_start":
+            shell = get_chat_shell(arguments.get("session_id", f"mcp_{datetime.now().strftime('%y%m%d_%H%M%S')}"))
+            result = await shell.start(
+                temporal_anchor=arguments.get("temporal_anchor"),
+                intention=arguments.get("intention", "MCP chat session"),
+                mode=arguments.get("mode", "exploratory"),
+            )
+            return [TextContent(type="text", text=json.dumps({
+                **result,
+                "active_sessions": list(_chat_sessions.keys()),
+            }))]
+
+        elif name == "grilo_chat_send":
+            session_id = arguments.get("session_id")
+            if not session_id and len(_chat_sessions) == 1:
+                session_id = list(_chat_sessions.keys())[0]
+            if not session_id or session_id not in _chat_sessions:
+                return [TextContent(type="text", text=json.dumps({
+                    "error": "Session not found. Use grilo_chat_start first.",
+                    "active_sessions": list(_chat_sessions.keys()),
+                }))]
+            shell = _chat_sessions[session_id]
+            response = await shell.send_message(
+                content=arguments["message"],
+                role=arguments.get("role", "user"),
+            )
+            return [TextContent(type="text", text=json.dumps({
+                "message": response.message,
+                "claims_extracted": response.claims_extracted,
+                "gmif_summary": response.gmif_summary,
+                "governance_passed": response.governance_passed,
+                "blocked_claims": response.blocked_claims,
+                "session_id": session_id,
+            }))]
+
+        elif name == "grilo_chat_end":
+            session_id = arguments.get("session_id")
+            if not session_id or session_id not in _chat_sessions:
+                return [TextContent(type="text", text=json.dumps({
+                    "error": "Session not found",
+                    "active_sessions": list(_chat_sessions.keys()),
+                }))]
+            shell = _chat_sessions.pop(session_id)
+            result = await shell.end()
+            return [TextContent(type="text", text=json.dumps(result))]
+
+        elif name == "grilo_export_session":
+            session_id = arguments.get("session_id")
+            if not session_id or session_id not in _chat_sessions:
+                return [TextContent(type="text", text=json.dumps({
+                    "error": "Session not found",
+                    "active_sessions": list(_chat_sessions.keys()),
+                }))]
+            shell = _chat_sessions[session_id]
+            script = shell.export_session()
+            status = shell.get_status()
+            return [TextContent(type="text", text=json.dumps({
+                "script": script,
+                "session_id": session_id,
+                "cycle_id": status.get("cycle_id"),
+                "messages_count": status.get("messages_count"),
+                "claims_count": status.get("claims_count"),
             }))]
 
         else:

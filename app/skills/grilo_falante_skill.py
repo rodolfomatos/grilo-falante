@@ -2,6 +2,7 @@
 Grilo Falante Skill
 
 Main skill for epistemic analysis of content.
+Includes /grilo chat command for governed conversations.
 """
 
 import asyncio
@@ -12,6 +13,7 @@ from pathlib import Path
 
 from app.services.pipeline import Pipeline, get_pipeline, AnalysisResult
 from app.data.memory.semantic import get_semantic_memory
+from app.skills.chat_shell import ChatShell
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +149,77 @@ class GriloFalanteSkill:
         }
 
 
+async def run_chat_shell(shell: ChatShell) -> None:
+    """
+    Executar shell conversacional interativo.
+
+    Args:
+        shell: ChatShell instance
+    """
+    import sys
+
+    print("=" * 60)
+    print("GRILO FALANTE - CHAT GOVERNADO")
+    print("=" * 60)
+    print()
+    print("Este chat é governado pelo regime Grilo Falante.")
+    print("Todas as mensagens são analisadas para claims")
+    print("e classificadas com GMIF (M1-M7).")
+    print()
+    print("Comandos:")
+    print("  :quit, :exit    Sair")
+    print("  :save           Guardar sessão")
+    print("  :export         Exportar script de resume")
+    print("  :status         Ver estado")
+    print("=" * 60)
+    print()
+
+    start_result = await shell.start()
+    if not start_result.get("success"):
+        print(f"Erro ao iniciar: {start_result.get('message')}")
+        return
+
+    print(f"Sessão iniciada: {start_result.get('session_id')}")
+    print(f"Cycle ID: {start_result.get('cycle_id')}")
+    print(f"Estado: {start_result.get('state')}")
+    print()
+
+    while True:
+        try:
+            user_input = input("> ")
+        except (EOFError, KeyboardInterrupt):
+            print("\n")
+            break
+
+        if not user_input.strip():
+            continue
+
+        if user_input.strip() in (":quit", ":exit", "/quit", "/exit"):
+            end_result = await shell.end()
+            print(f"Sessão terminada. Claims guardadas: {end_result.get('stats', {}).get('claims_count', 0)}")
+            break
+
+        if user_input.strip() == ":save":
+            save_result = await shell.save()
+            print(f"Sessão guardada: {json.dumps(save_result, indent=2, default=str)}")
+            continue
+
+        if user_input.strip() == ":export":
+            script = shell.export_session()
+            print(script)
+            continue
+
+        if user_input.strip() == ":status":
+            status = shell.get_status()
+            print(json.dumps(status, indent=2, default=str))
+            continue
+
+        response = await shell.send_message(user_input, role="user")
+        print(f"[{response.gmif_summary}] ", end="")
+        print(response.message)
+        print()
+
+
 # Initialize singleton
 _skill: Optional[GriloFalanteSkill] = None
 
@@ -162,38 +235,49 @@ def get_skill() -> GriloFalanteSkill:
 async def main():
     """CLI entry point."""
     import sys
-    
+
     if len(sys.argv) < 2:
         print("Usage: grilo_falante <command> [args]")
         print("Commands:")
         print("  analyse <file>    Analyse file")
         print("  search <query>   Search memories")
         print("  stats           Show statistics")
+        print("  chat            Start governed chat session")
+        print("  chat --session <id>  Resume chat session")
         return
-    
+
     skill = get_skill()
     command = sys.argv[1]
-    
+
     if command == "analyse":
         if len(sys.argv) < 3:
             print("Usage: grilo_falante analyse <file>")
             return
-        
+
         result = await skill.analyse_file(sys.argv[2])
         print(json.dumps(result, indent=2, default=str))
-    
+
     elif command == "search":
         if len(sys.argv) < 3:
             print("Usage: grilo_falante search <query>")
             return
-        
+
         results = skill.search(sys.argv[2])
         print(json.dumps(results, indent=2))
-    
+
     elif command == "stats":
         stats = skill.get_stats()
         print(json.dumps(stats, indent=2))
-    
+
+    elif command == "chat":
+        session_id = None
+        if len(sys.argv) >= 3 and sys.argv[2] == "--session":
+            if len(sys.argv) >= 4:
+                session_id = sys.argv[3]
+
+        shell = ChatShell(session_id=session_id)
+        await run_chat_shell(shell)
+
     else:
         print(f"Unknown command: {command}")
 
