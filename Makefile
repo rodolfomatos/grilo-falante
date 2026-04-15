@@ -42,20 +42,22 @@ help:
 	@echo ""
 
 dev:
-	@echo "Installing development dependencies..."
-	cd grilo_falante && pip install -e ".[dev]"
+	@echo "Installing dependencies..."
+	@echo "Note: Using PYTHONPATH for development (no install needed)"
+	@pip install pytest ruff httpx pydantic asyncpg fastapi uvicorn 2>/dev/null || true
+	@echo "Ready! Use 'PYTHONPATH=. make test' to run tests"
 
 test:
 	@echo "Running tests..."
-	cd grilo_falante && pytest tests/ -v
+	@PYTHONPATH=. pytest grilo_falante/tests/ -v
 
 lint:
 	@echo "Running linter..."
-	cd grilo_falante && ruff check .
+	@ruff check grilo_falante/
 
 format:
 	@echo "Formatting code..."
-	cd grilo_falante && ruff format .
+	@ruff format grilo_falante/
 
 clean:
 	@echo "Cleaning..."
@@ -66,37 +68,22 @@ clean:
 
 build:
 	@echo "Building system documentation..."
-	@echo "(Build step for regime documentation)"
 
 build-api:
 	@echo "Building API..."
-	cd grilo_falante && pip install -e .
+	pip install fastapi uvicorn
 
 build-mcp:
 	@echo "Building MCP..."
-	cd grilo_falante && pip install -e .
+	pip install mcp
 
 audit:
 	@echo "Running hostile audit..."
-	cd grilo_falante && python3 -c "
-from pathlib import Path
-from grilo_falante.backend.services import CognitiveLint
-lint = CognitiveLint()
-print('Lint patterns loaded:', len(lint.BLOCK_PATTERNS), 'blocking,', len(lint.WARN_PATTERNS), 'warning')
-print('Audit complete.')
-"
+	@PYTHONPATH=. python3 -c "from grilo_falante.backend.services import CognitiveLint; lint = CognitiveLint(); print('Lint patterns:', len(lint.BLOCK_PATTERNS), 'blocking,', len(lint.WARN_PATTERNS), 'warning')"
 
 audit-hostile:
 	@echo "Running full hostile audit..."
-	cd grilo_falante && python3 << 'EOF'
-from pathlib import Path
-from grilo_falante.models import GMIFLevel
-print("=== HOSTILE AUDIT ===")
-print(f"GMIF Levels: {len(GMIFLevel)}")
-for level in GMIFLevel:
-    print(f"  {level.value}: {level.name}")
-print("=== AUDIT COMPLETE ===")
-EOF
+	@PYTHONPATH=. python3 -c "from grilo_falante.models import GMIFLevel; print('=== HOSTILE AUDIT ==='); print('GMIF Levels:', len(GMIFLevel)); [print(' ', l.value, ':', l.name) for l in GMIFLevel]"
 
 docker-build:
 	@echo "Building Docker images..."

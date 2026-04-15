@@ -17,6 +17,7 @@ from grilo_falante.models import (
     ShadowDocument,
     SessionPreferences,
     StudyPlan,
+    StudyPlanStep,
     GovernanceRecord,
     GMIFLevel,
     GapStatus,
@@ -572,6 +573,112 @@ class GovernanceRepository:
             curator_key=row["curator_key"],
             curator_confidence=row["curator_confidence"],
             metadata=row["metadata"] or {},
+            created_at=row["created_at"],
+        )
+
+
+class ShadowDocumentRepository:
+    """Repository for shadow documents."""
+
+    async def create(self, shadow: ShadowDocument) -> ShadowDocument:
+        """Create a new shadow document."""
+        async with acquire_connection() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO shadow_documents
+                (source_id, factual_summary, projected_claims, citations, limits,
+                 misuse_risks, status, validation_notes, f1_count, f2_count)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                RETURNING id, created_at
+                """,
+                shadow.source_id,
+                shadow.factual_summary,
+                shadow.projected_claims,
+                json.dumps(shadow.citations),
+                shadow.limits,
+                shadow.misuse_risks,
+                shadow.status.value if hasattr(shadow.status, 'value') else shadow.status,
+                shadow.validation_notes,
+                shadow.f1_count,
+                shadow.f2_count,
+            )
+            shadow.id = row["id"]
+            shadow.created_at = row["created_at"]
+            return shadow
+
+    async def get_by_source(self, source_id: int) -> list[ShadowDocument]:
+        """Get shadow documents for a source."""
+        async with acquire_connection() as conn:
+            rows = await conn.fetch(
+                "SELECT * FROM shadow_documents WHERE source_id = $1",
+                source_id,
+            )
+            return [self._row_to_shadow(row) for row in rows]
+
+    def _row_to_shadow(self, row: asyncpg.Record) -> ShadowDocument:
+        """Convert database row to ShadowDocument."""
+        return ShadowDocument(
+            id=row["id"],
+            source_id=row["source_id"],
+            factual_summary=row["factual_summary"],
+            projected_claims=row["projected_claims"] or [],
+            citations=row["citations"] or [],
+            limits=row["limits"] or [],
+            misuse_risks=row["misuse_risks"] or [],
+            status=row["status"],
+            validation_notes=row["validation_notes"],
+            f1_count=row["f1_count"],
+            f2_count=row["f2_count"],
+            created_at=row["created_at"],
+        )
+
+
+class StudyPlanRepository:
+    """Repository for study plans."""
+
+    async def create(self, plan: StudyPlan) -> StudyPlan:
+        """Create a new study plan."""
+        async with acquire_connection() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO study_plans
+                (plan_key, gap_key, topic, steps, status, current_step, completed_steps)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id, created_at
+                """,
+                plan.plan_key,
+                plan.gap_key,
+                plan.topic,
+                json.dumps([s.model_dump() for s in plan.steps]),
+                plan.status.value if hasattr(plan.status, 'value') else plan.status,
+                plan.current_step,
+                plan.completed_steps,
+            )
+            plan.id = row["id"]
+            plan.created_at = row["created_at"]
+            return plan
+
+    async def get_by_key(self, plan_key: str) -> Optional[StudyPlan]:
+        """Get study plan by key."""
+        async with acquire_connection() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM study_plans WHERE plan_key = $1", plan_key
+            )
+            return self._row_to_plan(row) if row else None
+
+    def _row_to_plan(self, row: asyncpg.Record) -> StudyPlan:
+        """Convert database row to StudyPlan."""
+        steps_data = json.loads(row["steps"]) if isinstance(row["steps"], str) else row["steps"]
+        steps = [StudyPlanStep(**s) for s in steps_data] if steps_data else []
+        return StudyPlan(
+            id=row["id"],
+            plan_key=row["plan_key"],
+            gap_key=row["gap_key"],
+            topic=row["topic"],
+            steps=steps,
+            status=row["status"],
+            current_step=row["current_step"],
+            completed_steps=row["completed_steps"],
             created_at=row["created_at"],
         )
 

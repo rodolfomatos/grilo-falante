@@ -51,7 +51,7 @@ all = [
 grilo = "grilo_falante.cli:main"
 
 [tool.setuptools.packages.find]
-where = ["backend"]
+where = ["."]
 
 [tool.ruff]
 line-length = 100

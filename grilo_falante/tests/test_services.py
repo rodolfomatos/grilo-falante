@@ -8,6 +8,8 @@ from grilo_falante.backend.services import (
     CognitiveLint,
     LintState,
 )
+from grilo_falante.models.enums import GMIFLevel
+from grilo_falante.backend.services.feynman import FeynmanLevel
 
 
 def test_gfid_generation():

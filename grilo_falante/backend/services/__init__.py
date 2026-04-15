@@ -7,6 +7,7 @@ from grilo_falante.backend.services.gap import GapDetectionService
 from grilo_falante.backend.services.curator import CuratorScoringService
 from grilo_falante.backend.services.query import QueryPipeline
 from grilo_falante.backend.services.school import SchoolModeService
+from grilo_falante.backend.services.lint import CognitiveLint, LintState
 
 __all__ = [
     "GFIDService",
@@ -16,4 +17,6 @@ __all__ = [
     "CuratorScoringService",
     "QueryPipeline",
     "SchoolModeService",
+    "CognitiveLint",
+    "LintState",
 ]
