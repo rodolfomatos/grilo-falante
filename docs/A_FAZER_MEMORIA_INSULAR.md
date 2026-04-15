@@ -722,23 +722,23 @@ NÃO APAGAR NUNCA — apenas reduzir prioridade de recuperação
 
 ## Fase 1: Ciclo Dormir/Acordar Correto
 
-### TODO 1.1: Implementar `ir_dormir()` completo
-- [ ] Criar `app/regime/dormir.py`
-- [ ] Implementar步骤 1-8 do IR_DORMIR
-- [ ] Criar classe `ProcessadorBatch`
-- [ ] Implementar cálculo de saliência
-- [ ] Implementar identificação de pedras
-- [ ] Implementar agregação em ilhas
-- [ ] Criar relatório de sono
+### TODO 1.1: Implementar `ir_dormir()` completo ✅ IMPLEMENTADO
+- [x] Criar `app/regime/dormir.py`
+- [x] Implementar passos 1-8 do IR_DORMIR
+- [x] Criar classe `ProcessadorBatch`
+- [x] Implementar cálculo de saliência
+- [x] Implementar identificação de pedras
+- [x] Implementar agregação em ilhas
+- [x] Criar relatório de sono
 
-### TODO 1.2: Implementar `acordar()` completo
-- [ ] Atualizar `app/regime/acordar.py`
-- [ ] Implementar步骤 1-6 do ACORDAR
-- [ ] Implementar busca por tarefa
-- [ ] Implementar bundle de reentrada
-- [ ] Criar classe `ContextoRestaurado`
+### TODO 1.2: Implementar `acordar()` completo ✅ IMPLEMENTADO
+- [x] Atualizar `app/regime/acordar.py`
+- [x] Implementar passos 1-6 do ACORDAR
+- [x] Implementar busca por tarefa
+- [x] Implementar bundle de reentrada
+- [x] Criar classe `ContextoRestaurado`
 
-### TODO 1.3: Integrar no ChatShell
+### TODO 1.3: Integrar no ChatShell 🔄 EM PROGRESSO
 - [ ] Atualizar `app/skills/chat_shell.py`
 - [ ] Substituir `save()` por `ir_dormir()`
 - [ ] Substituir `start()` por `acordar()`
@@ -929,15 +929,15 @@ Fase 5 (Interfaces)
 ### Alta Prioridade ( foundations) ✅ COMPLETED
 1. ~~TODO 0.1 - Ontologia Nuclear~~ ✅
 2. ~~TODO 0.2 - Modelo de Dados~~ ✅
-3. TODO 1.1 - ir_dormir() básico
-4. TODO 1.2 - acordar() básico
+3. ~~TODO 1.1 - ir_dormir() básico~~ ✅
+4. ~~TODO 1.2 - acordar() básico~~ ✅
 5. TODO 1.3 - ChatShell atualizado
+6. TODO 1.4 - CLI ciclos manuais
 
 ### Média Prioridade ( core memory)
-6. TODO 2.1 - Gestão de Ilhas
-7. TODO 2.2 - Cálculo de Saliência
-8. TODO 2.3 - Dinâmica de Erosão
-9. ~~TODO 0.3 - MemPalace atualizado~~ ✅
+7. TODO 2.1 - Gestão de Ilhas
+8. TODO 2.2 - Cálculo de Saliência
+9. TODO 2.3 - Dinâmica de Erosão
 
 ### Baixa Prioridade ( enrichement)
 10. TODO 3.1-3.4 - Índices
