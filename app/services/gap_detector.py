@@ -158,8 +158,8 @@ class GapDetector:
                 result = self.mempalace_client.search(claim)
                 if result and result.get("matches"):
                     return True
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"MemPalace search failed: {e}")
         
         return False
     

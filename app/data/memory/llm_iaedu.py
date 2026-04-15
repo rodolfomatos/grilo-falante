@@ -84,8 +84,8 @@ class IAEDUClient:
                         data = json.loads(line)
                         if data.get("type") == "token" and data.get("content"):
                             result += data["content"]
-                    except:
-                        pass
+                    except Exception as e:
+                        logger.warning(f"Failed to parse JSON line: {e}")
             
             logger.info(f"IAEDU response: {result[:50]}...")
             return result

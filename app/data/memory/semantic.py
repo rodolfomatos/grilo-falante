@@ -192,8 +192,8 @@ class SemanticMemory:
             try:
                 # Get wings from MemPalace
                 return list(self.DEFAULT_WINGS.keys())
-            except:
-                pass
+            except Exception as e:
+                logger.warning(f"Failed to list wings: {e}")
         return list(self.DEFAULT_WINGS.keys())
     
     def get_stats(self) -> Dict:

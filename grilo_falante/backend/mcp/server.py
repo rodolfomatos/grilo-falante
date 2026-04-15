@@ -627,7 +627,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 claims = [{"id": "claim_0", "claim_text": content[:500], "gmif_level": "M3", "validation_status": "pending"}]
 
             auditoria = AuditoriaHostil()
-            report = asyncio.run(auditoria.run_full_audit(claims=claims, governance_records=[]))
+            report = await auditoria.run_full_audit(claims=claims, governance_records=[])
 
             return [TextContent(type="text", text=json.dumps(report.to_dict()))]
 
