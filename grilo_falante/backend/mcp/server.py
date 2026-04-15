@@ -456,6 +456,18 @@ async def list_tools() -> list[Tool]:
                 "required": ["text"],
             },
         ),
+        Tool(
+            name="grilo_semantic_search",
+            description="Fast semantic search using MemPalace cache for context retrieval",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search query"},
+                    "limit": {"type": "number", "default": 5, "description": "Maximum results"},
+                },
+                "required": ["query"],
+            },
+        ),
     ]
 
 
@@ -906,6 +918,25 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 "state": result.state.value,
                 "message": result.message,
                 "issues": result.issues,
+            }))]
+
+        elif name == "grilo_semantic_search":
+            from grilo_falante.backend.memory import MemPalaceCache, MEMPALACE_AVAILABLE
+            if not MEMPALACE_AVAILABLE:
+                return [TextContent(type="text", text=json.dumps({
+                    "error": "MemPalace not available",
+                    "results": [],
+                }))]
+            cache = MemPalaceCache()
+            results = await cache.search(
+                arguments["query"],
+                limit=arguments.get("limit", 5),
+            )
+            return [TextContent(type="text", text=json.dumps({
+                "query": arguments["query"],
+                "results": results,
+                "count": len(results),
+                "source": "mempalace",
             }))]
 
         else:
