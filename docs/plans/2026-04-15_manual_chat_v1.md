@@ -20,20 +20,20 @@ User → ChatShell → Extract Claims → GMIF → Governance Gate → LLM Respo
 ## Funcionalidades a Implementar
 
 ### 1. Bugs Críticos
-- [ ] asyncio.run() crash em server.py:630
-- [ ] bare except: pass com logging
-- [ ] MemPalace gap_detector:90
+- [x] asyncio.run() crash em server.py:630
+- [x] bare except: pass com logging
+- [x] MemPalace gap_detector:90
 
 ### 2. /grilo chat Shell
-- [ ] ChatShell class
-- [ ] send_message() com governance
-- [ ] Comando /grilo chat
-- [ ] MCP tool grilo_chat
-- [ ] Auto-save cada 5 mensagens
+- [x] ChatShell class
+- [x] send_message() com governance
+- [x] Comando /grilo chat
+- [x] MCP tool grilo_chat
+- [x] Auto-save cada 5 mensagens
 
 ### 3. Session Resume
-- [ ] grilo_export_session tool
-- [ ] Script bash grilo-resume-{id}.sh
+- [x] grilo_export_session tool
+- [x] Script bash grilo-resume-{id}.sh
 - [ ] grilo_import_session tool
 
 ### 4. Manual API
@@ -41,22 +41,33 @@ User → ChatShell → Extract Claims → GMIF → Governance Gate → LLM Respo
 - [ ] Pesquisa full-text
 
 ### 5. Manual MD
-- [ ] 35+ ficheiros MD
+- [x] 00_INDICE.md
+- [x] 01_o_que_e_o_grilo.md
+- [x] 03_instalacao.md
+- [x] 06_chat_gobernado.md
+- [x] 11_todas_mcp_tools.md
+- [x] A1_session_resume.md
+- [ ] Resto: partes 2,4,5,6,7
 
-## Persistência
-- MemPalace: wing_conversas, semantic cache
-- PostgreSQL: claims, session_preferences, governance_records
+## Progresso
 
-## LLM Provider
-- OpenWebUI (via config)
+### Bugs Corrigidos ✅
+- asyncio.run() → await
+- bare except → logging
 
-##.auto-save
-- A cada 5 mensagens
+### ChatShell ✅
+- app/skills/chat_shell.py criado
+- MCP tools: grilo_chat_start, grilo_chat_send, grilo_chat_end, grilo_export_session
+- CLI: /grilo chat
 
-## Commits Planeados
-- fix: asyncio.run bug
-- feat: ChatShell class
-- feat: grilo chat command
-- feat: session resume
-- feat: manual API
-- docs: manual parts 1-7
+### Commits Feitos
+- 3d25930 - fix: asyncio.run() bug
+- f9f7400 - feat: ChatShell class
+
+### Manual
+- docs/manual/00_INDICE.md
+- docs/manual/PARTE_1_FUNDAMENTOS/01_o_que_e_o_grilo.md
+- docs/manual/PARTE_1_FUNDAMENTOS/03_instalacao.md
+- docs/manual/PARTE_2_UTILIZADOR/06_chat_gobernado.md
+- docs/manual/PARTE_3_ESPECIALISTA/11_todas_mcp_tools.md
+- docs/manual/APENDICES/A1_session_resume.md
