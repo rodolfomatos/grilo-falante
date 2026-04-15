@@ -321,6 +321,45 @@ async def school_mode(gap_key: str):
     }
 
 
+# PINA endpoints
+@app.get("/api/v1/pina/pending")
+async def get_pina_pending(limit: int = Query(20, le=100)):
+    """Get all pending NCA candidates awaiting human decision."""
+    from grilo_falante.regime import Acordar, Loader, Ledger
+    ledger = Ledger()
+    loader = Loader(ledger=ledger)
+    pina = loader.pina
+    pending = pina.get_pending()
+    return {
+        "pending_count": len(pending),
+        "pending": pending[:limit],
+    }
+
+
+@app.get("/api/v1/pina/invariants")
+async def get_pina_invariants():
+    """Get all active invariants (incorporated rules)."""
+    from grilo_falante.regime import Acordar, Loader, Ledger
+    ledger = Ledger()
+    loader = Loader(ledger=ledger)
+    pina = loader.pina
+    invariants = pina.get_active_invariants()
+    return {
+        "invariant_count": len(invariants),
+        "invariants": invariants,
+    }
+
+
+@app.get("/api/v1/pina/status")
+async def get_pina_status():
+    """Get full PINA protocol status."""
+    from grilo_falante.regime import Acordar, Loader, Ledger
+    ledger = Ledger()
+    loader = Loader(ledger=ledger)
+    pina = loader.pina
+    return pina.get_status()
+
+
 # Curator endpoints
 @app.post("/api/v1/curators")
 async def create_curator(req: CreateCuratorRequest):

@@ -143,6 +143,16 @@ async def list_tools() -> list[Tool]:
             inputSchema={"type": "object", "properties": {}},
         ),
         Tool(
+            name="grilo_pina_pending",
+            description="List all pending NCA candidates awaiting human decision",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "limit": {"type": "number", "default": 20, "description": "Maximum results"},
+                },
+            },
+        ),
+        Tool(
             name="grilo_validate_transition",
             description="Validate a transition in an epistemic graph",
             inputSchema={
@@ -556,6 +566,13 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         elif name == "grilo_pina_status":
             status = _pina.get_status()
             return [TextContent(type="text", text=json.dumps(status))]
+
+        elif name == "grilo_pina_pending":
+            pending = _pina.get_pending()
+            return [TextContent(type="text", text=json.dumps({
+                "pending_count": len(pending),
+                "pending": pending[:arguments.get("limit", 20)],
+            }))]
 
         elif name == "grilo_validate_transition":
             result = _validator.validate_transition(
