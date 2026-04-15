@@ -124,20 +124,67 @@ make test
 
 ---
 
-## MCP Tools (21)
+## MCP Tools (36)
 
-| Category | Tools |
-|----------|-------|
-| Regime | `grilo_status`, `grilo_health` |
-| GF-ID | `grilo_generate_gfid`, `grilo_classify_gmif` |
-| Query | `gepeto_query` |
-| Claims | `gepeto_get_claim`, `gepeto_create_claim`, `gepeto_validate_claim` |
-| Gaps | `gepeto_list_gaps`, `gepeto_get_gap`, `gepeto_resolve_gap`, `gepeto_school_mode` |
-| Sources | `gepeto_list_sources`, `gepeto_get_source`, `gepeto_create_source` |
-| Curators | `gepeto_create_curator`, `gepeto_get_curator` |
-| Session | `gepeto_session_prefs` |
-| Feynman | `gepeto_feynman_explain` |
-| Audit | `grilo_audit`, `grilo_lint` |
+### Regime Lifecycle
+| Tool | Description |
+|------|-------------|
+| `grilo_load` | Load regime for new cycle |
+| `grilo_unload` | End current cycle |
+| `grilo_acordar` | Wake-up ritual with temporal anchoring |
+| `grilo_vai_dormir` | Hibernate regime |
+| `grilo_resume` | Resume from hibernation |
+| `grilo_status` | Current regime status |
+| `grilo_health` | System health check |
+
+### PINA Protocol
+| Tool | Description |
+|------|-------------|
+| `grilo_pina_propose` | Propose normative candidate |
+| `grilo_pina_decide` | Record decision [A/B/C] |
+| `grilo_pina_status` | PINA status |
+| `grilo_get_ledger_stats` | Ledger statistics |
+
+### Claims & Query
+| Tool | Description |
+|------|-------------|
+| `gepeto_query` | Execute epistemic query |
+| `gepeto_get_claim` | Get claim by ID |
+| `gepeto_create_claim` | Create claim |
+| `gepeto_validate_claim` | Validate claim |
+| `grilo_generate_gfid` | Generate GF-ID |
+| `grilo_classify_gmif` | Classify by GMIF |
+
+### Gaps & Learning
+| Tool | Description |
+|------|-------------|
+| `gepeto_list_gaps` | List gaps |
+| `gepeto_get_gap` | Get gap |
+| `gepeto_resolve_gap` | Resolve gap |
+| `gepeto_school_mode` | Execute school mode |
+
+### Sources & Curators
+| Tool | Description |
+|------|-------------|
+| `gepeto_list_sources` | List sources |
+| `gepeto_get_source` | Get source |
+| `gepeto_create_source` | Create source |
+| `gepeto_create_curator` | Create curator |
+| `gepeto_get_curator` | Get curator |
+| `gepeto_session_prefs` | Session preferences |
+
+### Cognitive Workflows
+| Tool | Description |
+|------|-------------|
+| `grilo_run_auditoria_hostil` | Execute 5-axis hostile audit |
+| `grilo_run_autopsia_literatura` | Execute literature autopsy |
+| `grilo_run_triagem` | Execute triage workflow |
+| `grilo_audit` | Basic hostile audit |
+| `grilo_lint` | Cognitive lint |
+| `grilo_stamp_capsule` | Add GF-ID header to capsule |
+| `grilo_validate_transition` | Validate graph transition |
+| `grilo_list_graphs` | List epistemic graphs |
+| `gepeto_feynman_explain` | Feynman explanation |
 
 ---
 
