@@ -3,10 +3,11 @@ FastAPI REST API for Grilo Falante v3.0
 """
 
 import hashlib
+import os
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Query, Depends
+from fastapi import FastAPI, HTTPException, Query, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -431,6 +432,109 @@ async def feynman_explain(req: FeynmanRequest):
         "gaps": result.gaps_found,
         "completed": result.completed,
     }
+
+
+# Document Ingestion endpoints
+class PDFIngestRequest(BaseModel):
+    source_key: str
+    title: str
+    authors: list[str] = []
+    source_type: str = "paper"
+
+
+@app.post("/api/v1/ingest/pdf")
+async def ingest_pdf(
+    file: UploadFile = File(...),
+    req: PDFIngestRequest = Depends(),
+):
+    """
+    Upload and process a PDF document.
+
+    The PDF is parsed using OpenDataLoader (local mode),
+    then a Shadow Document is automatically generated.
+    """
+    from grilo_falante.backend.ingestion import PDFIngestionService, ShadowDocumentGenerator
+    from grilo_falante.backend.db.repositories import SourceRepository, ShadowDocumentRepository
+
+    if not file.filename.endswith(".pdf"):
+        raise HTTPException(status_code=400, detail="Only PDF files are supported")
+
+    temp_path = f"/tmp/{file.filename}"
+    with open(temp_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    pdf_service = PDFIngestionService()
+    parse_result = await pdf_service.parse(temp_path)
+
+    if not parse_result.success:
+        raise HTTPException(status_code=500, detail=f"PDF parsing failed: {parse_result.error}")
+
+    source_repo = SourceRepository()
+    existing = await source_repo.get_by_key(req.source_key)
+    if existing:
+        raise HTTPException(status_code=409, detail="Source already exists")
+
+    from grilo_falante.models import GovernedSource
+    source = GovernedSource(
+        source_key=req.source_key,
+        title=req.title,
+        authors=req.authors,
+        source_type=req.source_type,
+        source_origin="pdf_upload",
+        ingestion_origin="pdf_upload",
+        tier="tier_2",
+    )
+    created_source = await source_repo.create(source)
+
+    markdown_content = ""
+    if parse_result.markdown_path:
+        markdown_content = await pdf_service.extract_markdown(parse_result.markdown_path)
+
+    if markdown_content:
+        shadow_generator = ShadowDocumentGenerator()
+        gen_result = await shadow_generator.generate(
+            source_title=req.title,
+            source_content=markdown_content,
+            source_authors=req.authors,
+            source_type=req.source_type,
+        )
+
+        if gen_result.success:
+            shadow_repo = ShadowDocumentRepository()
+            shadow_model = gen_result.shadow_document
+            shadow_record = ShadowDocument(
+                source_id=created_source.id,
+                factual_summary=shadow_model.scope,
+                projected_claims=shadow_model.assumptions,
+                limits=shadow_model.limits,
+                misuse_risks=shadow_model.misuse_risks,
+                status="completed",
+                validation_notes=shadow_model.honesty_note,
+                f1_count=shadow_model.f1_count,
+                f2_count=shadow_model.f2_count,
+            )
+            await shadow_repo.create(shadow_record)
+
+    os.unlink(temp_path)
+
+    return {
+        "status": "success",
+        "source_id": created_source.id,
+        "source_key": created_source.source_key,
+        "pages_processed": parse_result.pages_processed,
+        "shadow_document_generated": gen_result.success if markdown_content else False,
+    }
+
+
+@app.get("/api/v1/shadow/{source_id}")
+async def get_shadow_document(source_id: int):
+    """Get shadow document for a source."""
+    repo = ShadowDocumentRepository()
+    shadow = await repo.get_by_source(source_id)
+    if not shadow:
+        raise HTTPException(status_code=404, detail="Shadow document not found")
+    return shadow
 
 
 # Governance endpoints

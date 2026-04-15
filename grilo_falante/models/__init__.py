@@ -20,6 +20,7 @@ from grilo_falante.models.claim import Claim, GovernedClaim
 from grilo_falante.models.gap import Gap
 from grilo_falante.models.curator import Curator
 from grilo_falante.models.source import GovernedSource, ShadowDocument
+from grilo_falante.models.shadow import ShadowDocument as ShadowDocumentComplete, ConceptualCapsule
 from grilo_falante.models.session import SessionPreferences
 from grilo_falante.models.study_plan import StudyPlan, StudyPlanStep
 from grilo_falante.models.governance import GovernanceRecord
@@ -46,6 +47,8 @@ __all__ = [
     "Curator",
     "GovernedSource",
     "ShadowDocument",
+    "ShadowDocumentComplete",
+    "ConceptualCapsule",
     "SessionPreferences",
     "StudyPlan",
     "StudyPlanStep",
