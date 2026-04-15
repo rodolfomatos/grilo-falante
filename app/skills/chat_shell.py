@@ -133,6 +133,86 @@ class ChatShell:
             "session_id": self.session_id,
         }
 
+    async def acordar_ilhas(
+        self,
+        tarefa: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Restaurar contexto das ilhas ao acordar.
+
+        Usa o novo ciclo Acordar para carregar ilhas ativas
+        e construir bundle de reentrada se houver tarefa.
+
+        Args:
+            tarefa: Tarefa opcional para construir bundle
+
+        Returns:
+            Contexto restaurado
+        """
+        try:
+            from app.regime.acordar import acordar as ciclo_acordar
+
+            resultado = await ciclo_acordar(
+                session_id=self.session_id,
+                tarefa=tarefa,
+            )
+
+            self._ilhas_ativas = resultado.ilhas_ativas
+            self._ilhas_dormintes = resultado.ilhas_dormintes
+            self._bundle = resultado.bundle
+
+            return {
+                "success": True,
+                "ilhas_ativas": len(resultado.ilhas_ativas),
+                "ilhas_dormintes": len(resultado.ilhas_dormintes),
+                "bundle": resultado.bundle,
+            }
+        except Exception as e:
+            logger.warning(f"acordar_ilhas failed: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
+    async def ir_dormir_ilhas(self) -> Dict[str, Any]:
+        """
+        Executar ciclo Ir Dormir - sanitização batch.
+
+        Processa todas as interações desde o último acordar,
+        identifica pedras, agrega em ilhas, e guarda estado.
+
+        Returns:
+            Relatório do ciclo de sono
+        """
+        try:
+            from app.regime.dormir import ir_dormir
+
+            interações = []
+            for msg in self.messages:
+                interações.append({
+                    "tipo": "MENSAGEM",
+                    "conteúdo": msg.content,
+                    "role": msg.role,
+                    "frequência": 0.5,
+                    "intensidade": 0.3,
+                    "novidade": 0.5,
+                    "relevância": 0.4,
+                })
+
+            resultado = await ir_dormir(
+                session_id=self.session_id,
+                interações=interações,
+            )
+
+            return resultado
+
+        except Exception as e:
+            logger.warning(f"ir_dormir_ilhas failed: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
     async def send_message(self, content: str, role: str = "user") -> ChatResponse:
         """
         Enviar mensagem com governance check.
@@ -471,23 +551,29 @@ echo "  grilo chat --import-json \\$GRILO_SESSION_JSON"
         """
         Terminar sessão - grilo_vai_dormir().
 
+        Executa o ciclo Ir Dormir para sanitizar as interações
+        do dia antes de hibernar.
+
         Returns:
             Resultado do shutdown
         """
         if self._acordar is None:
             return {"success": False, "message": "No active session"}
 
+        dormir_result = await self.ir_dormir_ilhas()
+
         vai_dormir_result = self._acordar.vai_dormir()
 
         self.state = "HIBERNATED"
 
-        save_data = await self.save()
+        save_data = await self.save_to_file()
 
         return {
             "success": vai_dormir_result.get("success", False),
             "message": vai_dormir_result.get("message", ""),
             "session_id": self.session_id,
             "cycle_id": self._cycle_id,
+            "dormir_result": dormir_result,
             "stats": save_data,
         }
 
