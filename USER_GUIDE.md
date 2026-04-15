@@ -167,17 +167,25 @@ Opções:
 
 ### 6.1 PROBLEMAS CRÍTICOS
 
-#### P1: SKILL.md Desatualizado
-**Problema:** SKILL.md menciona:
-- `MemPalace` (ChromaDB) - **NÃO EXISTE em v3.0**
-- `analyse <path>` - **NÃO EXISTE como tool**
-- `chat` command - **NÃO EXISTE**
-- `memory search/list` - **NÃO EXISTE**
+#### P1: SKILL.md Desatualizado ✅ JÁ CORRIGIDO
+**Problema original:** SKILL.md mencionava tecnologias inexistentes.
+**Estado atual:** CORRIGIDO - SKILL.md usa PostgreSQL + pgvector.
 
-**Realidade v3.0:**
-- Usa **PostgreSQL + pgvector** em vez de MemPalace
-- Não tem comando `analyse` - tem `gepeto_query`
-- Não tem `chat` - MCP tools são chamadas pelo cliente MCP
+#### P2: Arquitetura de Memória Dual ✅ INTEGRAÇÃO COMPLETA
+**Arquitetura atual v3.0:**
+- **MemPalace (ChromaDB)** - Cache semântico rápido (~10ms)
+  - Disponível em `/home/rodolfo/.mempalace/palace/`
+  - Ferramenta: `grilo_semantic_search`
+- **PostgreSQL + pgvector** - Store autoritativo
+  - Persistência entre sessões
+  - Query com governança: `gepeto_query`
+
+**Fluxo de dados:**
+```
+Query → MemPalace (cache, ~10ms) → PostgreSQL (autoritativo)
+              ↓
+        Se cache miss → Full retrieval
+```
 
 #### P2: README Inconsistente
 **Problema:** README diz "21 MCP tools" mas existem **36 tools**.
@@ -247,28 +255,11 @@ grilo_load() → grilo_acordar() → trabalho → grilo_vai_dormir()
 
 ## 8. Propostas de Correção
 
-### P1: Atualizar SKILL.md
-```
-MUDAR DE:
-- MemPalace (ChromaDB local)
+### ✅ P1: Atualizar SKILL.md — CONCLUÍDO
+SKILL.md agora usa PostgreSQL + pgvector.
 
-PARA:
-- PostgreSQL + pgvector (backend de memória epistémica)
-```
-
-### P2: Adicionar Quick Start MCP
-```markdown
-## Quick Start MCP
-
-1. Conectar ao MCP server
-2. Iniciar ciclo:
-   grilo_load()
-   grilo_acordar(temporal_anchor="2026-04-15", intention="...")
-3. Fazer query:
-   gepeto_query(query="...")
-4. Terminar ciclo:
-   grilo_vai_dormir()
-```
+### ✅ P2: Adicionar Quick Start MCP — CONCLUÍDO
+GETTING_STARTED.md criado com fluxo completo.
 
 ### P3: Criar指引 de Regime
 ```markdown
@@ -297,31 +288,38 @@ Sem este ritual, o sistema está em estado INACTIVE.
 
 ## 9. Checklist de Usabilidade
 
+### Status das Correções
+
 | Item | Status | Notas |
 |------|--------|-------|
-| Utilizador sabe que tem de fazer grilo_load primeiro | ❌ | Não há indicação |
-| Utilizador sabe o que é temporal_anchor | ❌ | Requer ler documentação |
-| Utilizador sabe quando usar PINA | ❌ | Não há guidance |
-| Utilizador consegue fazer query simples | ✅ | gepeto_query existe |
-| Utilizador consegue ver estado do sistema | ✅ | grilo_status existe |
-| Utilizador sabe quando hibernar | ❌ | Não há notificação |
+| SKILL.md desatualizado | ✅ CORRIGIDO | PostgreSQL + pgvector |
+| Getting Started não existia | ✅ CRIADO | GETTING_STARTED.md |
+| MemPalace não usado | ✅ INTEGRADO | grilo_semantic_search |
+| Regime lifecycle não forçado | ⚠️ PARCIAL | Docs existem, não enforced |
+| Tool explosion (36 tools) | ⚠️ PARCIAL | Hierarquia文档ada |
 
 ---
 
 ## 10. Conclusão
 
-O Grilo Falante tem **múltiplas interfaces** mas:
+O Grilo Falante v3.0 tem **arquitetura dual-backend**:
 
-1. **Documentação Fragmentada** - SKILL.md, README.md, regime.md, ACORDAR.md não estão linked
-2. **SKILL.md Desatualizado** - Menciona tecnologia que não existe (MemPalace)
-3. **Regime Lifecycle Não Forçado** - Utilizador pode usar sem ACORDAR
-4. **Sem Fluxo Guiado** - Não há orientação de próximos passos
-5. **Tool Explosion** - 36 tools sem hierarquia clara
+1. **MemPalace (ChromaDB)** - Cache semântico rápido
+2. **PostgreSQL + pgvector** - Store autoritativo
 
-### Prioridade de Correções
+**Interfaces:** MCP (36 tools), REST (29 endpoints), SKILL, CLI
 
-1. **ALTA**: Atualizar SKILL.md (corrigir MemPalace → PostgreSQL)
-2. **ALTA**: Criar "Getting Started" para MCP
-3. **MÉDIA**: Documentar fluxo ACORDAR → VAI_DORMIR
-4. **MÉDIA**: Criar PINA dashboard
-5. **BAIXA**: Unificar auditoria tools
+###工具 hierarchy:
+```
+Regime (load/acordar/vai_dormir)
+├── Query (gepeto_query, grilo_semantic_search)
+├── Claims (create/get/validate)
+├── Gaps (list/resolve/school)
+├── Governance (audit/lint/PINA)
+└── Knowledge (graphs/stamps)
+```
+
+###尚未完成 (Remaining):
+1. **MÉDIA**: PINA dashboard/UI
+2. **BAIXA**: Unificar auditoria tools
+3. **BAIXA**: Tool hierarchy no SKILL.md
