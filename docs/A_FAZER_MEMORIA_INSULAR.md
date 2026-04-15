@@ -738,16 +738,17 @@ NÃO APAGAR NUNCA — apenas reduzir prioridade de recuperação
 - [x] Implementar bundle de reentrada
 - [x] Criar classe `ContextoRestaurado`
 
-### TODO 1.3: Integrar no ChatShell 🔄 EM PROGRESSO
-- [ ] Atualizar `app/skills/chat_shell.py`
-- [ ] Substituir `save()` por `ir_dormir()`
-- [ ] Substituir `start()` por `acordar()`
-- [ ] Adicionar parâmetro `tarefa` a acordar
+### TODO 1.3: Integrar no ChatShell ✅ IMPLEMENTADO
+- [x] Adicionar `acordar_ilhas()` method
+- [x] Adicionar `ir_dormir_ilhas()` method
+- [x] Update `end()` to use new dormir cycle
 
-### TODO 1.4: Criar CLI para ciclos manuais
-- [ ] Adicionar comando `grilo dormir` (forçar dormir)
-- [ ] Adicionar comando `grilo acordar --tarefa=X`
-- [ ] Adicionar comando `grilo estado` (ver estado das ilhas)
+### TODO 1.4: Criar CLI para ciclos manuais ✅ IMPLEMENTADO
+- [x] `grilo ilhas [--ativas]` - Listar ilhas
+- [x] `grilo dormir` - Forçar ciclo dormir
+- [x] `grilo acordar [--tarefa X]` - Ciclo acordar
+- [x] `grilo estado` - Ver estado do sistema
+- [x] `:ilhas`, `:dormir`, `:acordar` no chat shell
 
 ---
 
