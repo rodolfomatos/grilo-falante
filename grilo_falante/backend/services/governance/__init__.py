@@ -1,31 +1,41 @@
-"""Services package — Business logic for Grilo Falante"""
+"""
+Governance Services — Epistemic governance layer
 
-from grilo_falante.backend.services.gfid import GFIDService
-from grilo_falante.backend.services.gmif import GMIFClassifier
-from grilo_falante.backend.services.feynman import FeynmanService
-from grilo_falante.backend.services.gap import GapDetectionService
-from grilo_falante.backend.services.curator import CuratorScoringService
-from grilo_falante.backend.services.query import QueryPipeline
-from grilo_falante.backend.services.school import SchoolModeService
-from grilo_falante.backend.services.lint import CognitiveLint, LintState
-from grilo_falante.backend.services.governance import (
+Provides:
+- GovernanceLayer: Block/Allow/Review decisions
+- TransitionValidator: Claim state machine
+- EpistemicPolicy: Policy evaluation
+- EpistemicAlignment: LLM vs Evidence validation
+- QueryClassifier: Query type classification
+"""
+
+from grilo_falante.backend.services.governance.governance_layer import (
+    GovernanceDecision,
     governance,
     governance_with_blocking,
     verify_claims,
-    GovernanceDecision,
+)
+from grilo_falante.backend.services.governance.transition_validator import (
     TransitionError,
+    ClaimTransitionContext,
     validate_transition,
     is_valid_transition,
     get_allowed_transitions,
     is_terminal_state,
     requires_audit,
     VALID_STATES,
+)
+from grilo_falante.backend.services.governance.epistemic_policy import (
     evaluate_epistemic_policy,
     POLICY,
+)
+from grilo_falante.backend.services.governance.alignment import (
     EpistemicAlignment,
     AlignmentResult,
     AlignedClaim,
     classify_claim_evidence_pair,
+)
+from grilo_falante.backend.services.governance.query_classifier import (
     QueryType,
     classify_query,
     requires_evidence,
@@ -33,20 +43,12 @@ from grilo_falante.backend.services.governance import (
 )
 
 __all__ = [
-    "GFIDService",
-    "GMIFClassifier",
-    "FeynmanService",
-    "GapDetectionService",
-    "CuratorScoringService",
-    "QueryPipeline",
-    "SchoolModeService",
-    "CognitiveLint",
-    "LintState",
+    "GovernanceDecision",
     "governance",
     "governance_with_blocking",
     "verify_claims",
-    "GovernanceDecision",
     "TransitionError",
+    "ClaimTransitionContext",
     "validate_transition",
     "is_valid_transition",
     "get_allowed_transitions",
