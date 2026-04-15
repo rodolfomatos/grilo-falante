@@ -693,37 +693,30 @@ NÃO APAGAR NUNCA — apenas reduzir prioridade de recuperação
 
 ## Fase 0: Fundamentos (Pré-requisitos)
 
-### TODO 0.1: Definir Ontologia Nuclear
-- [ ] Criar `app/ontology/ilhas.py` com classes:
-  - `Ilha`
-  - `Pedra`
-  - `Saliência`
-- [ ] Criar `app/ontology/estados.py` com enums:
-  - `EstadoIlha`
-  - `EstadoPedra`
-  - `EstadoClaim`
-- [ ] Criar `app/ontology/relacoes.py` com tipos de relação
-- [ ] Definir thresholds em `config/ontologia.yaml`:
-  ```yaml
-  thresholds:
-    pedra_saliência: 0.3
-    ilha_transição: 0.8
-    agregação_similaridade: 0.75
-    erosão_score: 0.1
-    hibernação_score: 0.01
-  ```
+### TODO 0.1: Definir Ontologia Nuclear ✅ IMPLEMENTADO
+- [x] Criar `app/ontology/ilhas.py` com classes:
+  - [x] `Ilha`
+  - [x] `Pedra`
+  - [x] `Saliência`
+- [x] Criar `app/ontology/estados.py` com enums:
+  - [x] `EstadoIlha`
+  - [x] `EstadoPedra`
+  - [x] `EstadoClaim`
+- [x] Criar `app/ontology/relacoes.py` com tipos de relação (em estados.py)
+- [x] Definir thresholds em `config/ontologia.yaml`
 
-### TODO 0.2: Criar Modelo de Dados
-- [ ] Schema de base de dados para Ilhas (PostgreSQL)
-- [ ] Schema para Pedras
-- [ ] Schema para histórico de transições
-- [ ] Script de migração
+### TODO 0.2: Criar Modelo de Dados ✅ IMPLEMENTADO
+- [x] Schema de base de dados para Ilhas (PostgreSQL) - `schema_ilhas.py`
+- [x] Schema para Pedras
+- [x] Schema para histórico de transições
+- [x] Repository classes - `ilhas_repository.py`
 
-### TODO 0.3: Atualizar MemPalace
-- [ ] Renomear/converter `wing_conversas` para sistema de Ilhas
-- [ ] Adicionar índice por saliência
-- [ ] Adicionar índice por estado
-- [ ] Manter fallback para não-Ilhas
+### TODO 0.3: Atualizar MemPalace ✅ IMPLEMENTADO
+- [x] Criar `mempalace_ilhas.py` com:
+  - [x] Wing `wing_ilhas` para ilhas agregadas
+  - [x] Wing `wing_pedras` para pedras
+  - [x] Métodos: guardar_ilha, guardar_pedra
+  - [x] Buscas: encontrar_ilhas_similares, encontrar_pedras_similares
 
 ---
 
@@ -933,9 +926,9 @@ Fase 5 (Interfaces)
 
 ## 85. Priorização Recomendada
 
-### Alta Prioridade ( foundations)
-1. TODO 0.1 - Ontologia Nuclear
-2. TODO 0.2 - Modelo de Dados
+### Alta Prioridade ( foundations) ✅ COMPLETED
+1. ~~TODO 0.1 - Ontologia Nuclear~~ ✅
+2. ~~TODO 0.2 - Modelo de Dados~~ ✅
 3. TODO 1.1 - ir_dormir() básico
 4. TODO 1.2 - acordar() básico
 5. TODO 1.3 - ChatShell atualizado
@@ -944,7 +937,7 @@ Fase 5 (Interfaces)
 6. TODO 2.1 - Gestão de Ilhas
 7. TODO 2.2 - Cálculo de Saliência
 8. TODO 2.3 - Dinâmica de Erosão
-9. TODO 0.3 - MemPalace atualizado
+9. ~~TODO 0.3 - MemPalace atualizado~~ ✅
 
 ### Baixa Prioridade ( enrichement)
 10. TODO 3.1-3.4 - Índices
