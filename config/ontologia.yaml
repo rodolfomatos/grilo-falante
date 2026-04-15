@@ -1,0 +1,66 @@
+# Ontologia Configuration
+# Thresholds e parâmetros para o sistema de memória insular
+
+thresholds:
+  # Pedra → Ilha
+  pedra_saliencía: 0.3        # Valor mínimo de saliência para ser pedra
+  ilha_transição: 0.8         # Saliência mínima para criar ilha
+  threshold_reações: 5         # Nº de reações para criar ilha
+
+  # Agregação
+  agregação_similaridade: 0.75 # Similaridade mínima para agregar a ilha existente
+
+  # Dinâmica de erosão
+  erosão_score: 0.1           # Score abaixo do qual fica em erosão
+  hibernação_score: 0.01      # Score abaixo do qual hiberna
+
+  # Decay
+  decay_factor: 0.95           # Factor de decay por dia
+  decay_interval_days: 1      # Intervalo de decay em dias
+
+  # Relevância
+  recency_weight: 0.4
+  frequência_weight: 0.3
+  relevância_weight: 0.3
+
+  # Ativação
+  threshold_ativo: 0.5        # Score mínimo para ilha ser considerada ativa no acordar
+
+saliência:
+  # Componentes da saliência (0-1)
+  frequência:
+    base: 0.2
+    peso_interação: 0.1
+  intensidade:
+    base: 0.3
+    peso_reação: 0.2
+  novidade:
+    base: 0.2
+    max_similaridade: 0.8
+  relevância:
+    base: 0.3
+    conexões_ilha: 0.15
+
+ilha:
+  # Tamanhos e limites
+  max_membros: 100
+  min_membros: 1
+
+  # Consolidação
+  threshold_consolidação: 0.8  # Score para consolidar
+  membros_para_consolidar: 20
+
+  # Tempo
+  dias_para_erosão: 7
+  dias_para_hibernação: 30
+
+pedra:
+  # Tempo de vida
+  dias_para_agregar: 3
+  dias_para_transformar: 7
+
+# Camadas de memória
+memória:
+  max_ilhas_ativas: 50
+  max_pedras_pendentes: 200
+  lazy_load_dormientes: true
