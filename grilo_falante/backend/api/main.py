@@ -544,3 +544,218 @@ async def get_governance_history(entity_type: str, entity_id: int):
     repo = GovernanceRepository()
     records = await repo.get_by_entity(entity_type, entity_id)
     return {"records": [r.to_ledger_entry() for r in records], "count": len(records)}
+
+
+# Learning Path endpoints
+class LearningPathRequest(BaseModel):
+    topic: str
+    gap_key: Optional[str] = None
+    current_knowledge: list[str] = []
+
+
+@app.post("/api/v1/learning-path")
+async def create_learning_path(req: LearningPathRequest):
+    """Generate a learning path for a topic."""
+    from grilo_falante.cognitive import KanbanEpistemico, MovementType
+
+    kanban = KanbanEpistemico()
+    movement = kanban.create_movement(
+        title=f"Learning Path: {req.topic}",
+        description=f"Auto-generated learning path for: {req.topic}",
+        movement_type=MovementType.PROPOSAL,
+    )
+
+    return {
+        "plan_key": movement.movement_key,
+        "topic": req.topic,
+        "status": "identified",
+        "steps": [
+            {"step": 1, "action": f"Research {req.topic}", "status": "pending"},
+            {"step": 2, "action": "Identify knowledge gaps", "status": "pending"},
+            {"step": 3, "action": "Create shadow document", "status": "pending"},
+            {"step": 4, "action": "Extract claims", "status": "pending"},
+            {"step": 5, "action": "Validate with curator", "status": "pending"},
+        ],
+    }
+
+
+# Trusted Source Registry endpoints
+@app.get("/api/v1/registry/sources")
+async def get_trusted_sources():
+    """Get trusted source registry."""
+    repo = SourceRepository()
+    sources = await repo.list_all(limit=100)
+    return {
+        "sources": [
+            {
+                "id": s.id,
+                "source_key": s.source_key,
+                "title": s.title,
+                "tier": s.tier.value if hasattr(s.tier, 'value') else s.tier,
+                "validation_status": s.validation_status.value if hasattr(s.validation_status, 'value') else s.validation_status,
+            }
+            for s in sources
+        ],
+        "count": len(sources),
+    }
+
+
+class SourceProposalRequest(BaseModel):
+    source_key: str
+    action: str  # propose_add, propose_remove, propose_tier_change
+    rationale: str
+    proposer: str = "system"
+
+
+@app.post("/api/v1/registry/proposals")
+async def create_source_proposal(req: SourceProposalRequest):
+    """Propose a change to the trusted source registry."""
+    return {
+        "proposal_key": f"prop_{generate_key('proposal')}",
+        "source_key": req.source_key,
+        "action": req.action,
+        "status": "pending_review",
+        "rationale": req.rationale,
+    }
+
+
+# Graph endpoints
+@app.get("/api/v1/graph/dot")
+async def get_graph_dot():
+    """Get epistemic graph in DOT format."""
+    repo = ClaimRepository()
+    claims = await repo.list_all(limit=100)
+
+    dot_lines = [
+        "digraph epistemic_graph {",
+        '  rankdir=TB;',
+        '  node [shape=box];',
+    ]
+
+    for claim in claims:
+        gmif = claim.gmif_level.value if hasattr(claim.gmif_level, 'value') else claim.gmif_level
+        dot_lines.append(f'  "{claim.claim_key}" [label="{claim.claim_text[:50]}...", gmif="{gmif}"];')
+
+    dot_lines.append("}")
+
+    return {"dot": "\n".join(dot_lines), "claim_count": len(claims)}
+
+
+# Claim Card endpoint
+@app.get("/api/v1/claims/{claim_id}/card")
+async def get_claim_card(claim_id: int):
+    """Get claim card for UI display."""
+    repo = ClaimRepository()
+    claim = await repo.get_by_id(claim_id)
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+
+    gmif = claim.gmif_level.value if hasattr(claim.gmif_level, 'value') else claim.gmif_level
+    validation = claim.validation_status.value if hasattr(claim.validation_status, 'value') else claim.validation_status
+
+    return {
+        "id": claim.id,
+        "gfid": claim.gfid,
+        "claim_key": claim.claim_key,
+        "claim_text": claim.claim_text,
+        "gmif_level": gmif,
+        "gmif_confidence": claim.gmif_confidence,
+        "validation_status": validation,
+        "legitimacy_state": claim.legitimacy_state.value if hasattr(claim.legitimacy_state, 'value') else claim.legitimacy_state,
+        "attribution": claim.attribution.value if hasattr(claim.attribution, 'value') else claim.attribution,
+        "epistemic_role": claim.epistemic_role.value if hasattr(claim.epistemic_role, 'value') else claim.epistemic_role,
+        "created_at": claim.created_at.isoformat() if claim.created_at else None,
+    }
+
+
+# Kanban endpoints
+@app.get("/api/v1/kanban")
+async def get_kanban_state():
+    """Get current kanban epistemico state."""
+    from grilo_falante.cognitive import KanbanEpistemico
+    kanban = KanbanEpistemico()
+    state = kanban.get_state()
+    return state.to_dict()
+
+
+class CreateMovementRequest(BaseModel):
+    title: str
+    description: str = ""
+    movement_type: str = "idea"
+    author: str = "api"
+
+
+@app.post("/api/v1/kanban/movements")
+async def create_kanban_movement(req: CreateMovementRequest):
+    """Create a new epistemic movement."""
+    from grilo_falante.cognitive import KanbanEpistemico, MovementType
+
+    kanban = KanbanEpistemico()
+    mov_type = MovementType(req.movement_type) if req.movement_type in [m.value for m in MovementType] else MovementType.IDEA
+
+    movement = kanban.create_movement(
+        title=req.title,
+        description=req.description,
+        movement_type=mov_type,
+        author=req.author,
+    )
+
+    return {
+        "movement_key": movement.movement_key,
+        "title": movement.title,
+        "column": movement.column.value,
+        "status": "created",
+    }
+
+
+# Audit endpoints
+class RunAuditRequest(BaseModel):
+    session_id: Optional[str] = None
+    limit: int = 50
+
+
+@app.post("/api/v1/audit")
+async def run_hostile_audit(req: RunAuditRequest):
+    """Run hostile audit on claims."""
+    from grilo_falante.cognitive import AuditoriaHostil
+
+    claim_repo = ClaimRepository()
+    gov_repo = GovernanceRepository()
+
+    claims = await claim_repo.search("", limit=req.limit)
+    gov_records = await gov_repo.list_recent(limit=100)
+
+    audit = AuditoriaHostil()
+    report = await audit.run_full_audit(
+        claims=[c.to_dict() for c in claims],
+        governance_records=[r.to_ledger_entry() for r in gov_records],
+    )
+
+    return report.to_dict()
+
+
+# Prompt workflow endpoints
+class TriagemRequest(BaseModel):
+    conversation_content: str
+
+
+@app.post("/api/v1/prompts/triagem")
+async def run_triagem(req: TriagemRequest):
+    """Execute TRIAGEM_E_PRESERVACAO workflow."""
+    from grilo_falante.cognitive import PromptWorkflows
+    workflows = PromptWorkflows()
+    result = workflows.triagem_workflow(req.conversation_content)
+    return result
+
+
+class RadiografiaRequest(BaseModel):
+    conversation_content: str
+
+
+@app.post("/api/v1/prompts/radiografia")
+async def run_radiografia(req: RadiografiaRequest):
+    """Execute RADIOGRAFIA_ERROS workflow."""
+    from grilo_falante.cognitive import PromptWorkflows
+    workflows = PromptWorkflows()
+    result = workflows.radiografia_workflow(req.conversation_content)
+    return result
