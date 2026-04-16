@@ -870,3 +870,43 @@ python3 test_ai_to_ai.py --topic "Física Quântica" --provider ollama --rounds 
 - `grilo_admin/services/falacia_service.py` - Deteção e propagação
 
 Contém todos os modelos para o sistema de articles com Pydantic validation.
+
+---
+
+## 17. Visão Holística - Ilhas e Contextos
+
+Ver documento separado: **[ILHA_VISION_v1.md](./ILHA_VISION_v1.md)**
+
+Este documento descreve a visão completa do sistema:
+
+### 17.1 Resumo da Visão
+
+| Conceito | Descrição |
+|----------|-----------|
+| **ILHA** | Momento (espaço-temporal) com participantes e contexto |
+| **PEDRA** | Contexto reutilizável que pode viajar entre ilhas |
+| **ROSEBUD** | Âncora contextual - só faz sentido com contexto |
+| **IR DORMIR** | GF autónomo decide quando processar |
+| **ACORDAR** | Ritual de criar contexto para nova interacção |
+| **LOGBOOK** | Interface de navegação de memórias |
+
+### 17.2 Gaps Identificados
+
+| ID | Descrição | Prioridade |
+|----|-----------|------------|
+| G1 | AI-to-AI não gera ILHA automaticamente | Alta |
+| G2 | Não há timestamp NTP nos dados | Alta |
+| G3 | GF não decide autonomamente quando dormir | Alta |
+| G4 | Não há endpoint de logbook | Alta |
+
+### 17.3 Fluxo Visado
+
+```
+INTERACÇÃO → GERA ILHA → PEDRAS REUTILIZÁVEIS
+                    ↓
+              ACORDAR/DORMIR AUTÓNOMO
+                    ↓
+              LOGBOOK (navegação)
+```
+
+Ver documento completo para Feynman F1/F2/F3 explanations.
