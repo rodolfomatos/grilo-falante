@@ -1,27 +1,13 @@
-"""
-Grilo Falante Admin Services.
+"""Services module."""
 
-Provides services for:
-- OpenDataLoader PDF processing
-- Feynman F1/F2/F3 processing
-- RAG indexing
-- Falacia detection and propagation
-"""
-
-from grilo_admin.services.opendataloader_service import OpenDataLoaderService
-from grilo_admin.services.feynman_processor import FeynmanProcessor
-from grilo_admin.services.rag_index_service import RAGIndexService
-from grilo_admin.services.falacia_service import (
-    FalaciaDetector,
-    FalaciaPropagator,
-    FalaciaCorrector,
+from grilo_admin.services.mempalace_service import (
+    MemPalaceService,
+    get_mempalace_service,
+    enable_mempalace,
 )
 
 __all__ = [
-    "OpenDataLoaderService",
-    "FeynmanProcessor",
-    "RAGIndexService",
-    "FalaciaDetector",
-    "FalaciaPropagator",
-    "FalaciaCorrector",
+    "MemPalaceService",
+    "get_mempalace_service",
+    "enable_mempalace",
 ]

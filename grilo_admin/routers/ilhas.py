@@ -46,6 +46,7 @@ class ILHAManager:
     _ilhas: Dict[str, Dict[str, Any]] = {}
     _pedras: Dict[str, Dict[str, Any]] = {}
     _initialized = False
+    _mempalace_enabled = False
 
     @classmethod
     def _get_default_storage_path(cls) -> str:
@@ -100,6 +101,10 @@ class ILHAManager:
             json.dump(data, f, indent=2, default=str)
         logger.info(f"Saved {len(cls._ilhas)} ILHAs and {len(cls._pedras)} PEDRAs to {storage_path}")
 
+        # Optional: Sync to MemPalace
+        if cls._mempalace_enabled:
+            cls._sync_to_mempalace()
+
     @classmethod
     def load(cls):
         """Load ILHAs and PEDRAs from disk."""
@@ -118,6 +123,58 @@ class ILHAManager:
             logger.info(f"Loaded {len(cls._ilhas)} ILHAs and {len(cls._pedras)} PEDRAs from {storage_path}")
         except Exception as e:
             logger.error(f"Error loading ILHAs: {e}")
+
+    @classmethod
+    def enable_mempalace(cls, palace_path: Optional[str] = None) -> bool:
+        """
+        Enable MemPalace integration.
+
+        Args:
+            palace_path: Optional path to MemPalace data directory
+
+        Returns:
+            True if successful
+        """
+        try:
+            from grilo_admin.services import enable_mempalace as emp
+            cls._mempalace_enabled = emp(palace_path)
+            logger.info(f"MemPalace integration enabled: {cls._mempalace_enabled}")
+            return cls._mempalace_enabled
+        except Exception as e:
+            logger.error(f"Failed to enable MemPalace: {e}")
+            cls._mempalace_enabled = False
+            return False
+
+    @classmethod
+    def _sync_to_mempalace(cls) -> None:
+        """Sync ILHAs and PEDRAs to MemPalace."""
+        if not cls._mempalace_enabled:
+            return
+
+        try:
+            from grilo_admin.services import get_mempalace_service
+            service = get_mempalace_service()
+
+            # Store each ILHA
+            for ilha_dict in cls._ilhas.values():
+                service.store_ilha(ilha_dict)
+
+            logger.info(f"Synced {len(cls._ilhas)} ILHAs to MemPalace")
+        except Exception as e:
+            logger.error(f"Failed to sync to MemPalace: {e}")
+
+    @classmethod
+    def get_mempalace_stats(cls) -> Dict[str, Any]:
+        """Get MemPalace integration status."""
+        if not cls._mempalace_enabled:
+            return {"enabled": False}
+
+        try:
+            from grilo_admin.services import get_mempalace_service
+            service = get_mempalace_service()
+            return service.get_stats()
+        except Exception as e:
+            return {"enabled": True, "error": str(e)}
 
     @classmethod
     def _get_ntp_time(cls) -> float:
@@ -792,4 +849,68 @@ async def get_pedra_content(
             {"gmif_level": e.gmif_level, "timestamp": e.timestamp}
             for e in pedra.gmif_events
         ],
+    }
+
+
+# MemPalace Integration Endpoints
+class EnableMemPalaceRequest(BaseModel):
+    """Request to enable MemPalace integration."""
+    palace_path: Optional[str] = None
+
+
+@router.post("/mempalace/enable")
+async def enable_mempalace(
+    request: EnableMemPalaceRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Enable MemPalace integration.
+
+    MemPalace provides:
+    - Verbatim storage (opposite of GF's transformation)
+    - Semantic search with ChromaDB
+    - Knowledge graph with temporal relationships
+
+    When enabled, ILHAs will be synced to MemPalace on save.
+    """
+    success = ILHAManager.enable_mempalace(request.palace_path)
+    if success:
+        return {
+            "success": True,
+            "message": "MemPalace integration enabled",
+        }
+    return {
+        "success": False,
+        "message": "Failed to enable MemPalace. Is mempalace CLI installed?",
+    }
+
+
+@router.get("/mempalace/status")
+async def get_mempalace_status(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get MemPalace integration status.
+    """
+    stats = ILHAManager.get_mempalace_stats()
+    return stats
+
+
+@router.post("/mempalace/sync")
+async def sync_to_mempalace(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Force sync all ILHAs to MemPalace.
+    """
+    if not ILHAManager._mempalace_enabled:
+        raise HTTPException(
+            status_code=400,
+            detail="MemPalace integration is not enabled",
+        )
+
+    ILHAManager._sync_to_mempalace()
+    return {
+        "success": True,
+        "message": "Synced to MemPalace",
     }
