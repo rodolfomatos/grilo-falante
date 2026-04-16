@@ -49,6 +49,18 @@ class CycleState:
     _ilhas_ativas: List[Dict[str, Any]] = []
     _pedras: List[Dict[str, Any]] = []
 
+    _total_interactions: int = 0
+    _error_count: int = 0
+    _gaps_detected: int = 0
+    _last_fatigue_check: Optional[str] = None
+
+    _fatigue_thresholds = {
+        "memory_load_max": 100,
+        "error_rate_max": 0.3,
+        "gaps_max": 20,
+        "time_since_sleep_max_minutes": 60,
+    }
+
     @classmethod
     def reset(cls):
         """Reset state (for testing)."""
@@ -59,6 +71,10 @@ class CycleState:
         cls._cycle_history = []
         cls._ilhas_ativas = []
         cls._pedras = []
+        cls._total_interactions = 0
+        cls._error_count = 0
+        cls._gaps_detected = 0
+        cls._last_fatigue_check = None
 
     @classmethod
     def get_status(cls) -> Dict[str, Any]:
@@ -119,6 +135,93 @@ class CycleState:
     def add_pedra(cls, pedra: Dict[str, Any]):
         """Add a stone."""
         cls._pedras.append(pedra)
+
+    @classmethod
+    def increment_interactions(cls):
+        """Increment interaction counter."""
+        cls._total_interactions += 1
+
+    @classmethod
+    def increment_errors(cls):
+        """Increment error counter."""
+        cls._error_count += 1
+
+    @classmethod
+    def increment_gaps(cls):
+        """Increment gaps counter."""
+        cls._gaps_detected += 1
+
+    @classmethod
+    def get_fatigue_signals(cls) -> Dict[str, Any]:
+        """Get current fatigue signals."""
+        from grilo_admin.routers.ilhas import ILHAManager
+
+        memory_load = len(ILHAManager._ilhas) + len(ILHAManager._pedras)
+        error_rate = cls._error_count / max(1, cls._total_interactions)
+
+        time_since_sleep = None
+        if cls._last_dormir:
+            last_sleep = datetime.fromisoformat(cls._last_dormir["timestamp"])
+            time_since_sleep = (datetime.now() - last_sleep).total_seconds() / 60
+
+        signals = {
+            "memory_load": memory_load,
+            "memory_load_pct": min(100, (memory_load / cls._fatigue_thresholds["memory_load_max"]) * 100),
+            "error_rate": error_rate,
+            "error_rate_pct": min(100, error_rate * 100 / cls._fatigue_thresholds["error_rate_max"]) if cls._fatigue_thresholds["error_rate_max"] > 0 else 0,
+            "gaps_detected": cls._gaps_detected,
+            "gaps_pct": min(100, (cls._gaps_detected / cls._fatigue_thresholds["gaps_max"]) * 100),
+            "time_since_sleep_minutes": time_since_sleep,
+            "total_interactions": cls._total_interactions,
+            "thresholds": cls._fatigue_thresholds,
+        }
+
+        cls._last_fatigue_check = datetime.now().isoformat()
+        return signals
+
+    @classmethod
+    def evaluate_fatigue(cls) -> Dict[str, Any]:
+        """Evaluate fatigue and return autonomous decision."""
+        signals = cls.get_fatigue_signals()
+
+        sleep_score = 0
+        wake_score = 0
+
+        if signals["memory_load_pct"] > 70:
+            sleep_score += 30
+        if signals["error_rate_pct"] > 50:
+            sleep_score += 25
+        if signals["gaps_pct"] > 60:
+            sleep_score += 20
+        if signals["time_since_sleep_minutes"] and signals["time_since_sleep_minutes"] > 45:
+            sleep_score += 25
+
+        if signals["memory_load_pct"] < 30 and signals["time_since_sleep_minutes"] and signals["time_since_sleep_minutes"] < 15:
+            wake_score += 40
+        if signals["gaps_detected"] > 5:
+            wake_score += 30
+        if cls._last_dormir is None or (signals["time_since_sleep_minutes"] and signals["time_since_sleep_minutes"] > 30):
+            wake_score += 30
+
+        fatigue_level = "low"
+        if sleep_score > wake_score and sleep_score > 50:
+            fatigue_level = "high"
+            decision = "DORMIR"
+        elif wake_score > sleep_score and wake_score > 50:
+            fatigue_level = "rested"
+            decision = "ACORDAR"
+        else:
+            fatigue_level = "moderate"
+            decision = "MANTER"
+
+        return {
+            "decision": decision,
+            "fatigue_level": fatigue_level,
+            "sleep_score": sleep_score,
+            "wake_score": wake_score,
+            "signals": signals,
+            "timestamp": datetime.now().isoformat(),
+        }
 
 
 class IlhaManager:
@@ -337,6 +440,135 @@ async def get_cycle_history(
     return {
         "total": len(history),
         "history": history,
+    }
+
+
+@router.get("/fatigue")
+async def get_fatigue_signals(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get current fatigue signals.
+
+    Returns the signals GF uses to decide when to sleep/wake:
+    - memory_load: Number of ILHAs + pedras
+    - error_rate: Ratio of errors to total interactions
+    - gaps_detected: Number of unanswered gaps
+    - time_since_sleep: Minutes since last Dormir cycle
+
+    Use /decide-autonomous to get the actual decision.
+    """
+    return CycleState.get_fatigue_signals()
+
+
+@router.get("/decide-autonomous")
+async def decide_autonomous(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Autonomous decision: Should GF sleep, wake, or maintain current state?
+
+    This evaluates fatigue signals and returns a decision:
+    - DORMIR: When fatigue is high (memory overload, high error rate, many gaps)
+    - ACORDAR: When rested and ready for new interactions
+    - MANTER: When state is moderate, no urgent action needed
+
+    The decision is based on weighted scoring of:
+    - memory_load_pct: >70% adds sleep pressure
+    - error_rate_pct: >50% adds sleep pressure
+    - gaps_pct: >60% adds sleep pressure
+    - time_since_sleep: >45min adds sleep pressure
+
+    This is the G5 implementation: GF deciding autonomously.
+    """
+    evaluation = CycleState.evaluate_fatigue()
+    return {
+        "autonomous_decision": evaluation["decision"],
+        "fatigue_level": evaluation["fatigue_level"],
+        "sleep_score": evaluation["sleep_score"],
+        "wake_score": evaluation["wake_score"],
+        "signals": evaluation["signals"],
+        "recommendation": _get_recommendation(evaluation),
+    }
+
+
+def _get_recommendation(evaluation: Dict[str, Any]) -> str:
+    """Generate human-readable recommendation."""
+    decision = evaluation["decision"]
+    signals = evaluation["signals"]
+
+    if decision == "DORMIR":
+        reasons = []
+        if signals["memory_load_pct"] > 70:
+            reasons.append(f"memory at {signals['memory_load_pct']:.0f}%")
+        if signals["error_rate_pct"] > 50:
+            reasons.append(f"error rate at {signals['error_rate_pct']:.0f}%")
+        if signals["gaps_pct"] > 60:
+            reasons.append(f"{signals['gaps_detected']} gaps pending")
+        return f"GF should IR DORMIR. Reasons: {', '.join(reasons)}"
+
+    elif decision == "ACORDAR":
+        reasons = []
+        if signals["time_since_sleep_minutes"] and signals["time_since_sleep_minutes"] > 30:
+            reasons.append(f"rested for {signals['time_since_sleep_minutes']:.0f}min")
+        if signals["gaps_detected"] > 5:
+            reasons.append(f"{signals['gaps_detected']} gaps to explore")
+        return f"GF should ACORDAR. Reasons: {', '.join(reasons)}"
+
+    return "GF state is stable. No cycle needed."
+
+
+@router.post("/execute-autonomous")
+async def execute_autonomous(
+    current_user: User = Depends(require_role(UserRole.ADMIN)),
+):
+    """
+    Execute the autonomous decision.
+
+    Evaluates fatigue signals and executes the recommended cycle.
+    Admin role required.
+    """
+    evaluation = CycleState.evaluate_fatigue()
+    decision = evaluation["decision"]
+
+    if decision == "DORMIR":
+        CycleState.set_status(CycleStatus.RUNNING)
+        result = {
+            "triggered_by": "autonomous_fatigue",
+            "pedras_processadas": len(PedraManager._pedras),
+            "ilhas_actualizadas": len(IlhaManager._ilhas),
+            "timestamp": datetime.now().isoformat(),
+        }
+        CycleState.record_cycle(CycleType.DORMIR, result)
+        CycleState.set_status(CycleStatus.COMPLETED)
+        return {
+            "success": True,
+            "cycle_executed": "dormir",
+            "evaluation": evaluation,
+        }
+
+    elif decision == "ACORDAR":
+        CycleState.set_status(CycleStatus.RUNNING)
+        ilhas = IlhaManager.list_ilhas(estado="ativa")
+        result = {
+            "triggered_by": "autonomous_fatigue",
+            "ilhas_restored": len(ilhas),
+            "bundle_built": True,
+            "timestamp": datetime.now().isoformat(),
+        }
+        CycleState.record_cycle(CycleType.ACORDAR, result)
+        CycleState.set_status(CycleStatus.COMPLETED)
+        return {
+            "success": True,
+            "cycle_executed": "acordar",
+            "evaluation": evaluation,
+        }
+
+    return {
+        "success": True,
+        "cycle_executed": None,
+        "message": "No cycle needed - state is stable",
+        "evaluation": evaluation,
     }
 
 

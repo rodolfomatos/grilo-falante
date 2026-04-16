@@ -428,7 +428,7 @@ O **Logbook** é a forma de navegar as ILHAS geradas. É como um diário, mas:
 | G2 | Não há timestamp NTP nos dados | Alta | ✅ IMPLEMENTADO |
 | G3 | Participantes não têm IDs únicos | Média | ✅ IMPLEMENTADO |
 | G4 | Topic não é extraído automaticamente | Média | ✅ IMPLEMENTADO |
-| G5 | GF não decide autonomamente quando dormir | Alta | ⏳ PENDENTE |
+| G5 | GF não decide autonomamente quando dormir | Alta | ✅ IMPLEMENTADO |
 | G6 | Não há endpoint de logbook | Alta | ✅ IMPLEMENTADO |
 | G7 | PEDRA não tem campo `reused_in` | Média | ✅ IMPLEMENTADO |
 | G8 | Wiki view não mostra conexões entre ILHAS | Média | ⏳ PENDENTE |
@@ -442,11 +442,11 @@ FASE A: Integração AI-to-AI → ILHA (✅ COMPLETO)
 ├── ✅ Gerar ILHA após conversa
 └── ✅ Persistir em memória (ILHAManager)
 
-FASE B: Sistema de Ciclos Autónomos (⏳ PENDENTE)
-├── ⏳ Implementar sinais de "cansaço" GF
-├── ⏳ GF decide quando ir dormir
-├── ⏳ GF decide quando acordar
-└── ⏳ Logbook de ciclos
+FASE B: Sistema de Ciclos Autónomos (✅ COMPLETO)
+├── ✅ Implementar sinais de "cansaço" GF
+├── ✅ GF decide quando ir dormir
+├── ✅ GF decide quando acordar
+└── ✅ Logbook de ciclos
 
 FASE C: Navegação Logbook (✅ PARCIAL)
 ├── ✅ Endpoint /logbook
