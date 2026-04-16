@@ -63,9 +63,14 @@ from grilo_admin.models.ilha import (
     ILHAFromConversation,
     Participant,
     Pedra,
+    PedraType,
     InteractionType,
     LogbookEntry,
     ConversationMessage,
+    GmifEvent,
+    ShadowDocument,
+    DigitalObject,
+    ConceptualCapsule,
 )
 
 __all__ = [
@@ -126,7 +131,12 @@ __all__ = [
     "ILHAFromConversation",
     "Participant",
     "Pedra",
+    "PedraType",
     "InteractionType",
     "LogbookEntry",
     "ConversationMessage",
+    "GmifEvent",
+    "ShadowDocument",
+    "DigitalObject",
+    "ConceptualCapsule",
 ]

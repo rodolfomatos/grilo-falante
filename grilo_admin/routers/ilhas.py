@@ -23,9 +23,13 @@ from grilo_admin.models import (
     ILHAFromConversation,
     Participant,
     Pedra,
+    PedraType,
     InteractionType,
     LogbookEntry,
     ConversationMessage,
+    GmifEvent,
+    ShadowDocument,
+    DigitalObject,
     User,
 )
 
@@ -374,16 +378,53 @@ class ILHAManager:
     @classmethod
     def _dict_to_pedra(cls, d: Dict[str, Any]) -> Pedra:
         """Convert dict to Pedra."""
+        # Handle new fields with backward compatibility
+        content = d.get("content", "")  # Legacy field
+        content_summary = d.get("content_summary", content)
+
+        # Handle gmif_events
+        gmif_events = []
+        for event in d.get("gmif_events", []):
+            if isinstance(event, dict):
+                gmif_events.append(GmifEvent(**event))
+            else:
+                gmif_events.append(event)
+
+        # Handle shadow_documents
+        shadow_documents = []
+        for sd in d.get("shadow_documents", []):
+            if isinstance(sd, dict):
+                shadow_documents.append(ShadowDocument(**sd))
+            else:
+                shadow_documents.append(sd)
+
+        # Handle digital_objects
+        digital_objects = []
+        for do in d.get("digital_objects", []):
+            if isinstance(do, dict):
+                digital_objects.append(DigitalObject(**do))
+            else:
+                digital_objects.append(do)
+
         return Pedra(
             id=d["id"],
             ilha_id=d["ilha_id"],
+            started_at=d.get("started_at", d.get("created_at", "")),
+            ended_at=d.get("ended_at"),
             author_id=d.get("author_id", ""),
             author_name=d.get("author_name", ""),
-            content=d.get("content", ""),
+            content_summary=content_summary or content,
+            shadow_documents=shadow_documents,
+            digital_objects=digital_objects,
+            is_empty=d.get("is_empty", len(shadow_documents) == 0 and len(digital_objects) == 0 and not content_summary),
+            gmif_events=gmif_events,
             gmif_level=d.get("gmif_level", "M3"),
-            type=d.get("type", "claim"),
+            type=PedraType(d.get("type", "claim")) if d.get("type") else PedraType.CLAIM,
             is_gap=d.get("is_gap", False),
             gap_question=d.get("gap_question"),
+            saliencia=d.get("saliencia", 0.5),
+            consequence_level=d.get("consequence_level", 0.0),
+            decay_enabled=d.get("decay_enabled", True),
             reused_in=d.get("reused_in", []),
             created_at=d.get("created_at", ""),
         )
