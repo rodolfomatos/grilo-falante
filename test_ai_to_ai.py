@@ -410,10 +410,11 @@ async def main():
 
     print(f"Using LLM provider: {args.provider}")
 
-    llm_client = LLMClient(provider=args.provider)
+    llm_client_a = LLMClient(provider=args.provider)
+    llm_client_b = LLMClient(provider=args.provider)
 
-    agent_a = GriloFalanteAgent("Grilo", llm_client)
-    agent_b = RegularAgent("ChatGPT", llm_client)
+    agent_a = GriloFalanteAgent("Grilo (GF)", llm_client_a)
+    agent_b = RegularAgent("ChatGPT (Regular)", llm_client_b)
 
     agent_a.create_island(args.topic)
 
