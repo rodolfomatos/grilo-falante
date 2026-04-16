@@ -89,17 +89,26 @@ A **ILHA** é um **agregado espaço-temporal de contexto**. Tem:
 | `type` | Tipo de interação | `AI-TO-AI`, `AI-HUMAN`, `HUMAN-HUMAN` |
 | `pedras` | Array de pedras (contextos) | `[...]` |
 
-A **PEDRA** é um **contexto epistémico** que pode ser reutilizado:
+A **PEDRA** é um **agregador flexível de contextos epistémicos**:
 
 | Campo | Descrição |
 |-------|-----------|
 | `id` | Identificador único |
 | `Ilha_id` | ILHA de origem |
-| `author` | Quem disse/comportou |
-| `perspective` | A perspectiva específica |
-| `content` | O conteúdo (claim, pergunta, reação) |
-| `gmif_level` | Classificação epistémica |
+| `started_at` | Quando o evento começou |
+| `ended_at` | Quando o evento terminou (None se ativa) |
+| `content_summary` | Resumo do agregado (para display) |
+| `shadow_documents` | Lista de ShadowDocuments (sombras de fontes) |
+| `digital_objects` | Lista de DigitalObjects (PDFs, URLs, imagens) |
+| `conceptual_capsules` | DigitalObjects com síntese validada (é um tipo de DigitalObject) |
+| `is_empty` | True se não tem conteúdos |
+| `gmif_events` | Timeline de classificações (só regista o "quando") |
+| `saliência` | Score de relevância (pode crescer/decair) |
+| `consequence_level` | Nível de consequências |
+| `decay_enabled` | Se o decaimento está ativo |
 | `reused_in` | ILHAS onde foi reutilizada |
+
+**Nota:** Uma PEDRA pode conter 0 ou mais de cada tipo. Se não houver nada relevante, `is_empty=True`.
 
 ### 2.5 F3 - Why Loop
 
@@ -432,6 +441,9 @@ O **Logbook** é a forma de navegar as ILHAS geradas. É como um diário, mas:
 | G6 | Não há endpoint de logbook | Alta | ✅ IMPLEMENTADO |
 | G7 | PEDRA não tem campo `reused_in` | Média | ✅ IMPLEMENTADO |
 | G8 | Wiki view não mostra conexões entre ILHAS | Média | ⏳ PENDENTE |
+| G9 | Modelo PEDRA correto (agregador, não só texto) | Alta | ⏳ A CORRIGIR |
+| G10 | Integração MemPalace (backend de storage) | Alta | ⏳ A ESTUDAR |
+| G11 | Arquitetura de storage unificada | Alta | ⏳ A DESENHAR |
 
 ### 7.2 Próximos Passos
 
@@ -453,6 +465,24 @@ FASE C: Navegação Logbook (✅ PARCIAL)
 ├── ✅ Endpoint /ilhas/{ilha_id}
 ├── ⏳ Wiki view com conexões
 └── ⏳ Busca por contexto
+
+FASE D: Modelo PEDRA Corrigido (⏳ A FAZER)
+├── ⏳ Criar modelos ShadowDocument, DigitalObject, ConceptualCapsule
+├── ⏳ Atualizar modelo Pedra em ilha.py
+├── ⏳ Adicionar campos: started_at, ended_at, saliência, gmif_events
+└── ⏳ Testar criação de PEDRA com agregados
+
+FASE E: Integração MemPalace (⏳ A ESTUDAR)
+├── ⏳ Testar MemPalace localmente
+├── ⏳ Criar shadow document de análise
+├── ⏳ Definir arquitetura de integração
+└── ⏳ Implementar se complementar
+
+FASE F: Arquitetura de Storage (⏳ A DESENHAR)
+├── ⏳ Definir: PostgreSQL vs MemPalace vs Filesystem
+├── ⏳ Desenhar fluxo de dados unificado
+├── ⏳ Implementar persistência de ILHAs/PEDRAs
+└── ⏳ Testar sobrevivência a restart
 ```
 
 ---
