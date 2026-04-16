@@ -147,6 +147,72 @@ def test_api():
     print("=" * 60)
 
 
+def test_system_endpoints():
+    print("\n" + "=" * 60)
+    print("System Endpoints - Test")
+    print("=" * 60)
+
+    from fastapi.testclient import TestClient
+    from grilo_admin import app
+
+    client = TestClient(app)
+
+    print("\n1. Getting admin token...")
+    response = client.post(
+        "/auth/users/login",
+        json={"email": "admin@example.com", "password": "admin123"},
+    )
+    assert response.status_code == 200
+    token = response.json()["access_token"]
+    print(f"   Token obtained")
+
+    auth_headers = {"Authorization": f"Bearer {token}"}
+
+    print("\n2. Testing system status...")
+    response = client.get("/admin/system/status", headers=auth_headers)
+    print(f"   Status: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"   Uptime: {data.get('uptime_human', 'N/A')}")
+        print(f"   Plugins: {data.get('plugins', {}).get('total', 0)}")
+        print("   ✅ System status works")
+    else:
+        print(f"   ⚠️ Status code: {response.status_code}")
+
+    print("\n3. Testing system health...")
+    response = client.get("/admin/system/health", headers=auth_headers)
+    print(f"   Status: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"   Healthy: {data.get('healthy', 'N/A')}")
+        print("   ✅ System health works")
+    else:
+        print(f"   ⚠️ Status code: {response.status_code}")
+
+    print("\n4. Testing plugins list...")
+    response = client.get("/admin/plugins", headers=auth_headers)
+    print(f"   Status: {response.status_code}")
+    if response.status_code == 200:
+        data = response.json()
+        print(f"   Total plugins: {data.get('total', 0)}")
+        print("   ✅ Plugins list works")
+    else:
+        print(f"   ⚠️ Status code: {response.status_code}")
+
+    print("\n5. Testing cache clear (admin only)...")
+    response = client.post("/admin/system/cache/clear", headers=auth_headers)
+    print(f"   Status: {response.status_code}")
+    if response.status_code == 200:
+        print("   ✅ Cache clear works (admin)")
+    else:
+        print(f"   ⚠️ Status code: {response.status_code}")
+
+    print("\n" + "=" * 60)
+    print("System endpoints tests completed!")
+    print("=" * 60)
+
+
 if __name__ == "__main__":
     test_auth()
     test_api()
+    test_system_endpoints()

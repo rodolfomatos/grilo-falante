@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from grilo_admin.auth import get_current_user, user_store
 from grilo_admin.models import User
-from grilo_admin.routers import users_router
+from grilo_admin.routers import users_router, system_router, plugins_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan handler."""
     logger.info("Starting Grilo Falante Admin API...")
-    logger.info("Default admin credentials: admin@grilo.local / admin123")
+    logger.info("Default admin credentials: admin@example.com / admin123")
     yield
     logger.info("Shutting down Grilo Falante Admin API...")
 
@@ -89,6 +89,8 @@ async def protected_route(current_user: User = Depends(get_current_user)):
 
 
 app.include_router(users_router, prefix="/auth")
+app.include_router(system_router, prefix="/admin")
+app.include_router(plugins_router, prefix="/admin")
 
 
 if __name__ == "__main__":
