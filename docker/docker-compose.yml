@@ -98,9 +98,9 @@ services:
     stdin_open: true
     tty: true
 
-  # =============================================================================
-  # KNOWLEDGE LAKE (File Browser)
-  # =============================================================================
+# =============================================================================
+# KNOWLEDGE LAKE (File Browser)
+# =============================================================================
   lake:
     image: filebrowser/filebrowser:latest
     ports:
@@ -111,6 +111,23 @@ services:
     environment:
       FB_BASEURL: /lake
       FB_PORT: 8082
+
+  # =============================================================================
+  # MEMPALACE (Vector DB for Semantic Memory)
+  # =============================================================================
+  mempallace:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - mempallace_data:/chromadb/data
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+
+  # =============================================================================
+  # KNOWLEDGE LAKE (File Browser) - moved after mempallace
+  # =============================================================================
 
   # =============================================================================
   # IAEDU ADAPTER (Node.js)
@@ -136,3 +153,4 @@ volumes:
   ollama_data:
   openwebui_data:
   lake_data:
+  mempallace_data:
