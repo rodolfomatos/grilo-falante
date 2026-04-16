@@ -1,7 +1,7 @@
 # A_FAZER — Memória Insular e Sistema de Memória Contextualizada
 
-**Estatuto:** Documento de Planeamento Consolidado
-**Versão:** 1.0
+**Estatuto:** Validated - Implementation Complete
+**Versão:** 1.1
 **Data:** 2026-04-16
 **Contexto:** Grilo Falante v3.0 — Memória Insular
 

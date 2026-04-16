@@ -112,7 +112,7 @@ class ChatShell:
             ledger=ledger,
         )
 
-        pina = PINAProtocol(ledger=ledger)
+        pina = PINAProtocol(state_machine=self._loader.state_machine, ledger=ledger)
         self._governance_gate = GovernanceGate(pina_protocol=pina)
 
         temporal = temporal_anchor or datetime.now().strftime("%Y-%m-%d %H:%M")

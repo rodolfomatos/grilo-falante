@@ -332,6 +332,16 @@ async def list_tools() -> list[Tool]:
                 "required": ["gap_key"],
             },
         ),
+        Tool(
+            name="gepeto_sair_da_escola",
+            description="Exit school mode and return to GOVERNING state",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "Optional session ID to exit school mode for"},
+                },
+            },
+        ),
         # Curator tools
         Tool(
             name="gepeto_create_curator",
@@ -918,6 +928,35 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 "claims_created": result.claims_created,
                 "error": result.error,
             }))]
+
+        elif name == "gepeto_sair_da_escola":
+            from grilo_falante.regime.state import StateMachine, CycleState
+            from grilo_falante.regime import Ledger
+
+            sm = StateMachine()
+            ledger = Ledger()
+
+            if sm.current_cycle is None:
+                sm.start_cycle()
+
+            if sm.transition_to(CycleState.GOVERNING):
+                if ledger:
+                    ledger.add_entry(
+                        entry_type="EXIT_SCHOOL_MODE",
+                        content="Exited school mode via gepeto_sair_da_escola",
+                        gf_id="sair_da_escola",
+                    )
+                return [TextContent(type="text", text=json.dumps({
+                    "success": True,
+                    "message": "Exited school mode, returned to GOVERNING state",
+                    "state": CycleState.GOVERNING.value,
+                }))]
+            else:
+                return [TextContent(type="text", text=json.dumps({
+                    "success": False,
+                    "message": f"Could not transition to GOVERNING from current state",
+                    "current_state": sm.current_cycle.state.value if sm.current_cycle else "NONE",
+                }))]
 
         elif name == "gepeto_create_curator":
             repo = CuratorRepository()
