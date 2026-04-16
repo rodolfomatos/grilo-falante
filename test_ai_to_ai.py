@@ -177,9 +177,19 @@ class AIAgent:
 
     async def think(self, prompt: str) -> str:
         """Generate a response using the LLM."""
-        system_prompt = self._get_system_prompt()
-        response = await self.llm_client.generate(prompt, system_prompt=system_prompt)
-        return response
+        try:
+            system_prompt = self._get_system_prompt()
+            response = await self.llm_client.generate(prompt, system_prompt=system_prompt)
+            return response
+        except Exception as e:
+            return self._mock_response(prompt)
+
+    def _mock_response(self, prompt: str) -> str:
+        """Generate a mock response when LLM is not available."""
+        if self.agent_type == AgentType.GRILO_FALANTE:
+            return f"[MOCK - Grilo Falante] Regarding your question about the topic: This is a significant area of study with multiple perspectives. What specific aspect would you like to explore? I can help identify claims and classify them by epistemic confidence."
+        else:
+            return f"[MOCK - Regular AI] Thank you for your message. This is an interesting topic that deserves careful consideration. Could you elaborate on what aspects you're most interested in understanding?"
 
     def _get_system_prompt(self) -> Optional[str]:
         """Get system prompt based on agent type."""
@@ -419,8 +429,9 @@ async def main():
     print("\n" + "=" * 70)
     print("FULL CLAIMS LIST")
     print("=" * 70)
-    for i, claim in enumerate(report["gmif_distribution"], 1):
-        print(f"{i}. [{claim['gmif_level']}] {claim['text'][:80]}...")
+    for i, msg in enumerate(report.get("conversation", []), 1):
+        for j, claim_text in enumerate(msg.get("claims", []), 1):
+            print(f"{i}.{j}. {claim_text[:80]}...")
 
     report_file = f"conversation_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(report_file, "w") as f:

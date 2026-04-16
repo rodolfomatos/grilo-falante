@@ -94,7 +94,7 @@ OPENAI_DEFAULT_CONFIG = LLMConfig(
 IAEDU_DEFAULT_CONFIG = LLMConfig(
     provider="iaedu",
     endpoint="https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream",
-    model="gpt-4",
+    model="gpt-4o",
     temperature=0.3,
     max_tokens=4096,
     timeout=120,
@@ -234,7 +234,7 @@ def get_llm_config(provider: Optional[str] = None) -> LLMConfig:
                 "IAEDU_ENDPOINT",
                 getattr(settings, "iaedu_endpoint", "https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream"),
             ),
-            model="gpt-4",
+            model="gpt-4o",
             extra={"api_key": os.getenv("IAEDU_API_KEY", settings.iaedu_api_key or "")},
         )
 
@@ -331,6 +331,8 @@ class LLMClient:
             return await self._generate_ollama(prompt, system_prompt, **kwargs)
         elif self.config.provider == LLMProvider.OPENAI.value:
             return await self._generate_openai(prompt, system_prompt, **kwargs)
+        elif self.config.provider == LLMProvider.IAEDU.value:
+            return await self._generate_iaedu(prompt, system_prompt, **kwargs)
         else:
             raise NotImplementedError(f"Provider {self.config.provider} not implemented")
 
@@ -418,6 +420,71 @@ class LLMClient:
             response.raise_for_status()
             data = response.json()
             return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+    async def _generate_iaedu(
+        self,
+        prompt: str,
+        system_prompt: Optional[str] = None,
+        **kwargs,
+    ) -> str:
+        """
+        Generate using IAEDU API.
+
+        IAEDU uses multipart/form-data with:
+        - channel_id, thread_id, user_info, message
+        - x-api-key header
+        Returns streaming SSE with JSON lines.
+        """
+        import httpx
+        import uuid
+        import json
+
+        full_prompt = prompt
+        if system_prompt:
+            full_prompt = f"{system_prompt}\n\n{prompt}"
+
+        api_key = self.config.extra.get("api_key", "")
+
+        async with httpx.AsyncClient(timeout=self.config.timeout) as client:
+            form_data = {
+                "channel_id": "cmh1zoid901dlgy01fqyk9uwj",
+                "thread_id": str(uuid.uuid4()),
+                "user_info": "{}",
+                "message": full_prompt,
+            }
+
+            headers = {
+                "x-api-key": api_key,
+            }
+
+            response = await client.post(
+                self.config.endpoint,
+                headers=headers,
+                data=form_data,
+            )
+            response.raise_for_status()
+
+            full_response = ""
+            async for line in response.aiter_lines():
+                if line.strip():
+                    try:
+                        data = json.loads(line)
+                        msg_type = data.get("type", "")
+
+                        if msg_type == "error":
+                            error_msg = data.get("content", data.get("message", "Unknown error"))
+                            raise Exception(f"IAEDU API Error: {error_msg}")
+
+                        elif msg_type == "token":
+                            full_response += data.get("content", "")
+
+                        elif msg_type == "end" or msg_type == "done":
+                            break
+
+                    except json.JSONDecodeError:
+                        continue
+
+            return full_response if full_response else response.text
 
 
 @dataclass
