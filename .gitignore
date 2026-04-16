@@ -54,3 +54,23 @@ Thumbs.db
 # Project specific
 ledger/*.json
 !ledger/.gitkeep
+
+# Temporary storage (grilo_admin)
+/tmp/grilo_*
+/tmp/grilo_repositories/
+/tmp/grilo_pdf_output/
+/tmp/grilo_faqs/
+/tmp/grilo_mem palace/
+
+# Sessions
+sessions/
+
+# Test outputs
+conversation_report_*.json
+*.report.json
+
+# ChromaDB
+.chromadb/
+
+# Jupyter
+.ipynb_checkpoints/
