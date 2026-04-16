@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     log_level: str = "info"
 
     # LLM Provider
-    llm_provider: LLMProvider = LLMProvider.OLLAMA
+    llm_provider: LLMProvider = LLMProvider.BITNET
 
     # Ollama
     ollama_base_url: str = "http://localhost:11434"
