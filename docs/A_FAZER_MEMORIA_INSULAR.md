@@ -948,9 +948,13 @@ Fase 5 (Interfaces)
 - ~~TODO 3.3 - Coverage Map~~ ✅
 - ~~TODO 3.4 - Bundle de Reentrada~~ ✅
 
-### Fase 4 🔄 IN PROGRESS
-- Fase 4: Estudo Dirigido
-- Fase 5: Interfaces
+### Fase 4 ✅ COMPLETED
+- ~~Fase 4: Estudo Dirigido~~ ✅
+
+### Fase 5 ✅ COMPLETED
+- MCP Tools for islands ✅
+
+## RESUMO - TODO COMPLETO
 
 ---
 
@@ -997,6 +1001,56 @@ Fase 5 (Interfaces)
 | `grilo_falante/regime/acordar.py` | Ciclo acordar atual |
 | `grilo_falante/regime/loader.py` | Loader do regime |
 | `app/data/memory/semantic.py` | Integração MemPalace |
+
+---
+
+# RESUMO DA IMPLEMENTAÇÃO
+
+## Fases Completas
+
+| Fase | Estado | Módulo | Descrição |
+|------|--------|--------|----------|
+| Fase 0 | ✅ | `app/ontology/` | Ontologia nuclear (Ilha, Pedra, Saliencia, Estados) |
+| Fase 0 | ✅ | `config/ontologia.yaml` | Thresholds e configuração |
+| Fase 0 | ✅ | `grilo_falante/backend/db/schema_ilhas.py` | Schema PostgreSQL |
+| Fase 0 | ✅ | `grilo_falante/backend/db/ilhas_repository.py` | Repository para persistência |
+| Fase 1 | ✅ | `app/regime/dormir.py` | Ciclo Ir Dormir (ProcessadorBatch) |
+| Fase 1 | ✅ | `app/regime/acordar.py` | Ciclo Acordar (ContextoRestaurado) |
+| Fase 1 | ✅ | `app/skills/chat_shell.py` | ChatShell com ciclos integrados |
+| Fase 1 | ✅ | `app/skills/grilo_falante_skill.py` | CLI commands (ilhas, dormir, acordar, estado) |
+| Fase 2 | ✅ | `app/ilhas/gerenciador.py` | GestorIlhas |
+| Fase 2 | ✅ | `app/ilhas/saliência.py` | CalculadorSaliência |
+| Fase 2 | ✅ | `app/ilhas/erosão.py` | DinâmicaErosão |
+| Fase 2 | ✅ | `app/ilhas/relacoes.py` | GestorRelações |
+| Fase 3 | ✅ | `app/indices/canonico.py` | Índice Canónico |
+| Fase 3 | ✅ | `app/indices/pragmatico.py` | Índice Pragmático |
+| Fase 3 | ✅ | `app/indices/coverage.py` | Coverage Map |
+| Fase 3 | ✅ | `app/indices/bundle.py` | ConstrutorBundle |
+| Fase 4 | ✅ | `app/estudo/lacunas.py` | IdentificadorLacunas |
+| Fase 4 | ✅ | `app/estudo/motor.py` | MotorEstudo |
+| Fase 5 | ✅ | `grilo_falante/backend/mcp/server.py` | MCP tools (ilhas_list, dormir, acordar) |
+
+## Conceitos Implementados
+
+- **Lago**: Campo de fundo (MemPalace + PostgreSQL)
+- **Pedra**: Interação relevante com saliência
+- **Ilha**: Agregado cognitivo consolidado
+- **Ciclo Dormir**: Batch sanitization → agregar → guardar
+- **Ciclo Acordar**: Restaurar contexto → construir bundle
+- **Erosão**: Decay sem apagamento (USE IT OR LOSE IT)
+- **Índices**: Canónico (tópicos), Pragmático (tarefas), Coverage
+
+## Ficheiros Principais
+
+```
+app/
+├── ontology/         # Classes base (Ilha, Pedra, Saliencia)
+├── regime/          # Ciclos (dormir, acordar)
+├── ilhas/           # Sistema de ilhas
+├── indices/         # Índices de navegação
+├── estudo/          # Estudo dirigido
+└── skills/          # ChatShell, CLI
+```
 
 ---
 
