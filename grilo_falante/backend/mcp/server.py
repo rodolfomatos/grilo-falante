@@ -549,6 +549,68 @@ async def list_tools() -> list[Tool]:
                 "required": ["session_script"],
             },
         ),
+        Tool(
+            name="grilo_ilhas_list",
+            description="List memory islands",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "estado": {
+                        "type": "string",
+                        "description": "Filter by state (ATIVA, ERODENDO, DORMINTE)",
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum results",
+                        "default": 50,
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="grilo_ilhas_get",
+            description="Get island details",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "ilha_id": {
+                        "type": "string",
+                        "description": "Island ID",
+                    },
+                },
+                "required": ["ilha_id"],
+            },
+        ),
+        Tool(
+            name="grilo_dormir",
+            description="Execute sleep cycle - batch sanitization",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID",
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="grilo_acordar",
+            description="Execute wake cycle - restore context",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID",
+                    },
+                    "tarefa": {
+                        "type": "string",
+                        "description": "Optional task for bundle",
+                    },
+                },
+            },
+        ),
     ]
 
 
@@ -1132,6 +1194,62 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 "state": shell.state,
                 "messages_count": len(shell.messages),
                 "claims_count": len(shell.claims),
+            }))]
+
+        elif name == "grilo_ilhas_list":
+            from grilo_falante.backend.db.ilhas_repository import IlhaRepository
+
+            repo = IlhaRepository()
+            estado = arguments.get("estado")
+            limit = arguments.get("limit", 50)
+
+            if estado:
+                ilhas = await repo.listar(estado=estado, limit=limit)
+            else:
+                ilhas = await repo.listar(limit=limit)
+
+            return [TextContent(type="text", text=json.dumps({
+                "ilhas": [i.para_dict() for i in ilhas],
+                "count": len(ilhas),
+            }))]
+
+        elif name == "grilo_ilhas_get":
+            from grilo_falante.backend.db.ilhas_repository import IlhaRepository
+
+            repo = IlhaRepository()
+            ilha_id = arguments.get("ilha_id")
+
+            ilha = await repo.obter(ilha_id)
+            if not ilha:
+                return [TextContent(type="text", text=json.dumps({
+                    "error": f"Island {ilha_id} not found",
+                }))]
+
+            return [TextContent(type="text", text=json.dumps({
+                "ilha": ilha.para_dict(),
+                "membros": [m.para_dict() for m in ilha.membros],
+                "relações": [r.para_dict() for r in ilha.relações],
+            }))]
+
+        elif name == "grilo_dormir":
+            from app.regime.dormir import ir_dormir
+
+            session_id = arguments.get("session_id", "mcp")
+            resultado = await ir_dormir(session_id=session_id, interações=[])
+            return [TextContent(type="text", text=json.dumps(resultado))]
+
+        elif name == "grilo_acordar":
+            from app.regime.acordar import acordar
+
+            session_id = arguments.get("session_id", "mcp")
+            tarefa = arguments.get("tarefa")
+
+            resultado = await acordar(session_id=session_id, tarefa=tarefa)
+            return [TextContent(type="text", text=json.dumps({
+                "success": True,
+                "ilhas_ativas": len(resultado.ilhas_ativas),
+                "ilhas_dormintes": len(resultado.ilhas_dormintes),
+                "bundle": resultado.bundle,
             }))]
 
         else:
