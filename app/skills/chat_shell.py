@@ -66,6 +66,7 @@ class ChatShell:
         self._acordar = None
         self._temporal_anchor: Optional[str] = None
         self._intention: Optional[str] = None
+        self._governance_gate = None
 
     async def start(
         self,
@@ -92,6 +93,8 @@ class ChatShell:
             }
 
         from grilo_falante.regime import Loader, Acordar, Ledger
+        from grilo_falante.regime.governance_gate import GovernanceGate
+        from grilo_falante.regime.pina import PINAProtocol
 
         ledger = Ledger()
         self._loader = Loader(ledger=ledger)
@@ -108,6 +111,9 @@ class ChatShell:
             state_machine=self._loader.state_machine,
             ledger=ledger,
         )
+
+        pina = PINAProtocol(ledger=ledger)
+        self._governance_gate = GovernanceGate(pina_protocol=pina)
 
         temporal = temporal_anchor or datetime.now().strftime("%Y-%m-%d %H:%M")
         self._temporal_anchor = temporal
@@ -250,14 +256,15 @@ class ChatShell:
 
         if blocked_claims:
             governance_passed = False
+            blocked_texts = [f"#{i+1}: {bc['text'][:50]}... ({', '.join(bc['issues'])})" for i, bc in enumerate(blocked_claims)]
             response_msg = (
-                f"Mensagem contém claims que requerem verificação humana:\n"
-                f"{', '.join(blocked_claims)}\n"
-                f"Estas claims não serão incorporadas até verificação."
+                f"Governance gate: {len(blocked_claims)} claims requerem verificação:\n"
+                + "\n".join(blocked_texts)
+                + "\nEstas claims não serão incorporadas até verificação."
             )
         else:
             governance_passed = True
-            response_msg = f"OK. {len(claims)} claims extraídas."
+            response_msg = f"OK. {len(claims)} claims extraídas, governance passed."
 
         self.messages.append(message)
         self.claims.extend(claims)
@@ -313,14 +320,85 @@ class ChatShell:
             return "M3"  # Parcial
         return "M3"
 
-    def _check_governance(self, claims: List[Dict]) -> List[str]:
-        """Verificar governance gate - retorna lista de claims bloqueadas."""
+    def _check_governance(self, claims: List[Dict]) -> List[Dict]:
+        """
+        Verificar governance gate completo via GovernanceGate.
+
+        Returns:
+            Lista de dicts com claims bloqueadas e motivos
+        """
+        if self._governance_gate is None:
+            logger.warning("GovernanceGate not initialized, using legacy check")
+            return self._check_governance_legacy(claims)
+
+        result = self._governance_gate.verify(claims)
+
+        for candidate in result.pina_candidates:
+            logger.info(f"PINA candidate: {candidate['nca_id']}")
+
+        return result.blocked_claims
+
+    def _check_governance_legacy(self, claims: List[Dict]) -> List[Dict]:
+        """Legacy governance check for when GovernanceGate not available."""
         blocked = []
         for claim in claims:
-            text = claim.get("text", "").lower()
-            if any(word in text for word in ["obviamente", "claramente", "é óbvio"]):
-                blocked.append(f"Blocking pattern: {claim.get('text', '')[:50]}")
+            issues = []
+            gmif_level = claim.get("gmif_level", "M3")
+            text = claim.get("text", "")
+            source = claim.get("source")
+
+            if gmif_level in ["M5", "M6", "M7"]:
+                if not source:
+                    issues.append("nível M5+ requer fonte")
+
+            if gmif_level in ["M6", "M7"]:
+                if not source:
+                    issues.append("nível M7/M6 requer evidência")
+
+            if self._contradiz_claim_existente(text):
+                issues.append("contradiz claim validada existente")
+
+            text_lower = text.lower()
+            if any(word in text_lower for word in ["obviamente", "claramente", "é óbvio", "é evidente que"]):
+                issues.append("linguagem de fluência")
+
+            if len(text) < 20 and gmif_level not in ["M1", "M2"]:
+                issues.append("claim muito curta")
+
+            if issues:
+                blocked.append({
+                    "claim_id": claim.get("id", "unknown"),
+                    "text": text[:100],
+                    "gmif_level": gmif_level,
+                    "issues": issues,
+                })
+
         return blocked
+
+    def _contradiz_claim_existente(self, text: str) -> bool:
+        """Verificar se texto contradiz alguma claim validada existente."""
+        if not self.claims:
+            return False
+
+        text_lower = text.lower()
+        negations = ["não é", "não existe", "não há", "não existe", "nunca", "jamais"]
+
+        has_negation = any(neg in text_lower for neg in negations)
+        if not has_negation:
+            return False
+
+        for existing in self.claims:
+            if existing.get("legitimacy") == "ASSERTED":
+                existing_text = existing.get("text", "").lower()
+                has_existing_affirmation = not any(neg in existing_text for neg in negations)
+                if has_existing_affirmation:
+                    words_new = set(text_lower.split())
+                    words_existing = set(existing_text.split())
+                    overlap = words_new & words_existing
+                    if len(overlap) > 3:
+                        return True
+
+        return False
 
     async def _store_claims(self, claims: List[Dict]) -> None:
         """Guardar claims em MemPalace e PostgreSQL."""
