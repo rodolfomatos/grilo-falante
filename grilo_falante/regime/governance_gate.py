@@ -84,9 +84,9 @@ class GovernanceGate:
 
             # 6. PINA: decisions normativas requerem proposta
             if self._is_normative_decision(claim):
-                pina_candidate = self._create_pina_candidate(claim)
-                if pina_candidate:
-                    pina_candidates.append(pina_candidate)
+                pina_result = self._submit_to_pina(claim)
+                if pina_result:
+                    pina_candidates.append(pina_result)
                 issues.append("PINA required for normative decision")
 
             if issues:
@@ -143,17 +143,28 @@ class GovernanceGate:
 
         return any(ind in text_lower for ind in normative_indicators)
 
-    def _create_pina_candidate(self, claim: Dict) -> Optional[Dict]:
-        """Criar candidato PINA."""
+    def _submit_to_pina(self, claim: Dict) -> Optional[Dict]:
+        """Submeter claim normativa ao PINA protocol."""
         if not self.pina:
             return None
 
+        text = claim.get("text", "")
+        source = claim.get("source", "chat")
+
+        result = self.pina.propose_candidate(
+            source_document=source,
+            faithful_statement=text,
+            location="chat",
+            graph_scope=claim.get("gmif_level"),
+        )
+
         return {
-            "nca_id": f"NCA-{claim.get('id', 'unknown')}",
-            "source_document": claim.get("source", "chat"),
-            "faithful_statement": claim.get("text", ""),
+            "nca_id": result.nca_id,
+            "source_document": source,
+            "faithful_statement": text,
             "location": "chat",
             "gmif_level": claim.get("gmif_level", "M3"),
+            "proposed": result.success,
         }
 
     def add_validated_claim(self, claim: Dict) -> None:
