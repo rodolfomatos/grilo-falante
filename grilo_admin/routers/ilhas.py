@@ -43,10 +43,76 @@ class ILHAManager:
     _initialized = False
 
     @classmethod
+    def _get_default_storage_path(cls) -> str:
+        """Get default storage path relative to module location."""
+        import os
+        module_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        return os.path.join(module_dir, "data", "ilhas.json")
+
+    _storage_path: str = None  # Lazy initialization
+
+    @classmethod
+    def _get_storage_path(cls) -> str:
+        """Get storage path, initializing if needed."""
+        if cls._storage_path is None:
+            cls._storage_path = cls._get_default_storage_path()
+        return cls._storage_path
+
+    @classmethod
     def initialize(cls):
-        """Initialize storage."""
+        """Initialize storage and load from disk if available."""
         if not cls._initialized:
             cls._initialized = True
+            cls._ensure_storage_dir()
+            cls.load()
+
+    @classmethod
+    def _ensure_storage_dir(cls):
+        """Ensure storage directory exists."""
+        import os
+        storage_dir = os.path.dirname(cls._get_storage_path())
+        if storage_dir and not os.path.exists(storage_dir):
+            os.makedirs(storage_dir, exist_ok=True)
+
+    @classmethod
+    def set_storage_path(cls, path: str):
+        """Set the storage file path."""
+        cls._storage_path = path
+        cls._ensure_storage_dir()
+
+    @classmethod
+    def save(cls):
+        """Save ILHAs and PEDRAs to disk."""
+        import json
+        cls._ensure_storage_dir()
+        storage_path = cls._get_storage_path()
+        data = {
+            "ilhas": cls._ilhas,
+            "pedras": cls._pedras,
+            "saved_at": datetime.now(timezone.utc).isoformat(),
+        }
+        with open(storage_path, 'w') as f:
+            json.dump(data, f, indent=2, default=str)
+        logger.info(f"Saved {len(cls._ilhas)} ILHAs and {len(cls._pedras)} PEDRAs to {storage_path}")
+
+    @classmethod
+    def load(cls):
+        """Load ILHAs and PEDRAs from disk."""
+        import json
+        import os
+        storage_path = cls._get_storage_path()
+        if not os.path.exists(storage_path):
+            logger.info(f"No existing storage at {storage_path}, starting fresh")
+            return
+
+        try:
+            with open(storage_path, 'r') as f:
+                data = json.load(f)
+            cls._ilhas = data.get("ilhas", {})
+            cls._pedras = data.get("pedras", {})
+            logger.info(f"Loaded {len(cls._ilhas)} ILHAs and {len(cls._pedras)} PEDRAs from {storage_path}")
+        except Exception as e:
+            logger.error(f"Error loading ILHAs: {e}")
 
     @classmethod
     def _get_ntp_time(cls) -> float:
@@ -88,6 +154,7 @@ class ILHAManager:
         }
 
         cls._ilhas[ilha_dict["id"]] = ilha_dict
+        cls.save()
         logger.info(f"Created ILHA: {ilha_dict['id']} ({title})")
         return cls._dict_to_ilha(ilha_dict)
 
@@ -178,6 +245,7 @@ class ILHAManager:
         }
 
         cls._ilhas[ilha_id] = ilha_dict
+        cls.save()
         logger.info(f"Created ILHA from conversation: {ilha_id} ({len(pedras)} pedras)")
         return cls._dict_to_ilha(ilha_dict)
 
@@ -254,6 +322,7 @@ class ILHAManager:
         if pedra_id not in target_ilha.get("reused_pedras", []):
             target_ilha.setdefault("reused_pedras", []).append(pedra_id)
 
+        cls.save()
         logger.info(f"Pedra {pedra_id} reused in ILHA {target_ilha_id}")
         return True
 
@@ -274,6 +343,7 @@ class ILHAManager:
             ilha_dict["processed_at"] = datetime.now(timezone.utc).isoformat()
 
         cls._ilhas[ilha_id] = ilha_dict
+        cls.save()
         return cls._dict_to_ilha(ilha_dict)
 
     @classmethod

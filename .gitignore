@@ -55,6 +55,10 @@ Thumbs.db
 ledger/*.json
 !ledger/.gitkeep
 
+# ILHA/PEDRA storage (JSON)
+data/
+!data/.gitkeep
+
 # Temporary storage (grilo_admin)
 /tmp/grilo_*
 /tmp/grilo_repositories/
