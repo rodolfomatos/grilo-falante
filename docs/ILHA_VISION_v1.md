@@ -100,13 +100,18 @@ A **PEDRA** é um **agregador flexível de contextos epistémicos**:
 | `content_summary` | Resumo do agregado (para display) |
 | `shadow_documents` | Lista de ShadowDocuments (sombras de fontes) |
 | `digital_objects` | Lista de DigitalObjects (PDFs, URLs, imagens) |
-| `conceptual_capsules` | DigitalObjects com síntese validada (é um tipo de DigitalObject) |
 | `is_empty` | True se não tem conteúdos |
 | `gmif_events` | Timeline de classificações (só regista o "quando") |
+| `gmif_level` | Classificação atual |
 | `saliência` | Score de relevância (pode crescer/decair) |
 | `consequence_level` | Nível de consequências |
 | `decay_enabled` | Se o decaimento está ativo |
 | `reused_in` | ILHAS onde foi reutilizada |
+
+**Modelo ConceptualCapsule:**
+- Uma ConceptualCapsule é um DigitalObject com `is_capsule=True`
+- CC = <C, A, Σ, Δ> (Content, Scope, Interpretation, Normative Effect)
+- Não precisa de lista separada - é um atributo do DigitalObject
 
 **Nota:** Uma PEDRA pode conter 0 ou mais de cada tipo. Se não houver nada relevante, `is_empty=True`.
 
@@ -441,9 +446,10 @@ O **Logbook** é a forma de navegar as ILHAS geradas. É como um diário, mas:
 | G6 | Não há endpoint de logbook | Alta | ✅ IMPLEMENTADO |
 | G7 | PEDRA não tem campo `reused_in` | Média | ✅ IMPLEMENTADO |
 | G8 | Wiki view não mostra conexões entre ILHAS | Média | ⏳ PENDENTE |
-| G9 | Modelo PEDRA correto (agregador, não só texto) | Alta | ⏳ A CORRIGIR |
+| G9 | Modelo PEDRA correto (agregador) | Alta | ✅ IMPLEMENTADO |
 | G10 | Integração MemPalace (backend de storage) | Alta | ⏳ A ESTUDAR |
-| G11 | Arquitetura de storage unificada | Alta | ⏳ A DESENHAR |
+| G11 | Persistência ILHAs/PEDRAs (JSON) | Alta | ✅ IMPLEMENTADO |
+| G12 | API para adicionar conteúdo a PEDRAs | Alta | ✅ IMPLEMENTADO |
 
 ### 7.2 Próximos Passos
 
@@ -466,23 +472,36 @@ FASE C: Navegação Logbook (✅ PARCIAL)
 ├── ⏳ Wiki view com conexões
 └── ⏳ Busca por contexto
 
-FASE D: Modelo PEDRA Corrigido (⏳ A FAZER)
-├── ⏳ Criar modelos ShadowDocument, DigitalObject, ConceptualCapsule
-├── ⏳ Atualizar modelo Pedra em ilha.py
-├── ⏳ Adicionar campos: started_at, ended_at, saliência, gmif_events
-└── ⏳ Testar criação de PEDRA com agregados
+FASE D: Modelo PEDRA Corrigido (✅ COMPLETO)
+├── ✅ Criar modelos ShadowDocument, DigitalObject, ConceptualCapsule
+├── ✅ Atualizar modelo Pedra em ilha.py
+├── ✅ Adicionar campos: started_at, ended_at, saliência, gmif_events
+└── ✅ Testar criação de PEDRA com agregados
 
-FASE E: Integração MemPalace (⏳ A ESTUDAR)
+FASE E: API de Conteúdo PEDRA (✅ COMPLETO)
+├── ✅ POST /pedras/{id}/shadow-documents
+├── ✅ POST /pedras/{id}/digital-objects
+├── ✅ PUT /pedras/{id}
+└── ✅ GET /pedras/{id}/content
+
+FASE F: Integração MemPalace (⏳ A ESTUDAR)
+├── ✅ Criar shadow document de análise (SHADOW_MEMPALACE_v1.md)
 ├── ⏳ Testar MemPalace localmente
-├── ⏳ Criar shadow document de análise
 ├── ⏳ Definir arquitetura de integração
 └── ⏳ Implementar se complementar
 
-FASE F: Arquitetura de Storage (⏳ A DESENHAR)
+FASE G: Arquitetura de Storage (✅ PARCIAL)
+├── ✅ ILHAManager com persistência JSON (data/ilhas.json)
 ├── ⏳ Definir: PostgreSQL vs MemPalace vs Filesystem
-├── ⏳ Desenhar fluxo de dados unificado
-├── ⏳ Implementar persistência de ILHAs/PEDRAs
-└── ⏳ Testar sobrevivência a restart
+├── ⏳ Testar sobrevivência a restart
+└── ⏳ Backup e recovery
+
+FASE H: Shadow First Skill (✅ COMPLETO)
+├── ✅ Skill implementado em grilo_admin/skills/
+├── ✅ CLI: python -m grilo_admin.skills.cli
+├── ✅ API: /admin/skills/shadow/*
+├── ✅ Metodologia documentada
+└── ✅ ILHA "Shadow First" criada e persistida
 ```
 
 ---
