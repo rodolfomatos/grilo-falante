@@ -1,9 +1,20 @@
 # Plano: Admin Back-office para Grilo Falante Platform
 
-**Versão:** 1.0
+**Versão:** 1.1
 **Data:** 2026-04-16
 **Autor:** Rodolfo
 **Estado:** Draft
+
+---
+
+## Histórico de Alterações
+
+| Versão | Data | Alterações |
+|--------|------|-----------|
+| 1.0 | 2026-04-16 | Versão inicial |
+| 1.1 | 2026-04-16 | Adicionado OpenDataLoader PDF e Feynman F1/F2/F3 |
+
+---
 
 ---
 
@@ -93,13 +104,55 @@ class Repository:
 ### 2.4 Fluxo de Ingestão
 
 ```
-Upload → Parser → Chunking → Embedding → Indexing → Searchable
-                                              ↓
-                                         MemPalace (fast)
-                                         PostgreSQL (authoritative)
+Upload (PDF/DOCX)
+       │
+       ▼
+OpenDataLoader PDF ──▶ Markdown + JSON (com bounding boxes)
+       │
+       ▼
+FeynmanProcessor ──▶ F1 (FAQ simplificado)
+       │           ──▶ F2 (Explicação técnica)
+       │           ──▶ F3 (Why Loop → Gap detection)
+       │
+       ▼
+Chunking + Embedding
+       │
+       ▼
+MemPalace (fast RAG)
+PostgreSQL (authoritative)
 ```
 
-### 2.5 Porquê Repositórios?
+**OpenDataLoader PDF** (https://github.com/opendataloader-project/opendataloader-pdf):
+- Extrai PDF para Markdown + JSON
+- Suporta OCR, tables, formulas, multi-column
+- Bounding boxes para citações exactas
+- Output: `format="markdown,json"`
+
+### 2.5 Feynman - 3 Níveis de Processamento
+
+O **FeynmanSynthesizer** processa conteúdo em 3 níveis:
+
+| Nível | Nome | Descrição | Output |
+|-------|------|-----------|--------|
+| **F1** | Explicação da criança | Simples, acessível, linguagem comum | FAQ Q&A simplificado |
+| **F2** | Explicação do especialista | Técnica, detalhada, com jargão | Documentação técnica |
+| **F3** | Why Loop | "Porque é que X? Porque Y. Porque Z..." | Gaps identificados |
+
+**F3 (Why Loop)** é crucial para auto-aprendizagem:
+- Faz perguntas "porquê?" sucessivamente
+- Identifica conhecimento profundo
+- Deteta gaps (o que não se sabe)
+- Trigger "Ir à Escola" quando encontra gap
+
+```
+FeynmanSynthesizer.process(content)
+    │
+    ├──▶ F1: Simplificar ──▶ FAQ simplificado
+    ├──▶ F2: Tecnificar ──▶ Explicação técnica
+    └──▶ F3: Why Loop ──▶ Gaps ──▶ Ir à Escola
+```
+
+### 2.6 Porquê Repositórios?
 
 O Grilo Falante usa **MemPalace + PostgreSQL** como infraestrutura de armazenamento. Em vez de ter um sistema de ficheiros disperso, os repositórios:
 
