@@ -78,3 +78,10 @@ conversation_report_*.json
 
 # Jupyter
 .ipynb_checkpoints/
+
+# Docker
+.dockerignore
+
+# Environment
+.env
+!.env.example

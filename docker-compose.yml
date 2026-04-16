@@ -1,0 +1,71 @@
+# Grilo Falante v3.0 - Docker Compose
+# Usage: docker-compose up -d
+
+services:
+  grilo-falante:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: grilo-falante
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - GRILO_ADMIN_JWT_SECRET=${GRILO_JWT_SECRET:-changeme-in-production}
+      - GRILO_STORAGE_PATH=/app/data/ilhas.json
+    volumes:
+      - grilo-data:/app/data
+      - ./data:/app/data  # Mount local data directory
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - grilo-network
+
+  # Optional: PostgreSQL for production use
+  postgres:
+    image: postgres:15-alpine
+    container_name: grilo-postgres
+    environment:
+      - POSTGRES_USER=grilo
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-grilo123}
+      - POSTGRES_DB=grilo_falante
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grilo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - grilo-network
+    profiles:
+      - with-postgres
+
+  # Optional: MemPalace for semantic search
+  # Note: MemPalace runs differently - see docs
+  # This is a placeholder for future integration
+  mempalace:
+    image: alpine:latest
+    container_name: grilo-mempalace
+    profiles:
+      - with-mempalace
+    networks:
+      - grilo-network
+
+volumes:
+  grilo-data:
+    driver: local
+  postgres-data:
+    driver: local
+
+networks:
+  grilo-network:
+    driver: bridge
