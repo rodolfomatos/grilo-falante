@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 
 from grilo_admin.auth import get_current_user
 from grilo_admin.models import (
@@ -583,3 +584,212 @@ async def get_pedra(
     if not pedra:
         raise HTTPException(status_code=404, detail=f"Pedra '{pedra_id}' not found")
     return pedra
+
+
+# Request models for adding content
+class AddShadowDocumentRequest(BaseModel):
+    """Request to add a shadow document to a pedra."""
+    source_name: str
+    source_type: str = "document"
+    source_reference: Optional[str] = None
+    feynman_f1: Optional[str] = None
+    feynman_f2: Optional[str] = None
+    feynman_f3_gaps: List[str] = Field(default_factory=list)
+    extracted_claims: List[str] = Field(default_factory=list)
+    evidence_level: str = "weak"
+    assumptions: List[str] = Field(default_factory=list)
+    misuse_risks: List[str] = Field(default_factory=list)
+
+
+class AddDigitalObjectRequest(BaseModel):
+    """Request to add a digital object to a pedra."""
+    type: str = "reference"
+    reference: str
+    title: Optional[str] = None
+    description: Optional[str] = None
+    identity: Optional[str] = None
+    purpose: Optional[str] = None
+    authority: Optional[str] = None
+    is_capsule: bool = False
+    capsule_scope: Optional[str] = None
+    capsule_interpretation: Optional[str] = None
+    capsule_normative_effect: Optional[str] = None
+
+
+class UpdatePedraRequest(BaseModel):
+    """Request to update a pedra."""
+    content_summary: Optional[str] = None
+    saliencia: Optional[float] = None
+    consequence_level: Optional[float] = None
+    is_empty: Optional[bool] = None
+    gmif_level: Optional[str] = None
+
+
+@router.post("/pedras/{pedra_id}/shadow-documents")
+async def add_shadow_document(
+    pedra_id: str,
+    request: AddShadowDocumentRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Add a shadow document to a pedra.
+
+    A shadow document captures the "shadow" of a source -
+    the claims and insights that remain when you remember something.
+    """
+    pedra_dict = ILHAManager._pedras.get(pedra_id)
+    if not pedra_dict:
+        raise HTTPException(status_code=404, detail=f"Pedra '{pedra_id}' not found")
+
+    shadow_doc = ShadowDocument(
+        source_name=request.source_name,
+        source_type=request.source_type,
+        source_reference=request.source_reference,
+        feynman_f1=request.feynman_f1,
+        feynman_f2=request.feynman_f2,
+        feynman_f3_gaps=request.feynman_f3_gaps,
+        extracted_claims=request.extracted_claims,
+        evidence_level=request.evidence_level,
+        assumptions=request.assumptions,
+        misuse_risks=request.misuse_risks,
+    )
+
+    pedra_dict.setdefault("shadow_documents", []).append(shadow_doc.model_dump())
+    pedra_dict["is_empty"] = False
+    ILHAManager.save()
+
+    return {
+        "success": True,
+        "message": f"Shadow document added to '{pedra_id}'",
+        "shadow_document_id": shadow_doc.id,
+        "total_shadow_documents": len(pedra_dict["shadow_documents"]),
+    }
+
+
+@router.post("/pedras/{pedra_id}/digital-objects")
+async def add_digital_object(
+    pedra_id: str,
+    request: AddDigitalObjectRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Add a digital object to a pedra.
+
+    Digital objects are referenceable entities like PDFs, URLs, or images.
+    If is_capsule=True, it's a ConceptualCapsule (validated synthesis).
+    """
+    pedra_dict = ILHAManager._pedras.get(pedra_id)
+    if not pedra_dict:
+        raise HTTPException(status_code=404, detail=f"Pedra '{pedra_id}' not found")
+
+    digital_obj = DigitalObject(
+        type=request.type,
+        reference=request.reference,
+        title=request.title,
+        description=request.description,
+        identity=request.identity,
+        purpose=request.purpose,
+        authority=request.authority,
+        is_capsule=request.is_capsule,
+        capsule_scope=request.capsule_scope,
+        capsule_interpretation=request.capsule_interpretation,
+        capsule_normative_effect=request.capsule_normative_effect,
+    )
+
+    pedra_dict.setdefault("digital_objects", []).append(digital_obj.model_dump())
+    pedra_dict["is_empty"] = False
+    ILHAManager.save()
+
+    return {
+        "success": True,
+        "message": f"Digital object added to '{pedra_id}'",
+        "digital_object_id": digital_obj.id,
+        "is_capsule": digital_obj.is_capsule,
+        "total_digital_objects": len(pedra_dict["digital_objects"]),
+    }
+
+
+@router.put("/pedras/{pedra_id}")
+async def update_pedra(
+    pedra_id: str,
+    request: UpdatePedraRequest,
+    current_user: User = Depends(get_current_user),
+):
+    """Update a pedra's metadata."""
+    pedra_dict = ILHAManager._pedras.get(pedra_id)
+    if not pedra_dict:
+        raise HTTPException(status_code=404, detail=f"Pedra '{pedra_id}' not found")
+
+    if request.content_summary is not None:
+        pedra_dict["content_summary"] = request.content_summary
+    if request.saliencia is not None:
+        pedra_dict["saliencia"] = request.saliencia
+    if request.consequence_level is not None:
+        pedra_dict["consequence_level"] = request.consequence_level
+    if request.is_empty is not None:
+        pedra_dict["is_empty"] = request.is_empty
+    if request.gmif_level is not None:
+        pedra_dict["gmif_level"] = request.gmif_level
+        # Add GMIF event
+        gmif_event = {
+            "gmif_level": request.gmif_level,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "source": "user_update",
+        }
+        pedra_dict.setdefault("gmif_events", []).append(gmif_event)
+
+    ILHAManager.save()
+    pedra = ILHAManager.get_pedra(pedra_id)
+
+    return {
+        "success": True,
+        "message": f"Pedra '{pedra_id}' updated",
+        "pedra": pedra,
+    }
+
+
+@router.get("/pedras/{pedra_id}/content")
+async def get_pedra_content(
+    pedra_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Get all content of a pedra including shadow documents and digital objects.
+    """
+    pedra = ILHAManager.get_pedra(pedra_id)
+    if not pedra:
+        raise HTTPException(status_code=404, detail=f"Pedra '{pedra_id}' not found")
+
+    return {
+        "id": pedra.id,
+        "ilha_id": pedra.ilha_id,
+        "content_summary": pedra.content_summary,
+        "is_empty": pedra.is_empty,
+        "shadow_documents": [
+            {
+                "id": sd.id,
+                "source_name": sd.source_name,
+                "source_type": sd.source_type,
+                "extracted_claims": sd.extracted_claims,
+                "evidence_level": sd.evidence_level,
+            }
+            for sd in pedra.shadow_documents
+        ],
+        "digital_objects": [
+            {
+                "id": do.id,
+                "type": do.type,
+                "reference": do.reference,
+                "title": do.title,
+                "is_capsule": do.is_capsule,
+            }
+            for do in pedra.digital_objects
+        ],
+        "gmif_level": pedra.gmif_level,
+        "saliencia": pedra.saliencia,
+        "consequence_level": pedra.consequence_level,
+        "gmif_events": [
+            {"gmif_level": e.gmif_level, "timestamp": e.timestamp}
+            for e in pedra.gmif_events
+        ],
+    }
