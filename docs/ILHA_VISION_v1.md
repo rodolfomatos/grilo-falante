@@ -422,37 +422,37 @@ O **Logbook** é a forma de navegar as ILHAS geradas. É como um diário, mas:
 
 ### 7.1 Lacunas Identificadas (Gaps)
 
-| ID | Descrição | Prioridade |
-|----|-----------|------------|
-| G1 | AI-to-AI não gera ILHA automaticamente | Alta |
-| G2 | Não há timestamp NTP nos dados | Alta |
-| G3 | Participantes não têm IDs únicos | Média |
-| G4 | Topic não é extraído automaticamente | Média |
-| G5 | GF não decide autonomamente quando dormir | Alta |
-| G6 | Não há endpoint de logbook | Alta |
-| G7 | PEDRA não tem campo `reused_in` | Média |
-| G8 | Wiki view não mostra conexões entre ILHAS | Média |
+| ID | Descrição | Prioridade | Estado |
+|----|-----------|------------|--------|
+| G1 | AI-to-AI não gera ILHA automaticamente | Alta | ✅ IMPLEMENTADO |
+| G2 | Não há timestamp NTP nos dados | Alta | ✅ IMPLEMENTADO |
+| G3 | Participantes não têm IDs únicos | Média | ✅ IMPLEMENTADO |
+| G4 | Topic não é extraído automaticamente | Média | ✅ IMPLEMENTADO |
+| G5 | GF não decide autonomamente quando dormir | Alta | ⏳ PENDENTE |
+| G6 | Não há endpoint de logbook | Alta | ✅ IMPLEMENTADO |
+| G7 | PEDRA não tem campo `reused_in` | Média | ✅ IMPLEMENTADO |
+| G8 | Wiki view não mostra conexões entre ILHAS | Média | ⏳ PENDENTE |
 
 ### 7.2 Próximos Passos
 
 ```
-FASE A: Integração AI-to-AI → ILHA
-├── Criar modelo ILHA com timestamp
-├── Integrar no AI-to-AI test script
-├── Gerar ILHA após conversa
-└── Persistir em memória
+FASE A: Integração AI-to-AI → ILHA (✅ COMPLETO)
+├── ✅ Criar modelo ILHA com timestamp NTP
+├── ✅ Integrar no AI-to-AI test script
+├── ✅ Gerar ILHA após conversa
+└── ✅ Persistir em memória (ILHAManager)
 
-FASE B: Sistema de Ciclos Autónomos
-├── Implementar sinais de "cansaço" GF
-├── GF decide quando ir dormir
-├── GF decide quando acordar
-└── Logbook de ciclos
+FASE B: Sistema de Ciclos Autónomos (⏳ PENDENTE)
+├── ⏳ Implementar sinais de "cansaço" GF
+├── ⏳ GF decide quando ir dormir
+├── ⏳ GF decide quando acordar
+└── ⏳ Logbook de ciclos
 
-FASE C: Navegação Logbook
-├── Endpoint /logbook
-├── Endpoint /logbook/{ilha_id}
-├── Wiki view com conexões
-└── Busca por contexto
+FASE C: Navegação Logbook (✅ PARCIAL)
+├── ✅ Endpoint /logbook
+├── ✅ Endpoint /ilhas/{ilha_id}
+├── ⏳ Wiki view com conexões
+└── ⏳ Busca por contexto
 ```
 
 ---

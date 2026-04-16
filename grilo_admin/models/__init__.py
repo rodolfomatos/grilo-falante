@@ -56,6 +56,18 @@ from grilo_admin.models.article import (
     ValidationQueueItem,
 )
 
+from grilo_admin.models.ilha import (
+    ILHA,
+    ILHACreate,
+    ILHAUpdate,
+    ILHAFromConversation,
+    Participant,
+    Pedra,
+    InteractionType,
+    LogbookEntry,
+    ConversationMessage,
+)
+
 __all__ = [
     # User models
     "User",
@@ -107,4 +119,14 @@ __all__ = [
     "WikiView",
     "LearningResult",
     "ValidationQueueItem",
+    # ILHA models
+    "ILHA",
+    "ILHACreate",
+    "ILHAUpdate",
+    "ILHAFromConversation",
+    "Participant",
+    "Pedra",
+    "InteractionType",
+    "LogbookEntry",
+    "ConversationMessage",
 ]

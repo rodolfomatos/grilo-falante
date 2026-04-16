@@ -29,6 +29,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from grilo_falante.platform.config import get_llm_config, LLMClient
 
+from grilo_admin.models import ILHAFromConversation, ConversationMessage
+from grilo_admin.routers.ilhas import ILHAManager
+
 
 class AgentType(str, Enum):
     GRILO_FALANTE = "grilo_falante"
@@ -426,6 +429,33 @@ async def main():
     )
 
     report = await simulator.run()
+
+    print("\n" + "=" * 70)
+    print("CREATING ILHA FROM CONVERSATION")
+    print("=" * 70)
+
+    conversation_messages = []
+    for msg_data in report.get("conversation", []):
+        msg = ConversationMessage(
+            participant=msg_data["agent"],
+            content=msg_data["content"],
+            claims_extracted=msg_data.get("claims", []),
+            gaps_extracted=msg_data.get("gaps", []),
+        )
+        conversation_messages.append(msg)
+
+    ilha_data = ILHAFromConversation(
+        topic=args.topic,
+        messages=conversation_messages,
+    )
+
+    ilha = ILHAManager.create_from_conversation(ilha_data)
+    print(f"✅ ILHA created: {ilha.id}")
+    print(f"   Topic: {ilha.topic}")
+    print(f"   Participants: {[p.name for p in ilha.participants]}")
+    print(f"   Pedras: {len(ilha.pedras)}")
+    print(f"   Claims: {ilha.claims_count}")
+    print(f"   Gaps: {ilha.gaps_count}")
 
     print("\n" + "=" * 70)
     print("FULL CLAIMS LIST")

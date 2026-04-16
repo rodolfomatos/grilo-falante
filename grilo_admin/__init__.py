@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from grilo_admin.auth import get_current_user, user_store
 from grilo_admin.models import User
-from grilo_admin.routers import users_router, system_router, plugins_router, repositories_router, cycles_router, learning_router, escalations_router, articles_router
+from grilo_admin.routers import users_router, system_router, plugins_router, repositories_router, cycles_router, learning_router, escalations_router, articles_router, ilhas_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -96,6 +96,7 @@ app.include_router(cycles_router, prefix="/admin")
 app.include_router(learning_router, prefix="/admin")
 app.include_router(escalations_router, prefix="/admin")
 app.include_router(articles_router, prefix="/admin")
+app.include_router(ilhas_router, prefix="/admin")
 
 
 if __name__ == "__main__":

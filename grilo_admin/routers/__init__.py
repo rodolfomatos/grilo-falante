@@ -10,6 +10,7 @@ from grilo_admin.routers.cycles import router as cycles_router
 from grilo_admin.routers.learning import router as learning_router
 from grilo_admin.routers.escalations import router as escalations_router
 from grilo_admin.routers.articles import router as articles_router
+from grilo_admin.routers.ilhas import router as ilhas_router
 
 __all__ = [
     "users_router",
@@ -20,4 +21,5 @@ __all__ = [
     "learning_router",
     "escalations_router",
     "articles_router",
+    "ilhas_router",
 ]
