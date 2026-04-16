@@ -14,6 +14,7 @@ from grilo_falante.backend.services.llm.base import (
     LLMServiceFactory,
     get_llm_service,
 )
+from grilo_falante.backend.services.llm.bitnet import BitNetService
 
 __all__ = [
     "LLMMessage",
@@ -24,6 +25,7 @@ __all__ = [
     "IAEDUService",
     "OpenWebUIService",
     "OpenAIService",
+    "BitNetService",
     "LLMServiceFactory",
     "get_llm_service",
 ]

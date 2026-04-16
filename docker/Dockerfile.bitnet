@@ -1,0 +1,68 @@
+# =============================================================================
+# Dockerfile for BitNet (1-bit LLM inference via bitnet.cpp)
+# =============================================================================
+# This builds bitnet.cpp and runs the inference server
+# with the BitNet b1.58 model for efficient 1-bit LLM inference.
+#
+# Model is downloaded automatically on first run if not present.
+# =============================================================================
+
+FROM python:3.10-slim
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    cmake \
+    build-essential \
+    python3-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install huggingface-cli for model download
+RUN pip install huggingface_hub
+
+# Clone and build bitnet.cpp
+WORKDIR /build
+
+# Clone bitnet.cpp repository
+RUN git clone --recursive https://github.com/microsoft/BitNet.git .
+
+# Build bitnet.cpp (CPU version)
+RUN mkdir -p build && \
+    cd build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release && \
+    cmake --build . --config Release
+
+# Create models directory
+RUN mkdir -p /models
+
+# Set up model download script
+WORKDIR /models
+
+# Download model automatically if not present
+ENV BITNET_MODEL=${BITNET_MODEL:-BitNet-b1.58-2B-4T}
+ENV MODEL_REPO=microsoft/${BITNET_MODEL}-gguf
+ENV MODEL_FILE=ggml-model-i2_s.gguf
+
+RUN echo "Downloading BitNet model: ${MODEL_REPO}" && \
+    huggingface-cli download ${MODEL_REPO} ${MODEL_FILE} \
+        --local-dir . \
+        --local-dir-use-symlinks False \
+        || echo "Model download failed, will retry on startup"
+
+# Copy inference server script
+COPY --from=build /build/run_inference_server.py /models/
+
+# Expose port
+EXPOSE 8002
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
+
+# Run inference server
+WORKDIR /models
+CMD python run_inference_server.py \
+    -m /models/${MODEL_FILE} \
+    --port 8002 \
+    --host 0.0.0.0

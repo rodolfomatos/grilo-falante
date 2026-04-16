@@ -40,6 +40,27 @@ services:
               capabilities: [gpu]
 
   # =============================================================================
+  # BITNET (1-bit LLM via bitnet.cpp)
+  # =============================================================================
+  bitnet:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bitnet
+    ports:
+      - "8002:8002"
+    volumes:
+      - bitnet_models:/models
+    environment:
+      BITNET_MODEL: ${BITNET_MODEL:-BitNet-b1.58-2B-4T}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # =============================================================================
   # OPENWEBUI (Interface)
   # =============================================================================
   openwebui:
@@ -72,6 +93,8 @@ services:
       IAEDU_API_KEY: ${IAEDU_API_KEY:-}
       OPENWEBUI_BASE_URL: http://openwebui:8080
       OPENWEBUI_API_KEY: ${OPENWEBUI_API_KEY:-}
+      BITNET_BASE_URL: http://bitnet:8002
+      BITNET_MODEL: ${BITNET_MODEL:-BitNet-b1.58-2B-4T}
     ports:
       - "8000:8000"
     depends_on:
@@ -91,6 +114,8 @@ services:
       API_TOKEN: ${API_TOKEN:-}
       LLM_PROVIDER: ${LLM_PROVIDER:-ollama}
       OLLAMA_BASE_URL: http://ollama:11434
+      BITNET_BASE_URL: http://bitnet:8002
+      BITNET_MODEL: ${BITNET_MODEL:-BitNet-b1.58-2B-4T}
     depends_on:
       db:
         condition: service_healthy
@@ -154,3 +179,4 @@ volumes:
   openwebui_data:
   lake_data:
   mempallace_data:
+  bitnet_models:

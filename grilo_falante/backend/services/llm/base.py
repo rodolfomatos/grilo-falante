@@ -412,6 +412,9 @@ class LLMServiceFactory:
             service = OpenWebUIService()
         elif provider == "openai":
             service = OpenAIService()
+        elif provider == "bitnet":
+            from grilo_falante.backend.services.llm.bitnet import BitNetService
+            service = BitNetService()
         else:
             raise ValueError(f"Unknown LLM provider: {provider}")
 

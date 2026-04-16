@@ -18,6 +18,7 @@ class LLMProvider(str, Enum):
     IAEDU = "iaedu"
     OPENWEBUI = "openwebui"
     ANTHROPIC = "anthropic"
+    BITNET = "bitnet"
 
 
 class Settings(BaseSettings):
@@ -68,6 +69,11 @@ class Settings(BaseSettings):
     openwebui_base_url: str = "http://localhost:8080"
     openwebui_api_key: Optional[str] = None
 
+    # BitNet (1-bit LLM via bitnet.cpp)
+    bitnet_base_url: str = "http://localhost:8002"
+    bitnet_model: str = "BitNet-b1.58-2B-4T"
+    bitnet_temperature: float = 0.3
+
     # MCP
     mcp_transport: str = "stdio"
 
@@ -105,6 +111,10 @@ class Settings(BaseSettings):
     @property
     def openwebui_available(self) -> bool:
         return bool(self.openwebui_api_key and self.llm_provider == LLMProvider.OPENWEBUI)
+
+    @property
+    def bitnet_available(self) -> bool:
+        return self.llm_provider == LLMProvider.BITNET
 
 
 @lru_cache
