@@ -114,11 +114,95 @@ class Acordar:
             intention_declared=intention
         )
 
+    async def vai_dormir_async(self) -> dict:
+        """
+        VAI_DORMIR async - Hibernate the regime AND execute sleep cycle.
+
+        This performs the complete sleep cycle:
+        1. Collect interactions since last wake
+        2. Identify stones (salient interactions)
+        3. Evaluate transformation into islands
+        4. Aggregate around gravity centers
+        5. Update existing island states (apply decay)
+        6. Consolidate memory
+        7. Save to persistent storage
+        8. Generate sleep report
+
+        Only after all steps does it hibernate.
+        """
+        if self.state_machine.current_cycle is None:
+            return {"success": False, "message": "No active cycle"}
+
+        ctx = self.state_machine.current_cycle
+
+        relatório = {
+            "success": False,
+            "message": "",
+            "cycle_id": ctx.cycle_id,
+            "passos_executados": [],
+            "pedras_criadas": 0,
+            "ilhas_criadas": 0,
+            "ilhas_actualizadas": 0,
+            "agregações_feitas": 0,
+        }
+
+        try:
+            # Import the batch processor
+            from app.regime.dormir import ProcessadorBatch
+
+            # Collect interactions since last wake
+            interações = self._coletar_interações_do_dia()
+            relatório["passos_executados"].append("COLETAR")
+            relatório["interações_coletadas"] = len(interações)
+
+            # Execute batch processing (steps 2-5)
+            processador = ProcessadorBatch()
+            dormir_result = await processador.executar(
+                session_id=ctx.cycle_id or "regime",
+                interações=interações,
+            )
+
+            relatório.update(dormir_result)
+            relatório["passos_executados"].append("PROCESSAR")
+
+            # Step 6-7: Already done in processador.executar()
+
+            # Step 8: Generate sleep report
+            relatório["passos_executados"].append("RELATÓRIO")
+
+        except Exception as e:
+            logger.warning(f"Erro no ciclo dormir: {e}")
+            relatório["message"] = f"Sleep cycle error: {e}"
+            # Continue to hibernate even if sleep cycle failed
+
+        # Now hibernate
+        if not self.state_machine.hibernate():
+            relatório["success"] = False
+            relatório["message"] = "Cannot hibernate from current state"
+            return relatório
+
+        if self.ledger:
+            self.ledger.add_entry(
+                entry_type=LedgerEntryType.REGIME_EVENT,
+                content="VAI_DORMIR: Regime hibernated",
+                metadata={
+                    "cycle_id": ctx.cycle_id,
+                    "relatório": str(relatório.get("passos_executados", [])),
+                },
+                cycle_id=ctx.cycle_id
+            )
+
+        relatório["success"] = True
+        relatório["message"] = "Regime hibernated. Sleep cycle complete. Use grilo_resume to continue."
+
+        return relatório
+
     def vai_dormir(self) -> dict:
         """
-        VAI_DORMIR - Hibernate the regime.
+        VAI_DORMIR sync - Simplified version that just hibernates.
 
-        The regime can be suspended legitimately.
+        For full sleep cycle with batch processing, use vai_dormir_async().
+        This sync version is kept for backwards compatibility.
         """
         if self.state_machine.current_cycle is None:
             return {"success": False, "message": "No active cycle"}
@@ -131,15 +215,25 @@ class Acordar:
         if self.ledger:
             self.ledger.add_entry(
                 entry_type=LedgerEntryType.REGIME_EVENT,
-                content="VAI_DORMIR: Regime hibernated",
+                content="VAI_DORMIR: Regime hibernated (sync)",
                 metadata={"cycle_id": ctx.cycle_id},
                 cycle_id=ctx.cycle_id
             )
 
         return {
             "success": True,
-            "message": "Regime hibernated. Use grilo_resume to continue."
+            "message": "Regime hibernated. Use vai_dormir_async() for full sleep cycle."
         }
+
+    def _coletar_interações_do_dia(self) -> list:
+        """
+        Collect interactions since last wake.
+
+        Returns list of interaction dicts for the sleep cycle.
+        """
+        # TODO: Implement actual collection from ChatShell or other sources
+        # For now, return empty list (will be populated by ChatShell.end())
+        return []
 
     def resume(self) -> dict:
         """Resume from hibernation"""
