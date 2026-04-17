@@ -2,6 +2,7 @@
 	docker-build docker-up docker-down docker-logs docker-restart \
 	docker-start docker-stop \
 	docker-visualizer docker-api docker-mcp docker-db \
+	docker-rebuild docker-rebuild-api docker-rebuild-visualizer docker-rebuild-nginx \
 	db-init db-migrate db-reset db-seed \
 	audit audit-hostile \
 	install install-dev \
@@ -38,6 +39,10 @@ help:
 	@echo "  docker-stop          Stop running services"
 	@echo "  docker-logs          Show Docker logs"
 	@echo "  docker-restart      Restart all services"
+	@echo "  docker-rebuild     Rebuild and restart all services"
+	@echo "  docker-rebuild-api Rebuild API only"
+	@echo "  docker-rebuild-visualizer Rebuild visualizer only"
+	@echo "  docker-rebuild-nginx Rebuild nginx only"
 	@echo "  docker-visualizer   Start only visualizer"
 	@echo "  docker-api          Start only API"
 	@echo "  docker-mcp          Start only MCP"
@@ -175,6 +180,24 @@ docker-logs:
 docker-restart:
 	@echo "Restarting Docker services..."
 	@docker compose -f docker/docker-compose.yml restart
+
+docker-rebuild:
+	@echo "Rebuilding and restarting all Docker services..."
+	@docker compose -f docker/docker-compose.yml up --build -d
+	@echo ""
+	@docker compose -f docker/docker-compose.yml ps
+
+docker-rebuild-api:
+	@echo "Rebuilding API..."
+	@docker compose -f docker/docker-compose.yml up --build -d api
+
+docker-rebuild-visualizer:
+	@echo "Rebuilding Visualizer..."
+	@docker compose -f docker/docker-compose.yml up --build -d visualizer
+
+docker-rebuild-nginx:
+	@echo "Rebuilding Nginx..."
+	@docker compose -f docker/docker-compose.yml up --build -d nginx
 
 docker-start:
 	@echo "Starting Docker services..."
