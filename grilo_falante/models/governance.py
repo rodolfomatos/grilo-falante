@@ -36,7 +36,9 @@ class GovernanceRecord(BaseModel):
     curator_key: Optional[str] = Field(default=None, description="Curator key")
 
     # Confidence
-    curator_confidence: Optional[float] = Field(default=None, description="Curator's confidence in this decision")
+    curator_confidence: Optional[float] = Field(
+        default=None, description="Curator's confidence in this decision"
+    )
 
     # Metadata
     metadata: dict = Field(default_factory=dict, description="Additional metadata")

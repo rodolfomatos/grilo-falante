@@ -50,6 +50,16 @@ class BitNetService(LLMService):
     def default_temperature(self) -> float:
         return self.temperature
 
+    @property
+    def available(self) -> bool:
+        """Check if BitNet server is available."""
+        try:
+            import httpx
+            response = httpx.get(f"{self.base_url}/health", timeout=2.0)
+            return response.status_code == 200
+        except Exception:
+            return False
+
     async def chat(
         self,
         messages: list[LLMMessage],
@@ -91,7 +101,8 @@ class BitNetService(LLMService):
                     usage={
                         "prompt_tokens": data.get("prompt_eval_count", 0),
                         "completion_tokens": data.get("eval_count", 0),
-                        "total_tokens": data.get("prompt_eval_count", 0) + data.get("eval_count", 0),
+                        "total_tokens": data.get("prompt_eval_count", 0)
+                        + data.get("eval_count", 0),
                     },
                     finish_reason="stop" if data.get("done", False) else None,
                 )
@@ -145,6 +156,7 @@ class BitNetService(LLMService):
 
                         try:
                             import json
+
                             data = json.loads(line)
                         except json.JSONDecodeError:
                             continue

@@ -85,9 +85,7 @@ class QueryPipeline:
         claims = await self.claim_repo.search(query, session_id, limit=20)
 
         # Step 3: Detect gaps
-        gap_result = await self.gap_service.detect_gaps(
-            query, session_id, threshold
-        )
+        gap_result = await self.gap_service.detect_gaps(query, session_id, threshold)
 
         gaps = []
         if gap_result.gap_found and auto_school_mode:
@@ -167,8 +165,6 @@ class QueryPipeline:
             # Check for unsupported generalizations
             if any(word in text_lower for word in ["all", "always", "never", "everyone"]):
                 if claim.gmif_level not in [GMIFLevel.M1_PRIMARY, GMIFLevel.M4_DOUBTFUL]:
-                    issues.append(
-                        f"Generalization without primary evidence: {claim.claim_key}"
-                    )
+                    issues.append(f"Generalization without primary evidence: {claim.claim_key}")
 
         return len(issues) == 0, issues

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Ilhas - Grilo Falante Visualizer{% endblock %}
+
+{% block content %}
+<div class="tabs">
+    <a href="/visualizer/" class="tab">Overview</a>
+    <a href="/visualizer/ilhas" class="tab active">Ilhas</a>
+    <a href="/visualizer/claims" class="tab">Claims</a>
+    <a href="/visualizer/graph" class="tab">Graph</a>
+</div>
+
+<div class="article">
+    <div class="article-header">
+        <h1 class="article-title">Memory Islands (Ilhas)</h1>
+    </div>
+    <div class="article-content">
+        {% if ilhas %}
+            {% for ilha in ilhas %}
+            <div class="list-item">
+                <div class="list-item-content">
+                    <h3 class="list-item-title">
+                        <a href="/visualizer/ilhas/{{ilha.ilha_key}}">{{ilha.title}}</a>
+                    </h3>
+                    <p class="list-item-snippet">{{ilha.description[:150]}}...</p>
+                    <div>
+                        <span class="gmif-badge">{{ilha.estado}}</span>
+                        <span>{{ilha.membros|length}} members</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p><em>No ilhas found.</em></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

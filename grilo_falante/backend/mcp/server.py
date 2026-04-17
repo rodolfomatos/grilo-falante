@@ -47,7 +47,15 @@ from grilo_falante.models import (
     ValidationState,
     LegitimacyState,
 )
-from grilo_falante.regime import Loader, Acordar, Ledger, LedgerEntryType, StateMachine, PINAProtocol, TransitionValidator
+from grilo_falante.regime import (
+    Loader,
+    Acordar,
+    Ledger,
+    LedgerEntryType,
+    StateMachine,
+    PINAProtocol,
+    TransitionValidator,
+)
 
 _ledger = Ledger()
 _loader = Loader(ledger=_ledger)
@@ -59,12 +67,15 @@ _validator = TransitionValidator(state_machine=_state_machine)
 # Chat session management
 _chat_sessions: dict[str, "ChatShell"] = {}
 
+
 def get_chat_shell(session_id: str) -> "ChatShell":
     """Get or create a chat shell session."""
     from app.skills.chat_shell import ChatShell
+
     if session_id not in _chat_sessions:
         _chat_sessions[session_id] = ChatShell(session_id=session_id)
     return _chat_sessions[session_id]
+
 
 # Create server
 app = Server("grilo-falante")
@@ -100,9 +111,19 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "temporal_anchor": {"type": "string", "description": "Date/time context (e.g., '2026-04-15')"},
-                    "intention": {"type": "string", "description": "What the human intends to accomplish"},
-                    "mode": {"type": "string", "enum": ["exploratory", "committed"], "default": "exploratory"},
+                    "temporal_anchor": {
+                        "type": "string",
+                        "description": "Date/time context (e.g., '2026-04-15')",
+                    },
+                    "intention": {
+                        "type": "string",
+                        "description": "What the human intends to accomplish",
+                    },
+                    "mode": {
+                        "type": "string",
+                        "enum": ["exploratory", "committed"],
+                        "default": "exploratory",
+                    },
                 },
                 "required": ["temporal_anchor", "intention"],
             },
@@ -128,8 +149,14 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "source_document": {"type": "string", "description": "Source document reference"},
-                    "faithful_statement": {"type": "string", "description": "The normative statement"},
+                    "source_document": {
+                        "type": "string",
+                        "description": "Source document reference",
+                    },
+                    "faithful_statement": {
+                        "type": "string",
+                        "description": "The normative statement",
+                    },
                     "location": {"type": "string", "description": "Location in source"},
                     "graph_scope": {"type": "string"},
                 },
@@ -143,7 +170,11 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "nca_id": {"type": "string", "description": "The NCA-ID"},
-                    "decision": {"type": "string", "enum": ["A", "B", "C"], "description": "[A] Incorporate, [B] Do not incorporate, [C] Defer"},
+                    "decision": {
+                        "type": "string",
+                        "enum": ["A", "B", "C"],
+                        "description": "[A] Incorporate, [B] Do not incorporate, [C] Defer",
+                    },
                 },
                 "required": ["nca_id", "decision"],
             },
@@ -211,7 +242,10 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "content": {"type": "string", "description": "Literature review content to autopsy"},
+                    "content": {
+                        "type": "string",
+                        "description": "Literature review content to autopsy",
+                    },
                 },
                 "required": ["content"],
             },
@@ -338,7 +372,10 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "session_id": {"type": "string", "description": "Optional session ID to exit school mode for"},
+                    "session_id": {
+                        "type": "string",
+                        "description": "Optional session ID to exit school mode for",
+                    },
                 },
             },
         ),
@@ -459,7 +496,11 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "topic": {"type": "string"},
-                    "level": {"type": "string", "enum": ["fep1", "fep2", "fep3"], "default": "fep1"},
+                    "level": {
+                        "type": "string",
+                        "enum": ["fep1", "fep2", "fep3"],
+                        "default": "fep1",
+                    },
                 },
                 "required": ["topic"],
             },
@@ -505,10 +546,20 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "session_id": {"type": "string", "description": "Optional session ID (auto-generated if not provided)"},
-                    "temporal_anchor": {"type": "string", "description": "Date/time context (e.g., '2026-04-15')"},
+                    "session_id": {
+                        "type": "string",
+                        "description": "Optional session ID (auto-generated if not provided)",
+                    },
+                    "temporal_anchor": {
+                        "type": "string",
+                        "description": "Date/time context (e.g., '2026-04-15')",
+                    },
                     "intention": {"type": "string", "description": "What you intend to accomplish"},
-                    "mode": {"type": "string", "enum": ["exploratory", "committed"], "default": "exploratory"},
+                    "mode": {
+                        "type": "string",
+                        "enum": ["exploratory", "committed"],
+                        "default": "exploratory",
+                    },
                 },
             },
         ),
@@ -519,7 +570,10 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "message": {"type": "string", "description": "Message content"},
-                    "session_id": {"type": "string", "description": "Session ID (required if only one session exists)"},
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID (required if only one session exists)",
+                    },
                     "role": {"type": "string", "enum": ["user", "assistant"], "default": "user"},
                 },
                 "required": ["message"],
@@ -621,6 +675,56 @@ async def list_tools() -> list[Tool]:
                 },
             },
         ),
+        # AutoMem tools (optional)
+        Tool(
+            name="grilo_automem_status",
+            description="Check AutoMem availability and status",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
+        Tool(
+            name="grilo_automem_bridge_discovery",
+            description="Discover multi-hop connections between memories via bridge nodes",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "memory_id": {
+                        "type": "string",
+                        "description": "Starting memory ID",
+                    },
+                    "max_hops": {
+                        "type": "number",
+                        "default": 3,
+                        "description": "Maximum hops to traverse",
+                    },
+                },
+                "required": ["memory_id"],
+            },
+        ),
+        Tool(
+            name="grilo_automem_enrich",
+            description="Enrich a memory with auto-extracted entities",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "memory_id": {
+                        "type": "string",
+                        "description": "Memory ID to enrich",
+                    },
+                },
+                "required": ["memory_id"],
+            },
+        ),
+        Tool(
+            name="grilo_automem_consolidate",
+            description="Run consolidation cycle (decay, cluster, forget)",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
     ]
 
 
@@ -641,19 +745,33 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
         elif name == "grilo_load":
             result = _loader.load()
-            return [TextContent(type="text", text=json.dumps({
-                "success": result.success,
-                "message": result.message,
-                "cycle_id": result.cycle_id,
-                "state": result.state,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": result.success,
+                            "message": result.message,
+                            "cycle_id": result.cycle_id,
+                            "state": result.state,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_unload":
             result = _loader.unload()
-            return [TextContent(type="text", text=json.dumps({
-                "success": result.success,
-                "message": result.message,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": result.success,
+                            "message": result.message,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_acordar":
             result = _acordar.execute(
@@ -661,12 +779,19 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 intention=arguments["intention"],
                 mode=arguments.get("mode", "exploratory"),
             )
-            return [TextContent(type="text", text=json.dumps({
-                "success": result.success,
-                "message": result.message,
-                "temporal_anchor": result.temporal_anchor,
-                "intention_declared": result.intention_declared,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": result.success,
+                            "message": result.message,
+                            "temporal_anchor": result.temporal_anchor,
+                            "intention_declared": result.intention_declared,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_vai_dormir":
             result = _acordar.vai_dormir()
@@ -687,24 +812,38 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 location=arguments["location"],
                 graph_scope=arguments.get("graph_scope"),
             )
-            return [TextContent(type="text", text=json.dumps({
-                "success": result.success,
-                "nca_id": result.nca_id,
-                "message": result.message,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": result.success,
+                            "nca_id": result.nca_id,
+                            "message": result.message,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_pina_decide":
             result = _pina.decide(
                 nca_id=arguments["nca_id"],
                 decision=arguments["decision"],
             )
-            return [TextContent(type="text", text=json.dumps({
-                "success": result.success,
-                "nca_id": result.nca_id,
-                "message": result.message,
-                "decision": result.decision,
-                "active_invariants": result.active_invariants,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": result.success,
+                            "nca_id": result.nca_id,
+                            "message": result.message,
+                            "decision": result.decision,
+                            "active_invariants": result.active_invariants,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_pina_status":
             status = _pina.get_status()
@@ -712,10 +851,17 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
         elif name == "grilo_pina_pending":
             pending = _pina.get_pending()
-            return [TextContent(type="text", text=json.dumps({
-                "pending_count": len(pending),
-                "pending": pending[:arguments.get("limit", 20)],
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "pending_count": len(pending),
+                            "pending": pending[: arguments.get("limit", 20)],
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_validate_transition":
             result = _validator.validate_transition(
@@ -723,14 +869,21 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 to_node=arguments["to_node"],
                 graph_id=arguments["graph_id"],
             )
-            return [TextContent(type="text", text=json.dumps({
-                "valid": result.valid,
-                "from_node": result.from_node,
-                "to_node": result.to_node,
-                "graph_id": result.graph_id,
-                "message": result.message,
-                "available_transitions": result.available_transitions,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "valid": result.valid,
+                            "from_node": result.from_node,
+                            "to_node": result.to_node,
+                            "graph_id": result.graph_id,
+                            "message": result.message,
+                            "available_transitions": result.available_transitions,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_list_graphs":
             graphs = _validator.list_graphs()
@@ -739,15 +892,25 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         elif name == "grilo_stamp_capsule":
             from pathlib import Path
             from grilo_falante.regime import stamp_capsule
+
             capsule_path = Path(arguments["capsule_path"])
             gmif_level = arguments.get("gmif_level")
             force = arguments.get("force", False)
             stamped = stamp_capsule(capsule_path, gmif_level, force)
-            return [TextContent(type="text", text=json.dumps({
-                "success": stamped,
-                "capsule_path": str(capsule_path),
-                "message": "Capsule stamped successfully" if stamped else "Capsule already has metadata or error occurred",
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": stamped,
+                            "capsule_path": str(capsule_path),
+                            "message": "Capsule stamped successfully"
+                            if stamped
+                            else "Capsule already has metadata or error occurred",
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_run_auditoria_hostil":
             from grilo_falante.cognitive import AuditoriaHostil
@@ -759,15 +922,24 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             claims = []
             for i, line in enumerate(lines):
                 if len(line) > 20:
-                    claims.append({
-                        "id": f"claim_{i}",
-                        "claim_text": line,
-                        "gmif_level": "M3",
-                        "validation_status": "pending",
-                    })
+                    claims.append(
+                        {
+                            "id": f"claim_{i}",
+                            "claim_text": line,
+                            "gmif_level": "M3",
+                            "validation_status": "pending",
+                        }
+                    )
 
             if not claims:
-                claims = [{"id": "claim_0", "claim_text": content[:500], "gmif_level": "M3", "validation_status": "pending"}]
+                claims = [
+                    {
+                        "id": "claim_0",
+                        "claim_text": content[:500],
+                        "gmif_level": "M3",
+                        "validation_status": "pending",
+                    }
+                ]
 
             auditoria = AuditoriaHostil()
             report = await auditoria.run_full_audit(claims=claims, governance_records=[])
@@ -776,12 +948,14 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
         elif name == "grilo_run_autopsia_literatura":
             from grilo_falante.cognitive import PromptWorkflows
+
             workflow = PromptWorkflows()
             result = workflow.autopsia_literatura_workflow(arguments["content"])
             return [TextContent(type="text", text=json.dumps(result))]
 
         elif name == "grilo_run_triagem":
             from grilo_falante.cognitive import PromptWorkflows
+
             workflow = PromptWorkflows()
             result = workflow.triagem_workflow(arguments["content"])
             return [TextContent(type="text", text=json.dumps(result))]
@@ -799,10 +973,17 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 arguments["claim_text"],
                 arguments.get("source_count", 1),
             )
-            return [TextContent(type="text", text=json.dumps({
-                "gmif_level": level.value,
-                "gmif_confidence": confidence,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "gmif_level": level.value,
+                            "gmif_confidence": confidence,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_query":
             pipeline = QueryPipeline()
@@ -811,14 +992,21 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 session_id=arguments.get("session_id", "default"),
                 auto_school_mode=arguments.get("auto_school_mode", True),
             )
-            return [TextContent(type="text", text=json.dumps({
-                "status": result.status,
-                "reason": result.reason,
-                "claims_count": len(result.claims),
-                "gaps_count": len(result.gaps),
-                "m4_count": result.m4_count,
-                "lint_passed": result.lint_passed,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "status": result.status,
+                            "reason": result.reason,
+                            "claims_count": len(result.claims),
+                            "gaps_count": len(result.gaps),
+                            "m4_count": result.m4_count,
+                            "lint_passed": result.lint_passed,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_get_claim":
             repo = ClaimRepository()
@@ -842,11 +1030,18 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 gfid=gfid,
             )
             created = await repo.create(claim)
-            return [TextContent(type="text", text=json.dumps({
-                "id": created.id,
-                "claim_key": created.claim_key,
-                "gfid": created.gfid,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "id": created.id,
+                            "claim_key": created.claim_key,
+                            "gfid": created.gfid,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_validate_claim":
             repo = ClaimRepository()
@@ -862,8 +1057,12 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 return [TextContent(type="text", text=json.dumps({"error": "Curator not found"}))]
 
             decision = arguments["decision"]
-            new_status = ValidationState.APPROVED if decision == "approved" else ValidationState.REJECTED
-            new_legitimacy = LegitimacyState.ASSERTED if decision == "approved" else LegitimacyState.REJECTED
+            new_status = (
+                ValidationState.APPROVED if decision == "approved" else ValidationState.REJECTED
+            )
+            new_legitimacy = (
+                LegitimacyState.ASSERTED if decision == "approved" else LegitimacyState.REJECTED
+            )
 
             await repo.update_validation(claim.id, new_status, new_legitimacy)
 
@@ -891,11 +1090,18 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             elif decision == "rejected":
                 await scoring.penalize(curator.id, "Invalid validation")
 
-            return [TextContent(type="text", text=json.dumps({
-                "claim_id": claim.id,
-                "decision": decision,
-                "new_status": new_status.value,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "claim_id": claim.id,
+                            "decision": decision,
+                            "new_status": new_status.value,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_list_gaps":
             repo = GapRepository()
@@ -907,10 +1113,17 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             else:
                 gaps = await repo.list_by_status(GapStatus.IDENTIFIED, limit)
 
-            return [TextContent(type="text", text=json.dumps({
-                "gaps": [g.to_dict() for g in gaps],
-                "count": len(gaps),
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "gaps": [g.to_dict() for g in gaps],
+                            "count": len(gaps),
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_school_mode":
             repo = GapRepository()
@@ -921,13 +1134,20 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             service = SchoolModeService()
             result = await service.execute(gap)
 
-            return [TextContent(type="text", text=json.dumps({
-                "success": result.success,
-                "gap_key": result.gap.gap_key,
-                "sources_found": result.sources_found,
-                "claims_created": result.claims_created,
-                "error": result.error,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": result.success,
+                            "gap_key": result.gap.gap_key,
+                            "sources_found": result.sources_found,
+                            "claims_created": result.claims_created,
+                            "error": result.error,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_sair_da_escola":
             from grilo_falante.regime.state import StateMachine, CycleState
@@ -946,17 +1166,33 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                         content="Exited school mode via gepeto_sair_da_escola",
                         gf_id="sair_da_escola",
                     )
-                return [TextContent(type="text", text=json.dumps({
-                    "success": True,
-                    "message": "Exited school mode, returned to GOVERNING state",
-                    "state": CycleState.GOVERNING.value,
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "success": True,
+                                "message": "Exited school mode, returned to GOVERNING state",
+                                "state": CycleState.GOVERNING.value,
+                            }
+                        ),
+                    )
+                ]
             else:
-                return [TextContent(type="text", text=json.dumps({
-                    "success": False,
-                    "message": f"Could not transition to GOVERNING from current state",
-                    "current_state": sm.current_cycle.state.value if sm.current_cycle else "NONE",
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "success": False,
+                                "message": f"Could not transition to GOVERNING from current state",
+                                "current_state": sm.current_cycle.state.value
+                                if sm.current_cycle
+                                else "NONE",
+                            }
+                        ),
+                    )
+                ]
 
         elif name == "gepeto_create_curator":
             repo = CuratorRepository()
@@ -968,51 +1204,88 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 specializations=arguments.get("specializations", []),
             )
             created = await repo.create(curator)
-            return [TextContent(type="text", text=json.dumps({
-                "id": created.id,
-                "curator_key": created.curator_key,
-                "accountability_score": created.accountability_score,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "id": created.id,
+                            "curator_key": created.curator_key,
+                            "accountability_score": created.accountability_score,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_get_curator":
             repo = CuratorRepository()
             curator = await repo.get_by_id(arguments["curator_id"])
             if not curator:
                 return [TextContent(type="text", text=json.dumps({"error": "Curator not found"}))]
-            return [TextContent(type="text", text=json.dumps({
-                "id": curator.id,
-                "curator_key": curator.curator_key,
-                "name": curator.name,
-                "curator_type": curator.curator_type.value if hasattr(curator.curator_type, 'value') else curator.curator_type,
-                "accountability_score": curator.accountability_score,
-                "specializations": curator.specializations,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "id": curator.id,
+                            "curator_key": curator.curator_key,
+                            "name": curator.name,
+                            "curator_type": curator.curator_type.value
+                            if hasattr(curator.curator_type, "value")
+                            else curator.curator_type,
+                            "accountability_score": curator.accountability_score,
+                            "specializations": curator.specializations,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_list_sources":
             repo = SourceRepository()
             sources = await repo.list_all(arguments.get("limit", 20))
-            return [TextContent(type="text", text=json.dumps({
-                "sources": [{"id": s.id, "source_key": s.source_key, "title": s.title} for s in sources],
-                "count": len(sources),
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "sources": [
+                                {"id": s.id, "source_key": s.source_key, "title": s.title}
+                                for s in sources
+                            ],
+                            "count": len(sources),
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_get_source":
             repo = SourceRepository()
             source = await repo.get_by_id(arguments["source_id"])
             if not source:
                 return [TextContent(type="text", text=json.dumps({"error": "Source not found"}))]
-            return [TextContent(type="text", text=json.dumps({
-                "id": source.id,
-                "source_key": source.source_key,
-                "title": source.title,
-                "authors": source.authors,
-                "year": source.year,
-                "doi": source.doi,
-                "url": source.url,
-                "source_type": source.source_type,
-                "tier": source.tier.value if hasattr(source.tier, 'value') else source.tier,
-                "validation_status": source.validation_status.value if hasattr(source.validation_status, 'value') else source.validation_status,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "id": source.id,
+                            "source_key": source.source_key,
+                            "title": source.title,
+                            "authors": source.authors,
+                            "year": source.year,
+                            "doi": source.doi,
+                            "url": source.url,
+                            "source_type": source.source_type,
+                            "tier": source.tier.value
+                            if hasattr(source.tier, "value")
+                            else source.tier,
+                            "validation_status": source.validation_status.value
+                            if hasattr(source.validation_status, "value")
+                            else source.validation_status,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_create_source":
             repo = SourceRepository()
@@ -1027,11 +1300,18 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 tier=SourceTier(arguments.get("tier", "tier_2")),
             )
             created = await repo.create(source)
-            return [TextContent(type="text", text=json.dumps({
-                "id": created.id,
-                "source_key": created.source_key,
-                "title": created.title,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "id": created.id,
+                            "source_key": created.source_key,
+                            "title": created.title,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_get_gap":
             repo = GapRepository()
@@ -1053,11 +1333,18 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
             await gap_repo.resolve(gap.id, claim.id, arguments.get("curator_id"))
 
-            return [TextContent(type="text", text=json.dumps({
-                "gap_key": gap.gap_key,
-                "resolved": True,
-                "resolved_claim_id": claim.id,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "gap_key": gap.gap_key,
+                            "resolved": True,
+                            "resolved_claim_id": claim.id,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "gepeto_session_prefs":
             repo = SessionPreferencesRepository()
@@ -1066,24 +1353,37 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 topics=arguments.get("topics", []),
                 domains=arguments.get("domains", []),
                 recency_weight=arguments.get("recency_weight", 0.3),
-                preferred_categories=arguments.get("preferred_categories", ["M1", "M2", "M5", "M7"]),
+                preferred_categories=arguments.get(
+                    "preferred_categories", ["M1", "M2", "M5", "M7"]
+                ),
                 show_metadata=arguments.get("show_metadata", True),
                 auto_school_mode=arguments.get("auto_school_mode", True),
             )
             await repo.upsert(prefs)
-            return [TextContent(type="text", text=json.dumps({"status": "ok", "session_id": prefs.session_id}))]
+            return [
+                TextContent(
+                    type="text", text=json.dumps({"status": "ok", "session_id": prefs.session_id})
+                )
+            ]
 
         elif name == "gepeto_feynman_explain":
             service = FeynmanService()
             level = FeynmanLevel(arguments.get("level", "fep1"))
             result = service.explain(arguments["topic"], level)
-            return [TextContent(type="text", text=json.dumps({
-                "level": result.level.value,
-                "explanation": result.explanation,
-                "concepts": result.concepts_identified,
-                "gaps": result.gaps_found,
-                "completed": result.completed,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "level": result.level.value,
+                            "explanation": result.explanation,
+                            "concepts": result.concepts_identified,
+                            "gaps": result.gaps_found,
+                            "completed": result.completed,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_audit":
             from grilo_falante.cognitive import AuditoriaHostil
@@ -1096,98 +1396,191 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                     "id": c.claim_key,
                     "claim_text": c.claim_text,
                     "gmif_level": c.gmif_level.value if c.gmif_level else "M4",
-                    "validation_status": c.validation_state.value if c.validation_state else "pending",
+                    "validation_status": c.validation_state.value
+                    if c.validation_state
+                    else "pending",
                 }
                 for c in claims
             ]
 
             if not claims_data:
-                return [TextContent(type="text", text=json.dumps({
-                    "claims_audited": 0,
-                    "findings": [],
-                    "audit_result": {"status": "no_claims", "message": "No claims to audit"},
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "claims_audited": 0,
+                                "findings": [],
+                                "audit_result": {
+                                    "status": "no_claims",
+                                    "message": "No claims to audit",
+                                },
+                            }
+                        ),
+                    )
+                ]
 
             auditoria = AuditoriaHostil()
             report = await auditoria.run_full_audit(claims=claims_data, governance_records=[])
 
-            return [TextContent(type="text", text=json.dumps({
-                "claims_audited": len(claims),
-                "findings": report.findings,
-                "audit_result": report.to_dict(),
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "claims_audited": len(claims),
+                            "findings": report.findings,
+                            "audit_result": report.to_dict(),
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_lint":
             from grilo_falante.backend.services.lint import CognitiveLint
+
             lint = CognitiveLint()
             result = lint.lint(arguments["text"])
-            return [TextContent(type="text", text=json.dumps({
-                "state": result.state.value,
-                "message": result.message,
-                "issues": result.issues,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "state": result.state.value,
+                            "message": result.message,
+                            "issues": result.issues,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_semantic_search":
-            from grilo_falante.backend.memory import MemPalaceCache, MEMPALACE_AVAILABLE
-            if not MEMPALACE_AVAILABLE:
-                return [TextContent(type="text", text=json.dumps({
-                    "error": "MemPalace not available",
-                    "results": [],
-                }))]
-            cache = MemPalaceCache()
-            results = await cache.search(
+            from grilo_falante.backend.memory import (
+                MemPalaceCache,
+                AutoMemAdapter,
+                DualCacheRetriever,
+                MEMPALACE_AVAILABLE,
+            )
+            from grilo_falante.config import settings
+
+            # Initialize dual cache with AutoMem if enabled
+            automem_adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            # MemPalace fallback (if available)
+            mempalace = None
+            if MEMPALACE_AVAILABLE:
+                mempalace = MemPalaceCache()
+
+            # Dual cache retriever
+            dual_cache = DualCacheRetriever(
+                automem=automem_adapter,
+                mempalace=mempalace,
+                dual_write=settings.automem_dual_write,
+            )
+
+            results = await dual_cache.search(
                 arguments["query"],
                 limit=arguments.get("limit", 5),
             )
-            return [TextContent(type="text", text=json.dumps({
-                "query": arguments["query"],
-                "results": results,
-                "count": len(results),
-                "source": "mempalace",
-            }))]
+
+            # Determine source for logging
+            source = "dual_cache"
+            if not settings.automem_enabled:
+                source = "mempalace"
+            elif not results:
+                source = "postgresql"
+
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "query": arguments["query"],
+                            "results": results,
+                            "count": len(results),
+                            "source": source,
+                            "automem_enabled": settings.automem_enabled,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_chat_start":
-            shell = get_chat_shell(arguments.get("session_id", f"mcp_{datetime.now().strftime('%y%m%d_%H%M%S')}"))
+            shell = get_chat_shell(
+                arguments.get("session_id", f"mcp_{datetime.now().strftime('%y%m%d_%H%M%S')}")
+            )
             result = await shell.start(
                 temporal_anchor=arguments.get("temporal_anchor"),
                 intention=arguments.get("intention", "MCP chat session"),
                 mode=arguments.get("mode", "exploratory"),
             )
-            return [TextContent(type="text", text=json.dumps({
-                **result,
-                "active_sessions": list(_chat_sessions.keys()),
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            **result,
+                            "active_sessions": list(_chat_sessions.keys()),
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_chat_send":
             session_id = arguments.get("session_id")
             if not session_id and len(_chat_sessions) == 1:
                 session_id = list(_chat_sessions.keys())[0]
             if not session_id or session_id not in _chat_sessions:
-                return [TextContent(type="text", text=json.dumps({
-                    "error": "Session not found. Use grilo_chat_start first.",
-                    "active_sessions": list(_chat_sessions.keys()),
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": "Session not found. Use grilo_chat_start first.",
+                                "active_sessions": list(_chat_sessions.keys()),
+                            }
+                        ),
+                    )
+                ]
             shell = _chat_sessions[session_id]
             response = await shell.send_message(
                 content=arguments["message"],
                 role=arguments.get("role", "user"),
             )
-            return [TextContent(type="text", text=json.dumps({
-                "message": response.message,
-                "claims_extracted": response.claims_extracted,
-                "gmif_summary": response.gmif_summary,
-                "governance_passed": response.governance_passed,
-                "blocked_claims": response.blocked_claims,
-                "session_id": session_id,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "message": response.message,
+                            "claims_extracted": response.claims_extracted,
+                            "gmif_summary": response.gmif_summary,
+                            "governance_passed": response.governance_passed,
+                            "blocked_claims": response.blocked_claims,
+                            "session_id": session_id,
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_chat_end":
             session_id = arguments.get("session_id")
             if not session_id or session_id not in _chat_sessions:
-                return [TextContent(type="text", text=json.dumps({
-                    "error": "Session not found",
-                    "active_sessions": list(_chat_sessions.keys()),
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": "Session not found",
+                                "active_sessions": list(_chat_sessions.keys()),
+                            }
+                        ),
+                    )
+                ]
             shell = _chat_sessions.pop(session_id)
             result = await shell.end()
             return [TextContent(type="text", text=json.dumps(result))]
@@ -1195,27 +1588,48 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         elif name == "grilo_export_session":
             session_id = arguments.get("session_id")
             if not session_id or session_id not in _chat_sessions:
-                return [TextContent(type="text", text=json.dumps({
-                    "error": "Session not found",
-                    "active_sessions": list(_chat_sessions.keys()),
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": "Session not found",
+                                "active_sessions": list(_chat_sessions.keys()),
+                            }
+                        ),
+                    )
+                ]
             shell = _chat_sessions[session_id]
             script = shell.export_session()
             status = shell.get_status()
-            return [TextContent(type="text", text=json.dumps({
-                "script": script,
-                "session_id": session_id,
-                "cycle_id": status.get("cycle_id"),
-                "messages_count": status.get("messages_count"),
-                "claims_count": status.get("claims_count"),
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "script": script,
+                            "session_id": session_id,
+                            "cycle_id": status.get("cycle_id"),
+                            "messages_count": status.get("messages_count"),
+                            "claims_count": status.get("claims_count"),
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_import_session":
             session_script = arguments.get("session_script")
             if not session_script:
-                return [TextContent(type="text", text=json.dumps({
-                    "error": "session_script is required",
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": "session_script is required",
+                            }
+                        ),
+                    )
+                ]
 
             from app.skills.chat_shell import ChatShell
 
@@ -1226,14 +1640,21 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 return [TextContent(type="text", text=json.dumps(result))]
 
             _chat_sessions[shell.session_id] = shell
-            return [TextContent(type="text", text=json.dumps({
-                "success": True,
-                "session_id": shell.session_id,
-                "cycle_id": shell._cycle_id,
-                "state": shell.state,
-                "messages_count": len(shell.messages),
-                "claims_count": len(shell.claims),
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": True,
+                            "session_id": shell.session_id,
+                            "cycle_id": shell._cycle_id,
+                            "state": shell.state,
+                            "messages_count": len(shell.messages),
+                            "claims_count": len(shell.claims),
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_ilhas_list":
             from grilo_falante.backend.db.ilhas_repository import IlhaRepository
@@ -1247,10 +1668,17 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             else:
                 ilhas = await repo.listar(limit=limit)
 
-            return [TextContent(type="text", text=json.dumps({
-                "ilhas": [i.para_dict() for i in ilhas],
-                "count": len(ilhas),
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "ilhas": [i.para_dict() for i in ilhas],
+                            "count": len(ilhas),
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_ilhas_get":
             from grilo_falante.backend.db.ilhas_repository import IlhaRepository
@@ -1260,15 +1688,29 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
             ilha = await repo.obter(ilha_id)
             if not ilha:
-                return [TextContent(type="text", text=json.dumps({
-                    "error": f"Island {ilha_id} not found",
-                }))]
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps(
+                            {
+                                "error": f"Island {ilha_id} not found",
+                            }
+                        ),
+                    )
+                ]
 
-            return [TextContent(type="text", text=json.dumps({
-                "ilha": ilha.para_dict(),
-                "membros": [m.para_dict() for m in ilha.membros],
-                "relações": [r.para_dict() for r in ilha.relações],
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "ilha": ilha.para_dict(),
+                            "membros": [m.para_dict() for m in ilha.membros],
+                            "relações": [r.para_dict() for r in ilha.relações],
+                        }
+                    ),
+                )
+            ]
 
         elif name == "grilo_dormir":
             from app.regime.dormir import ir_dormir
@@ -1284,12 +1726,129 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             tarefa = arguments.get("tarefa")
 
             resultado = await acordar(session_id=session_id, tarefa=tarefa)
-            return [TextContent(type="text", text=json.dumps({
-                "success": True,
-                "ilhas_ativas": len(resultado.ilhas_ativas),
-                "ilhas_dormintes": len(resultado.ilhas_dormintes),
-                "bundle": resultado.bundle,
-            }))]
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "success": True,
+                            "ilhas_ativas": len(resultado.ilhas_ativas),
+                            "ilhas_dormintes": len(resultado.ilhas_dormintes),
+                            "bundle": resultado.bundle,
+                        }
+                    ),
+                )
+            ]
+
+        elif name == "grilo_automem_status":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "enabled": adapter.enabled,
+                            "available": adapter.is_available,
+                            "falkordb_url": settings.falkordb_url,
+                            "qdrant_url": settings.qdrant_url,
+                        }
+                    ),
+                )
+            ]
+
+        elif name == "grilo_automem_bridge_discovery":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            if not adapter.is_available:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"error": "AutoMem not available"}),
+                    )
+                ]
+
+            memory_id = arguments.get("memory_id")
+            max_hops = arguments.get("max_hops", 3)
+
+            bridges = await adapter.bridge_discovery(memory_id, max_hops)
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "bridges": bridges,
+                            "count": len(bridges),
+                        }
+                    ),
+                )
+            ]
+
+        elif name == "grilo_automem_enrich":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            if not adapter.is_available:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"error": "AutoMem not available"}),
+                    )
+                ]
+
+            memory_id = arguments.get("memory_id")
+            enriched = await adapter.enrich(memory_id)
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(enriched),
+                )
+            ]
+
+        elif name == "grilo_automem_consolidate":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            if not adapter.is_available:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"error": "AutoMem not available"}),
+                    )
+                ]
+
+            result = await adapter.consolidate()
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(result),
+                )
+            ]
 
         else:
             return [TextContent(type="text", text=json.dumps({"error": f"Unknown tool: {name}"}))]

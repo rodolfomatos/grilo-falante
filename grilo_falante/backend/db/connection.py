@@ -12,8 +12,7 @@ import asyncpg
 
 # Database configuration
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/grilo_falante"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/grilo_falante"
 )
 
 # Pool singleton

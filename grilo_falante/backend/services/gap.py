@@ -74,9 +74,7 @@ class GapDetectionService:
 
         # Check for M4 claims with low confidence
         m4_claims = [c for c in claims if c.gmif_level == GMIFLevel.M4_DOUBTFUL]
-        high_conf_claims = [
-            c for c in claims if c.gmif_confidence >= threshold
-        ]
+        high_conf_claims = [c for c in claims if c.gmif_confidence >= threshold]
 
         if not high_conf_claims and m4_claims:
             # TIPO A: Claims exist but none meet threshold
@@ -150,9 +148,7 @@ class GapDetectionService:
         )
         return await self.gap_repo.create(gap)
 
-    async def _cannot_explain_child(
-        self, query: str, claims: list[GovernedClaim]
-    ) -> bool:
+    async def _cannot_explain_child(self, query: str, claims: list[GovernedClaim]) -> bool:
         """
         Check if cannot explain at child level.
 

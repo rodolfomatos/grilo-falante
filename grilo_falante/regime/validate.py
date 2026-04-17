@@ -44,7 +44,9 @@ class TransitionValidator:
         self._graphs: dict[str, EpistemicGraph] = {}
         self._transitions: dict[str, dict[str, list[str]]] = {}
 
-    def register_graph(self, graph_id: str, name: str, nodes: list[str], edges: list[tuple[str, str]]):
+    def register_graph(
+        self, graph_id: str, name: str, nodes: list[str], edges: list[tuple[str, str]]
+    ):
         """Register an epistemic graph with its valid transitions"""
         self._graphs[graph_id] = EpistemicGraph(
             graph_id=graph_id,
@@ -68,16 +70,15 @@ class TransitionValidator:
 
         if to_node not in self._transitions[graph_id][from_node]:
             available = self._transitions[graph_id][from_node]
-            return False, f"No valid transition from '{from_node}' to '{to_node}'. Available: {available}"
+            return (
+                False,
+                f"No valid transition from '{from_node}' to '{to_node}'. Available: {available}",
+            )
 
         return True, f"Valid transition: {from_node} -> {to_node}"
 
     def validate_transition(
-        self,
-        from_node: str,
-        to_node: str,
-        graph_id: str,
-        auto_update_position: bool = True
+        self, from_node: str, to_node: str, graph_id: str, auto_update_position: bool = True
     ) -> TransitionResult:
         """Validate a transition in an epistemic graph"""
         valid, message = self.is_valid_transition(graph_id, from_node, to_node)
@@ -94,15 +95,10 @@ class TransitionValidator:
             to_node=to_node,
             graph_id=graph_id,
             message=message,
-            available_transitions=available_strs
+            available_transitions=available_strs,
         )
 
-    def validate_and_block(
-        self,
-        from_node: str,
-        to_node: str,
-        graph_id: str
-    ) -> TransitionResult:
+    def validate_and_block(self, from_node: str, to_node: str, graph_id: str) -> TransitionResult:
         """Validate transition and return BLOCK if invalid"""
         result = self.validate_transition(from_node, to_node, graph_id)
 

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Search: {{query}} - Grilo Falante Visualizer{% endblock %}
+
+{% block content %}
+<div class="article">
+    <div class="article-header">
+        <h1 class="article-title">Search Results for "{{query}}"</h1>
+    </div>
+    <div class="article-content search-results">
+        {% if results %}
+            {% for result in results %}
+            <div class="search-result">
+                <div class="search-result-title">
+                    <a href="{{result.url}}">{{result.title}}</a>
+                </div>
+                <div class="search-result-snippet">{{result.snippet}}</div>
+                <div class="search-result-type">Type: {{result.result_type}}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p><em>No results found.</em></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

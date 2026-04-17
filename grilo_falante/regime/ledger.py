@@ -73,7 +73,7 @@ class Ledger:
         gf_id: Optional[str] = None,
         metadata: Optional[dict] = None,
         entry_id: Optional[str] = None,
-        cycle_id: Optional[str] = None
+        cycle_id: Optional[str] = None,
     ) -> LedgerEntry:
         """Add a new entry to the ledger"""
         if entry_id is None:
@@ -85,7 +85,7 @@ class Ledger:
             gf_id=gf_id,
             content=content,
             metadata=metadata or {},
-            cycle_id=cycle_id
+            cycle_id=cycle_id,
         )
 
         self._entries.append(entry)
@@ -107,7 +107,9 @@ class Ledger:
 
     def get_nca(self) -> list[LedgerEntry]:
         """Get all normative candidate entries"""
-        return [e for e in self._entries if e.entry_type == LedgerEntryType.NORMATIVE_CANDIDATE.value]
+        return [
+            e for e in self._entries if e.entry_type == LedgerEntryType.NORMATIVE_CANDIDATE.value
+        ]
 
     def get_audits(self) -> list[LedgerEntry]:
         """Get all audit entries"""
@@ -125,7 +127,8 @@ class Ledger:
         """Search ledger entries by content"""
         query_lower = query.lower()
         return [
-            e for e in self._entries
+            e
+            for e in self._entries
             if query_lower in e.content.lower() or query_lower in str(e.metadata).lower()
         ]
 

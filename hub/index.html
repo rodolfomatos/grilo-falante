@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grilo Falante Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-5px);
+            border-color: rgba(124, 58, 237, 0.5);
+        }
+        
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .card p {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+        
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+        }
+        
+        .status-ok {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Grilo Falante</h1>
+        <p class="subtitle">Epistemic Governance Regime</p>
+        
+        <div class="cards">
+            <a href="/" class="card" target="_blank">
+                <div class="card-icon">&#128172;</div>
+                <h2>Chat</h2>
+                <p>Conversational interface with epistemic governance</p>
+                <span class="status status-ok">
+                    <span class="status-dot"></span>
+                    Online
+                </span>
+            </a>
+            
+            <a href="/visualizer" class="card" target="_blank">
+                <div class="card-icon">&#128218;</div>
+                <h2>Visualizer</h2>
+                <p>Wikipedia-like explorer for knowledge base</p>
+                <span class="status status-ok">
+                    <span class="status-dot"></span>
+                    Online
+                </span>
+            </a>
+            
+            <a href="/visualizer/graph" class="card" target="_blank">
+                <div class="card-icon">&#129504;</div>
+                <h2>Knowledge Graph</h2>
+                <p>Interactive graph visualization</p>
+                <span class="status status-ok">
+                    <span class="status-dot"></span>
+                    Online
+                </span>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

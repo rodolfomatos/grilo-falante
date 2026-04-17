@@ -25,8 +25,7 @@ class SessionPreferences(BaseModel):
 
     # Preferred GMIF categories
     preferred_categories: list[str] = Field(
-        default=["M1", "M2", "M5", "M7"],
-        description="Preferred GMIF levels"
+        default=["M1", "M2", "M5", "M7"], description="Preferred GMIF levels"
     )
 
     # Display preferences

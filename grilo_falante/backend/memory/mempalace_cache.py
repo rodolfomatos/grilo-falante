@@ -21,6 +21,7 @@ MEMPALACE_AVAILABLE = False
 try:
     from mempalace.searcher import search_memories
     from mempalace.knowledge_graph import KnowledgeGraph
+
     MEMPALACE_AVAILABLE = True
 except ImportError:
     logger.warning("MemPalace not available - semantic cache disabled")
@@ -100,16 +101,18 @@ class MemPalaceCache:
 
             cached = []
             for r in raw_results.get("results", []):
-                cached.append({
-                    "claim_id": r.get("source_file", ""),
-                    "claim_text": r.get("text", ""),
-                    "gmif_level": "M4",
-                    "score": r.get("similarity", 0.5),
-                    "wing": r.get("wing", ""),
-                    "room": r.get("room", ""),
-                    "cached": True,
-                    "source": "mempalace",
-                })
+                cached.append(
+                    {
+                        "claim_id": r.get("source_file", ""),
+                        "claim_text": r.get("text", ""),
+                        "gmif_level": "M4",
+                        "score": r.get("similarity", 0.5),
+                        "wing": r.get("wing", ""),
+                        "room": r.get("room", ""),
+                        "cached": True,
+                        "source": "mempalace",
+                    }
+                )
 
             logger.info(f"MemPalace cache hit: {len(cached)} results for '{query[:50]}'")
             return cached
@@ -327,22 +330,26 @@ class HybridCacheRetriever:
         for pg in pg_results:
             claim_id = pg.get("claim_id", pg.get("id", ""))
             if claim_id not in seen_ids:
-                merged.append({
-                    **pg,
-                    "cached": False,
-                    "source": "postgresql",
-                })
+                merged.append(
+                    {
+                        **pg,
+                        "cached": False,
+                        "source": "postgresql",
+                    }
+                )
                 seen_ids.add(claim_id)
 
         for cache in cache_results:
             claim_id = cache.get("claim_id", cache.get("id", ""))
             if claim_id not in seen_ids:
-                merged.append({
-                    **cache,
-                    "final_score": cache.get("score", 0) * self.MEMPALACE_WEIGHT,
-                    "cached": True,
-                    "source": "mempalace",
-                })
+                merged.append(
+                    {
+                        **cache,
+                        "final_score": cache.get("score", 0) * self.MEMPALACE_WEIGHT,
+                        "cached": True,
+                        "source": "mempalace",
+                    }
+                )
                 seen_ids.add(claim_id)
 
         merged.sort(key=lambda x: x.get("final_score", 0), reverse=True)

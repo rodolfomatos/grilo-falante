@@ -21,6 +21,7 @@ from typing import Any, Dict, List, Optional, Type
 
 class DomainStatus(Enum):
     """Status of a domain plugin."""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     UPDATING = "updating"
@@ -30,6 +31,7 @@ class DomainStatus(Enum):
 @dataclass
 class DomainMetadata:
     """Metadata for a domain plugin."""
+
     name: str
     version: str
     description: str
@@ -44,6 +46,7 @@ class DomainMetadata:
 @dataclass
 class QueryResult:
     """Result of processing a query through a domain adapter."""
+
     response: str
     domain: str
     claims_extracted: List[Dict[str, Any]] = field(default_factory=list)
@@ -61,6 +64,7 @@ class QueryResult:
 @dataclass
 class ValidationResult:
     """Result of validating content against domain rules."""
+
     is_valid: bool
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
@@ -217,7 +221,9 @@ class DomainAdapter(ABC):
 
         return None
 
-    def should_escalate(self, query: str, response: Optional[str] = None) -> tuple[bool, Optional[str]]:
+    def should_escalate(
+        self, query: str, response: Optional[str] = None
+    ) -> tuple[bool, Optional[str]]:
         """
         Determine if this query/response should trigger escalation.
 

@@ -1,8 +1,5 @@
 -- Grilo Falante v3.0 - Database Schema
--- PostgreSQL with pgvector extension
-
--- Extension for vector similarity
-CREATE EXTENSION IF NOT EXISTS vector;
+-- PostgreSQL with optional vector extension support
 
 -- Curator table
 CREATE TABLE IF NOT EXISTS curators (

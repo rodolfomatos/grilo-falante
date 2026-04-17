@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class GovernanceResult:
     """Resultado de uma verificação de governance."""
+
     passed: bool
     blocked_claims: List[Dict]
     warnings: List[str]
@@ -74,7 +75,13 @@ class GovernanceGate:
 
             # 4. Linguagem de fluência (warning, não block)
             text_lower = text.lower()
-            fluency_words = ["obviamente", "claramente", "é óbvio", "é evidente que", "naturalmente"]
+            fluency_words = [
+                "obviamente",
+                "claramente",
+                "é óbvio",
+                "é evidente que",
+                "naturalmente",
+            ]
             if any(word in text_lower for word in fluency_words):
                 warnings.append(f"Fluency detected: {text[:50]}")
 
@@ -90,12 +97,14 @@ class GovernanceGate:
                 issues.append("PINA required for normative decision")
 
             if issues:
-                blocked.append({
-                    "claim_id": claim.get("id", "unknown"),
-                    "text": text[:100],
-                    "gmif_level": gmif_level,
-                    "issues": issues,
-                })
+                blocked.append(
+                    {
+                        "claim_id": claim.get("id", "unknown"),
+                        "text": text[:100],
+                        "gmif_level": gmif_level,
+                        "issues": issues,
+                    }
+                )
 
         return GovernanceResult(
             passed=len(blocked) == 0 and len(pina_candidates) == 0,
@@ -135,10 +144,15 @@ class GovernanceGate:
         text_lower = claim.get("text", "").lower()
 
         normative_indicators = [
-            "deve ser", "deveria ser", "deverá ser",
-            "é obrigatório", "é necessário",
-            "não é permitido", "é proibido",
-            "é recomendado", "recomenda-se",
+            "deve ser",
+            "deveria ser",
+            "deverá ser",
+            "é obrigatório",
+            "é necessário",
+            "não é permitido",
+            "é proibido",
+            "é recomendado",
+            "recomenda-se",
         ]
 
         return any(ind in text_lower for ind in normative_indicators)

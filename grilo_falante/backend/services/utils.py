@@ -17,6 +17,7 @@ from dataclasses import dataclass
 
 class TimeoutError(Exception):
     """Raised when an operation times out."""
+
     pass
 
 
@@ -42,6 +43,7 @@ def with_timeout(seconds: int):
         def my_function():
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -52,15 +54,13 @@ def with_timeout(seconds: int):
                 return result
             finally:
                 signal.alarm(0)
+
         return wrapper
+
     return decorator
 
 
-def with_retry(
-    max_retries: int = 3,
-    backoff_factor: float = 1.0,
-    exceptions: tuple = (Exception,)
-):
+def with_retry(max_retries: int = 3, backoff_factor: float = 1.0, exceptions: tuple = (Exception,)):
     """
     Decorator that retries a function on failure with exponential backoff.
 
@@ -69,6 +69,7 @@ def with_retry(
         def my_function():
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -82,16 +83,14 @@ def with_retry(
                         sleep_time = backoff_factor * (2 ** (attempt - 1))
                         time.sleep(sleep_time)
             raise last_exception
+
         return wrapper
+
     return decorator
 
 
 def retry_operation(
-    func: Callable,
-    *args,
-    max_retries: int = 3,
-    backoff_factor: float = 1.0,
-    **kwargs
+    func: Callable, *args, max_retries: int = 3, backoff_factor: float = 1.0, **kwargs
 ) -> RetryResult:
     """
     Execute an operation with retry logic.
@@ -99,6 +98,7 @@ def retry_operation(
     Returns RetryResult with success status, result, attempts, and timing.
     """
     import time
+
     start_time = time.time()
     last_exception = None
 
@@ -106,10 +106,7 @@ def retry_operation(
         try:
             result = func(*args, **kwargs)
             return RetryResult(
-                success=True,
-                result=result,
-                attempts=attempt,
-                total_time=time.time() - start_time
+                success=True, result=result, attempts=attempt, total_time=time.time() - start_time
             )
         except Exception as e:
             last_exception = e
@@ -122,7 +119,7 @@ def retry_operation(
         result=None,
         attempts=max_retries,
         total_time=time.time() - start_time,
-        error=str(last_exception)
+        error=str(last_exception),
     )
 
 
@@ -130,7 +127,7 @@ def export_html(
     nodes: List[Dict],
     edges: List[Dict],
     output_path: str = "graphify-out/grilo_graph.html",
-    title: str = "Grilo Falante Dashboard"
+    title: str = "Grilo Falante Dashboard",
 ) -> str:
     """
     Export claims as an interactive HTML dashboard.
@@ -206,11 +203,11 @@ button:hover{{background:#0056b3}}
 </div>
 <h3>By GMIF Type</h3>
 <div class="grid">
-{type_badges or '<p>No classifications yet.</p>'}
+{type_badges or "<p>No classifications yet.</p>"}
 </div>
 <h3>Claims</h3>
 <div class="grid" id="grid">
-{node_cards or '<p>No claims yet.</p>'}
+{node_cards or "<p>No claims yet.</p>"}
 </div>
 <script>
 function filter(){{

@@ -93,8 +93,7 @@ def create_default_constraints() -> List[Constraint]:
 
 
 def evaluate_text_constraints(
-    text: str,
-    constraints: Optional[List[Constraint]] = None
+    text: str, constraints: Optional[List[Constraint]] = None
 ) -> Tuple[bool, List[ConstraintViolation]]:
     """
     Evaluate text against constraints.
@@ -131,8 +130,7 @@ def evaluate_text_constraints(
 
 
 def evaluate_for_promotion(
-    text: str,
-    constraints: Optional[List[Constraint]] = None
+    text: str, constraints: Optional[List[Constraint]] = None
 ) -> Tuple[str, List[ConstraintViolation]]:
     """
     Evaluate text against constraints for promotion readiness.
@@ -167,8 +165,8 @@ def get_constraint_summary(violations: List[ConstraintViolation]) -> dict:
         "by_constraint": {
             v.constraint_id: {
                 "name": v.constraint_name,
-                "count": sum(1 for x in violations if x.constraint_id == v.constraint_id)
+                "count": sum(1 for x in violations if x.constraint_id == v.constraint_id),
             }
             for v in violations
-        }
+        },
     }

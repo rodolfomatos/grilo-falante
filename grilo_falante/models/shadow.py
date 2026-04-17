@@ -15,6 +15,7 @@ from typing import List, Optional, Dict, Any
 @dataclass
 class EpistemicUnit:
     """An epistemic unit extracted from a document."""
+
     id: str
     type: str  # factual, premise, inference, interpretation, rhetorical
     content: str
@@ -35,6 +36,7 @@ class ShadowDocument:
     - T1: Explicit normative effect (governs legitimate use)
     - T2: Limitation of consequences (excludes ethical/political judgments)
     """
+
     id: Optional[int] = None
     source_id: Optional[int] = None
     title: str = ""
@@ -135,6 +137,7 @@ class ConceptualCapsule:
     Σ: Interpretation regime
     Δ: Normative effect
     """
+
     id: Optional[int] = None
     capsule_key: str = ""
     content: str = ""

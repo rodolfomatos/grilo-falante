@@ -89,9 +89,7 @@ class StateMachine:
 
     def start_cycle(self) -> CycleContext:
         """Start a new governed cycle"""
-        self.current_cycle = CycleContext(
-            cycle_id=self._generate_cycle_id()
-        )
+        self.current_cycle = CycleContext(cycle_id=self._generate_cycle_id())
         self.transition_to(CycleState.LOADED)
         return self.current_cycle
 
@@ -167,15 +165,16 @@ class StateMachine:
 
     def can_claim(self) -> bool:
         """Check if claims can be made in current state"""
-        return self.current_cycle is not None and \
-            self.current_cycle.state in [CycleState.ACTIVE, CycleState.GOVERNING]
+        return self.current_cycle is not None and self.current_cycle.state in [
+            CycleState.ACTIVE,
+            CycleState.GOVERNING,
+        ]
 
     def can_promote(self) -> bool:
         """Check if content can be promoted (not exploratory, legitimacy declared)"""
         if not self.current_cycle:
             return False
-        return not self.current_cycle.is_exploratory and \
-            self.current_cycle.legitimacy_declared
+        return not self.current_cycle.is_exploratory and self.current_cycle.legitimacy_declared
 
     def set_exploratory(self, is_exploratory: bool):
         """Set whether current content is exploratory (non-promotable)"""

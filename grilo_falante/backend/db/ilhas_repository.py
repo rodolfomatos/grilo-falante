@@ -53,9 +53,7 @@ class IlhaRepository:
     async def obter(self, ilha_key: str) -> Optional[Ilha]:
         """Get an island by key."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM ilhas WHERE ilha_key = $1", ilha_key
-            )
+            row = await conn.fetchrow("SELECT * FROM ilhas WHERE ilha_key = $1", ilha_key)
             if not row:
                 return None
             return self._row_to_ilha(row)
@@ -196,9 +194,7 @@ class PedraRepository:
         """Create a new stone."""
         content_hash = ""
         if pedra.conteúdo_original:
-            content_hash = hashlib.md5(
-                pedra.conteúdo_original.encode()
-            ).hexdigest()
+            content_hash = hashlib.md5(pedra.conteúdo_original.encode()).hexdigest()
 
         async with acquire_connection() as conn:
             await conn.execute(
@@ -232,9 +228,7 @@ class PedraRepository:
     async def obter(self, pedra_key: str) -> Optional[Pedra]:
         """Get a stone by key."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM pedras WHERE pedra_key = $1", pedra_key
-            )
+            row = await conn.fetchrow("SELECT * FROM pedras WHERE pedra_key = $1", pedra_key)
             if not row:
                 return None
             return self._row_to_pedra(row)

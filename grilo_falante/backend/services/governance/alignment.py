@@ -16,18 +16,90 @@ from grilo_falante.backend.services.llm import LLMMessage, get_llm_service
 
 
 NEGATION_MARKERS = {
-    "not", "no", "never", "none", "without", "isn't", "aren't", "wasn't", "weren't",
-    "doesn't", "don't", "didn't", "cannot", "can't", "won't",
-    "não", "nao", "nunca", "nenhum", "nenhuma", "sem",
+    "not",
+    "no",
+    "never",
+    "none",
+    "without",
+    "isn't",
+    "aren't",
+    "wasn't",
+    "weren't",
+    "doesn't",
+    "don't",
+    "didn't",
+    "cannot",
+    "can't",
+    "won't",
+    "não",
+    "nao",
+    "nunca",
+    "nenhum",
+    "nenhuma",
+    "sem",
 }
 
 STOPWORDS = {
-    "the", "a", "an", "of", "in", "on", "at", "for", "to", "and", "or", "is",
-    "are", "was", "were", "be", "been", "being", "do", "does", "did", "with",
-    "by", "as", "that", "this", "these", "those", "it", "its",
-    "o", "a", "os", "as", "de", "da", "do", "das", "dos", "em", "no", "na",
-    "nos", "nas", "por", "para", "e", "ou", "é", "foi", "ser", "com", "um",
-    "uma", "uns", "umas", "isto", "isso", "aquele", "aquela",
+    "the",
+    "a",
+    "an",
+    "of",
+    "in",
+    "on",
+    "at",
+    "for",
+    "to",
+    "and",
+    "or",
+    "is",
+    "are",
+    "was",
+    "were",
+    "be",
+    "been",
+    "being",
+    "do",
+    "does",
+    "did",
+    "with",
+    "by",
+    "as",
+    "that",
+    "this",
+    "these",
+    "those",
+    "it",
+    "its",
+    "o",
+    "a",
+    "os",
+    "as",
+    "de",
+    "da",
+    "do",
+    "das",
+    "dos",
+    "em",
+    "no",
+    "na",
+    "nos",
+    "nas",
+    "por",
+    "para",
+    "e",
+    "ou",
+    "é",
+    "foi",
+    "ser",
+    "com",
+    "um",
+    "uma",
+    "uns",
+    "umas",
+    "isto",
+    "isso",
+    "aquele",
+    "aquela",
 }
 
 
@@ -75,8 +147,9 @@ def _semantic_overlap(claim_text: str, evidence_text: str) -> float:
     evidence_tokens = _content_tokens(evidence_text)
     if not claim_tokens or not evidence_tokens:
         return 0.0
-    return (0.4 * _jaccard(claim_tokens, evidence_tokens) +
-            0.6 * _containment_score(claim_tokens, evidence_tokens))
+    return 0.4 * _jaccard(claim_tokens, evidence_tokens) + 0.6 * _containment_score(
+        claim_tokens, evidence_tokens
+    )
 
 
 def classify_claim_evidence_pair(
@@ -195,13 +268,15 @@ class EpistemicAlignment:
                     elif relation == "contradicted":
                         best_relation = "contradicted"
 
-            aligned.append(AlignedClaim(
-                text=claim_text,
-                status=best_relation,
-                matched_evidence=best_evidence_text,
-                score=round(best_score, 3),
-                evidence_id=best_evidence_id,
-            ))
+            aligned.append(
+                AlignedClaim(
+                    text=claim_text,
+                    status=best_relation,
+                    matched_evidence=best_evidence_text,
+                    score=round(best_score, 3),
+                    evidence_id=best_evidence_id,
+                )
+            )
 
         supported = sum(1 for a in aligned if a.status == "supported")
         contradicted = sum(1 for a in aligned if a.status == "contradicted")
@@ -244,13 +319,16 @@ class EpistemicAlignment:
         )
 
         messages = [
-            LLMMessage(role="system", content="You extract claims. Return only a JSON list of strings."),
+            LLMMessage(
+                role="system", content="You extract claims. Return only a JSON list of strings."
+            ),
             LLMMessage(role="user", content=extraction_prompt),
         ]
 
         response = await llm.chat(messages)
 
         import json
+
         try:
             llm_claims = json.loads(response.content)
             if not isinstance(llm_claims, list):

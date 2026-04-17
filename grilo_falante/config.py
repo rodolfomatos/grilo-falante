@@ -47,7 +47,7 @@ class Settings(BaseSettings):
 
     # Ollama
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "llama3.2"
+    ollama_model: str = "llama3.1:8b"
     ollama_temperature: float = 0.3
     ollama_num_ctx: int = 4096
 
@@ -62,7 +62,9 @@ class Settings(BaseSettings):
 
     # IAEDU (University of Porto academic API)
     iaedu_api_key: Optional[str] = None
-    iaedu_endpoint: str = "https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream"
+    iaedu_endpoint: str = (
+        "https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream"
+    )
     iaedu_channel_id: str = "cmh0rfgmn0i64j801uuoletwy"
 
     # OpenWebUI
@@ -96,6 +98,14 @@ class Settings(BaseSettings):
     # Graph lint
     lint_enabled: bool = True
 
+    # AutoMem (optional recall layer)
+    automem_enabled: bool = False
+    falkordb_url: str = "http://localhost:8001"
+    qdrant_url: str = "http://localhost:6333"
+    automem_collection: str = "grilo_falante"
+    automem_weight: float = 0.3
+    automem_dual_write: bool = False
+
     @property
     def requires_api_token(self) -> bool:
         return bool(self.api_token)
@@ -115,6 +125,10 @@ class Settings(BaseSettings):
     @property
     def bitnet_available(self) -> bool:
         return self.llm_provider == LLMProvider.BITNET
+
+    @property
+    def automem_available(self) -> bool:
+        return self.automem_enabled and self.falkordb_url and self.qdrant_url
 
 
 @lru_cache

@@ -25,6 +25,7 @@ MEMPALACE_AVAILABLE = False
 try:
     from mempalace.searcher import search_memories
     from mempalace.knowledge_graph import KnowledgeGraph
+
     MEMPALACE_AVAILABLE = True
 except ImportError:
     logger.warning("MemPalace not available - island recall disabled")
@@ -178,12 +179,14 @@ class MemPalaceIlhas:
                 if r.get("wing") == WING_ILHAS:
                     score = r.get("similarity", 0)
                     if score >= threshold:
-                        similares.append({
-                            "ilha_id": r.get("source_file", ""),
-                            "nome": r.get("metadata", {}).get("nome", ""),
-                            "score": score,
-                            "estado": r.get("metadata", {}).get("estado", ""),
-                        })
+                        similares.append(
+                            {
+                                "ilha_id": r.get("source_file", ""),
+                                "nome": r.get("metadata", {}).get("nome", ""),
+                                "score": score,
+                                "estado": r.get("metadata", {}).get("estado", ""),
+                            }
+                        )
 
             return similares
 
@@ -223,12 +226,14 @@ class MemPalaceIlhas:
                 if r.get("wing") == WING_PEDRAS:
                     score = r.get("similarity", 0)
                     if score >= threshold:
-                        similares.append({
-                            "pedra_id": r.get("source_file", ""),
-                            "conteúdo": r.get("text", "")[:100],
-                            "score": score,
-                            "saliência": r.get("metadata", {}).get("saliência", 0),
-                        })
+                        similares.append(
+                            {
+                                "pedra_id": r.get("source_file", ""),
+                                "conteúdo": r.get("text", "")[:100],
+                                "score": score,
+                                "saliência": r.get("metadata", {}).get("saliência", 0),
+                            }
+                        )
 
             return similares
 
@@ -267,11 +272,13 @@ class MemPalaceIlhas:
 
             relevantes = []
             for r in results.get("results", []):
-                relevantes.append({
-                    "id": r.get("id", ""),
-                    "type": "ILHA" if r.get("type") == WING_ILHAS else "PEDRA",
-                    "score": r.get("similarity", 0),
-                })
+                relevantes.append(
+                    {
+                        "id": r.get("id", ""),
+                        "type": "ILHA" if r.get("type") == WING_ILHAS else "PEDRA",
+                        "score": r.get("similarity", 0),
+                    }
+                )
 
             return relevantes
 

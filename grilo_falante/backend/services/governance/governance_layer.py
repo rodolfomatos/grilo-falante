@@ -29,14 +29,15 @@ def _count_m4_nodes(gmif_graph) -> int:
     if not gmif_graph:
         return 0
     count = 0
-    for _, data in gmif_graph.nodes(data=True) if hasattr(gmif_graph, 'nodes') else []:
+    for _, data in gmif_graph.nodes(data=True) if hasattr(gmif_graph, "nodes") else []:
         if data.get("gmif_type") == "M4":
             count += 1
     return count
 
 
-def _get_decision_reason(decision: str, claims: list, m4_count: int,
-                         has_structure: bool, scores: list) -> str:
+def _get_decision_reason(
+    decision: str, claims: list, m4_count: int, has_structure: bool, scores: list
+) -> str:
     if decision == "block":
         if not claims:
             return "no_claims_retrieved"
@@ -66,10 +67,7 @@ def verify_claims(claims, threshold: float = None) -> list:
 
     threshold = threshold or POLICY["evidence_threshold"]
 
-    strong = [
-        c for c in claims
-        if c.get("score", 0) >= threshold
-    ]
+    strong = [c for c in claims if c.get("score", 0) >= threshold]
 
     if strong:
         return strong
@@ -154,11 +152,7 @@ def governance(
     scores = [c.get("score", 0) for c in claims]
     best = max(scores)
 
-    sources = set(
-        c.get("source_id")
-        for c in claims
-        if c.get("source_id")
-    )
+    sources = set(c.get("source_id") for c in claims if c.get("source_id"))
 
     if len(claims) == 1:
         decision = "allow" if best >= 0.2 else "block"

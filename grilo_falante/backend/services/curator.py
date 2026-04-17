@@ -51,9 +51,7 @@ class CuratorScoringService:
         )
         return await self.curator_repo.create(curator)
 
-    async def penalize(
-        self, curator_id: int, reason: str = "Incongruence detected"
-    ) -> Curator:
+    async def penalize(self, curator_id: int, reason: str = "Incongruence detected") -> Curator:
         """
         Penalize curator for incongruence.
 
@@ -66,15 +64,11 @@ class CuratorScoringService:
         new_score = max(0.0, curator.accountability_score - self.PENALTY_AMOUNT)
 
         if new_score < curator.accountability_score:
-            return await self.curator_repo.update_score(
-                curator_id, new_score, reason
-            )
+            return await self.curator_repo.update_score(curator_id, new_score, reason)
 
         return curator
 
-    async def reward(
-        self, curator_id: int, reason: str = "Valid correction"
-    ) -> Curator:
+    async def reward(self, curator_id: int, reason: str = "Valid correction") -> Curator:
         """
         Reward curator for valid correction.
 
@@ -87,9 +81,7 @@ class CuratorScoringService:
         new_score = min(1.0, curator.accountability_score + self.REWARD_AMOUNT)
 
         if new_score > curator.accountability_score:
-            return await self.curator_repo.update_score(
-                curator_id, new_score, reason
-            )
+            return await self.curator_repo.update_score(curator_id, new_score, reason)
 
         return curator
 

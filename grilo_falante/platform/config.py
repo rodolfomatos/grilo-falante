@@ -33,6 +33,7 @@ from grilo_falante.config import Settings, get_settings
 
 class LLMProvider(str, Enum):
     """Supported LLM providers."""
+
     BITNET = "bitnet"
     OLLAMA = "ollama"
     OPENAI = "openai"
@@ -44,6 +45,7 @@ class LLMProvider(str, Enum):
 @dataclass
 class LLMConfig:
     """Configuration for an LLM provider."""
+
     provider: str
     endpoint: str
     model: str
@@ -189,10 +191,12 @@ def get_llm_config(provider: Optional[str] = None) -> LLMConfig:
                 "BITNET_MODEL",
                 getattr(settings, "bitnet_model", "microsoft/bitnet-bge-m3"),
             ),
-            temperature=float(os.getenv(
-                "BITNET_TEMPERATURE",
-                getattr(settings, "bitnet_temperature", 0.3),
-            )),
+            temperature=float(
+                os.getenv(
+                    "BITNET_TEMPERATURE",
+                    getattr(settings, "bitnet_temperature", 0.3),
+                )
+            ),
         )
 
     elif provider_enum == LLMProvider.OLLAMA:
@@ -206,10 +210,12 @@ def get_llm_config(provider: Optional[str] = None) -> LLMConfig:
                 "OLLAMA_MODEL",
                 getattr(settings, "ollama_model", "llama3.2"),
             ),
-            temperature=float(os.getenv(
-                "OLLAMA_TEMPERATURE",
-                getattr(settings, "ollama_temperature", 0.3),
-            )),
+            temperature=float(
+                os.getenv(
+                    "OLLAMA_TEMPERATURE",
+                    getattr(settings, "ollama_temperature", 0.3),
+                )
+            ),
         )
 
     elif provider_enum == LLMProvider.OPENAI:
@@ -220,10 +226,12 @@ def get_llm_config(provider: Optional[str] = None) -> LLMConfig:
                 "OPENAI_MODEL",
                 getattr(settings, "openai_model", "gpt-4o"),
             ),
-            temperature=float(os.getenv(
-                "OPENAI_TEMPERATURE",
-                getattr(settings, "openai_temperature", 0.3),
-            )),
+            temperature=float(
+                os.getenv(
+                    "OPENAI_TEMPERATURE",
+                    getattr(settings, "openai_temperature", 0.3),
+                )
+            ),
             extra={"api_key": os.getenv("OPENAI_API_KEY", settings.openai_api_key or "")},
         )
 
@@ -232,7 +240,11 @@ def get_llm_config(provider: Optional[str] = None) -> LLMConfig:
             provider="iaedu",
             endpoint=os.getenv(
                 "IAEDU_ENDPOINT",
-                getattr(settings, "iaedu_endpoint", "https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream"),
+                getattr(
+                    settings,
+                    "iaedu_endpoint",
+                    "https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream",
+                ),
             ),
             model="gpt-4o",
             extra={"api_key": os.getenv("IAEDU_API_KEY", settings.iaedu_api_key or "")},
@@ -490,6 +502,7 @@ class LLMClient:
 @dataclass
 class PlatformConfig:
     """Main platform configuration."""
+
     default_llm_provider: LLMProvider = DEFAULT_PROVIDER
     database_url: str = "postgresql://postgres:postgres@localhost:5432/grilo_falante"
     lake_path: str = "./lake"

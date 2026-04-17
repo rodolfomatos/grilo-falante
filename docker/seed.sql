@@ -23,5 +23,5 @@ ON CONFLICT (source_key) DO NOTHING;
 
 -- Session preferences for default session
 INSERT INTO session_preferences (session_id, topics, domains, recency_weight, preferred_categories)
-VALUES ('default', ARRAY[], ARRAY[], 0.3, ARRAY['M1', 'M2', 'M5', 'M7'])
+VALUES ('default', ARRAY[]::TEXT[], ARRAY[]::TEXT[], 0.3, ARRAY['M1', 'M2', 'M5', 'M7'])
 ON CONFLICT (session_id) DO NOTHING;

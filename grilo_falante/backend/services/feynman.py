@@ -78,9 +78,7 @@ class FeynmanService:
 
         # Simple analogies and core concepts
         for concept in concepts[:3]:
-            explanation_parts.append(
-                f"Think of {concept} like a [analogy needed - this is a gap]"
-            )
+            explanation_parts.append(f"Think of {concept} like a [analogy needed - this is a gap]")
             gaps.append(f"Analogy for: {concept}")
 
         explanation = f"""
@@ -99,9 +97,7 @@ ask "why" and we'll go deeper!
             completed=True,
         )
 
-    def _explain_expert(
-        self, topic: str, context: Optional[dict]
-    ) -> FeynmanExplanation:
+    def _explain_expert(self, topic: str, context: Optional[dict]) -> FeynmanExplanation:
         """Generate expert-level explanation (FEP-2)."""
         concepts = self._extract_concepts(topic)
 
@@ -216,23 +212,19 @@ ask "why" and we'll go deeper!
         """Join explanation parts."""
         return "\n\n".join(f"- {part}" for part in parts)
 
-    def _format_why_chain(
-        self, chain: list[str], final: Optional[str]
-    ) -> str:
+    def _format_why_chain(self, chain: list[str], final: Optional[str]) -> str:
         """Format the why chain for display."""
         lines = []
         for i, item in enumerate(chain):
             indent = "  " * i
-            lines.append(f"{indent}{i+1}. {item}")
+            lines.append(f"{indent}{i + 1}. {item}")
 
         if final:
             lines.append(f"\n→ Axiom reached: {final}")
 
         return "\n".join(lines)
 
-    def double_feynman(
-        self, source_text: str
-    ) -> tuple[list[str], list[str]]:
+    def double_feynman(self, source_text: str) -> tuple[list[str], list[str]]:
         """
         Double Feynman validation.
 
@@ -258,10 +250,7 @@ ask "why" and we'll go deeper!
                 continue
 
             # Simple heuristics
-            if any(
-                kw in sentence.lower()
-                for kw in ["shows", "demonstrates", "measured", "data"]
-            ):
+            if any(kw in sentence.lower() for kw in ["shows", "demonstrates", "measured", "data"]):
                 f1_claims.append(sentence)
 
             if any(

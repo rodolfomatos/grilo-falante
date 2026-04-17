@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Grilo Falante Visualizer{% endblock %}</title>
+    <link rel="stylesheet" href="/visualizer/static/style.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://unpkg.com/d3@7"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
+            Grilo Falante
+        </a>
+        
+        <div class="navbar-search">
+            <form id="search-form" class="search-form" action="/visualizer/search" method="get">
+                <input 
+                    type="text" 
+                    id="search-input"
+                    name="q" 
+                    placeholder="Search..." 
+                    class="search-input"
+                    value="{{ query|default('') }}"
+                    autocomplete="off"
+                >
+                <button type="submit" class="search-btn">Search</button>
+            </form>
+            <div id="search-results"></div>
+        </div>
+        
+        <div class="navbar-nav">
+            <a href="/visualizer/" class="nav-tab {% if active_tab == 'overview' %}active{% endif %}">Overview</a>
+            <a href="/visualizer/ilhas" class="nav-tab {% if active_tab == 'ilhas' %}active{% endif %}">Ilhas</a>
+            <a href="/visualizer/claims" class="nav-tab {% if active_tab == 'claims' %}active{% endif %}">Claims</a>
+            <a href="/visualizer/graph" class="nav-tab {% if active_tab == 'graph' %}active{% endif %}">Graph</a>
+            <a href="/visualizer/sources" class="nav-tab {% if active_tab == 'sources' %}active{% endif %}">Sources</a>
+            <a href="/visualizer/gaps" class="nav-tab {% if active_tab == 'gaps' %}active{% endif %}">Gaps</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Navigation</div>
+                <div class="sidebar-content">
+                    <a href="/visualizer/" class="sidebar-link">Home</a>
+                    <a href="/visualizer/ilhas" class="sidebar-link">All Ilhas</a>
+                    <a href="/visualizer/claims" class="sidebar-link">All Claims</a>
+                    <a href="/visualizer/graph" class="sidebar-link">Knowledge Graph</a>
+                </div>
+            </div>
+            
+            <div class="sidebar-section">
+                <div class="sidebar-title">Quick Stats</div>
+                <div class="sidebar-content">
+                    <div>Ilhas: {{ ilhas|length }}</div>
+                    <div>Claims: {{ claims|length }}</div>
+                    <div>Sources: {{ sources|length }}</div>
+                    <div>Gaps: {{ gaps|length }}</div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    <script src="/visualizer/static/search.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

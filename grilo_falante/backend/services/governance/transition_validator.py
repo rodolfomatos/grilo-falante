@@ -56,24 +56,17 @@ def validate_transition(ctx: ClaimTransitionContext) -> None:
     if ctx.to_status not in allowed:
         allowed_str = ", ".join(allowed) if allowed else "None"
         raise TransitionError(
-            f"Invalid transition: {ctx.from_status} -> {ctx.to_status}. "
-            f"Allowed: {allowed_str}"
+            f"Invalid transition: {ctx.from_status} -> {ctx.to_status}. Allowed: {allowed_str}"
         )
 
     if ctx.to_status == "promoted" and not ctx.has_audit:
-        raise TransitionError(
-            "Cannot promote a claim without at least one audit registered."
-        )
+        raise TransitionError("Cannot promote a claim without at least one audit registered.")
 
     if ctx.to_status == "canonical":
-        raise TransitionError(
-            "State 'canonical' is not supported in this version of the regime."
-        )
+        raise TransitionError("State 'canonical' is not supported in this version of the regime.")
 
     if ctx.from_status == "contested" and ctx.to_status == "promoted":
-        raise TransitionError(
-            "A contested claim must go through 'audited' before being promoted."
-        )
+        raise TransitionError("A contested claim must go through 'audited' before being promoted.")
 
 
 def is_valid_transition(from_status: str, to_status: str) -> bool:

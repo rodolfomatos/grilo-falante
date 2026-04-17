@@ -36,10 +36,7 @@ class ActiveSearchService:
     """
 
     def __init__(
-        self,
-        kb_path: Optional[str] = None,
-        docs_path: Optional[str] = None,
-        max_results: int = 3
+        self, kb_path: Optional[str] = None, docs_path: Optional[str] = None, max_results: int = 3
     ):
         self.kb_path = kb_path
         self.docs_path = docs_path or "/home/rodolfo/Desktop/Grilo_Falante/ambrosio_v2.5.0"
@@ -67,21 +64,18 @@ class ActiveSearchService:
 
         try:
             cmd = [
-                "grep", "-r", "-i",
+                "grep",
+                "-r",
+                "-i",
                 "--include=*.md",
                 f"-m{self.max_results}",
                 query,
-                self.docs_path
+                self.docs_path,
             ]
-            output = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+            output = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
 
             if output.returncode == 0 and output.stdout:
-                lines = output.stdout.split("\n")[:self.max_results]
+                lines = output.stdout.split("\n")[: self.max_results]
                 for line in lines:
                     if ":" not in line:
                         continue
@@ -91,13 +85,15 @@ class ActiveSearchService:
                         file_path = parts[0]
                         content = parts[2][:200].strip()
 
-                        results.append(SearchResult(
-                            query=query,
-                            source="filesystem",
-                            content=content,
-                            relevance=0.7,
-                            metadata={"file": file_path}
-                        ))
+                        results.append(
+                            SearchResult(
+                                query=query,
+                                source="filesystem",
+                                content=content,
+                                relevance=0.7,
+                                metadata={"file": file_path},
+                            )
+                        )
 
         except subprocess.TimeoutExpired:
             pass
@@ -135,7 +131,7 @@ class ActiveSearchService:
             web_results = self.search_web(query)
             all_results.extend(web_results)
 
-        return all_results[:self.max_results]
+        return all_results[: self.max_results]
 
     def search_batch(self, gaps: list[str]) -> dict[str, list[SearchResult]]:
         """Search multiple gaps at once."""

@@ -142,8 +142,16 @@ class PDFIngestionService:
                 output_dir=output_dir,
                 json_path=os.path.join(output_dir, f"{Path(pdf_path).stem}.json"),
                 markdown_path=os.path.join(output_dir, f"{Path(pdf_path).stem}.md"),
-                pages_processed=self._count_pages(os.path.join(output_dir, f"{Path(pdf_path).stem}.json")) if "json" in formats else 0,
-                metadata=self._extract_metadata(os.path.join(output_dir, f"{Path(pdf_path).stem}.json")) if "json" in formats else {},
+                pages_processed=self._count_pages(
+                    os.path.join(output_dir, f"{Path(pdf_path).stem}.json")
+                )
+                if "json" in formats
+                else 0,
+                metadata=self._extract_metadata(
+                    os.path.join(output_dir, f"{Path(pdf_path).stem}.json")
+                )
+                if "json" in formats
+                else {},
             )
 
             return result
@@ -174,8 +182,10 @@ class PDFIngestionService:
             self.java_path,
             "-jar" if self.jar_path else "-jar",  # Placeholder for actual jar
             self.jar_path or "opendataloader-pdf-cli.jar",
-            "-i", pdf_path,
-            "-o", output_dir,
+            "-i",
+            pdf_path,
+            "-o",
+            output_dir,
         ]
 
         format_str = ",".join(formats)
@@ -222,10 +232,12 @@ class PDFIngestionService:
                         metadata["element_types"].get(item_type, 0) + 1
                     )
                     if item.get("type") == "heading":
-                        metadata["headings"].append({
-                            "level": item.get("heading level"),
-                            "text": item.get("content", "")[:100],
-                        })
+                        metadata["headings"].append(
+                            {
+                                "level": item.get("heading level"),
+                                "text": item.get("content", "")[:100],
+                            }
+                        )
 
             return metadata
         except Exception:
@@ -267,37 +279,43 @@ class PDFIngestionService:
 
                 if elem_type == "heading":
                     if current_content:
-                        chunks.append(PDFChunk(
-                            id=f"chunk_{len(chunks)}",
-                            type="section",
-                            page_number=current_page,
-                            content="\n".join(current_content),
-                            heading_level=current_heading,
-                        ))
+                        chunks.append(
+                            PDFChunk(
+                                id=f"chunk_{len(chunks)}",
+                                type="section",
+                                page_number=current_page,
+                                content="\n".join(current_content),
+                                heading_level=current_heading,
+                            )
+                        )
                         current_content = []
 
                     current_heading = element.get("heading level", "h2")
                     current_page = page
 
-                    chunks.append(PDFChunk(
-                        id=f"chunk_{len(chunks)}",
-                        type="heading",
-                        page_number=page,
-                        content=content,
-                        heading_level=current_heading,
-                    ))
+                    chunks.append(
+                        PDFChunk(
+                            id=f"chunk_{len(chunks)}",
+                            type="heading",
+                            page_number=page,
+                            content=content,
+                            heading_level=current_heading,
+                        )
+                    )
                 else:
                     current_content.append(content)
                     current_page = page
 
             if current_content:
-                chunks.append(PDFChunk(
-                    id=f"chunk_{len(chunks)}",
-                    type="section",
-                    page_number=current_page,
-                    content="\n".join(current_content),
-                    heading_level=current_heading,
-                ))
+                chunks.append(
+                    PDFChunk(
+                        id=f"chunk_{len(chunks)}",
+                        type="section",
+                        page_number=current_page,
+                        content="\n".join(current_content),
+                        heading_level=current_heading,
+                    )
+                )
 
         except Exception as e:
             pass

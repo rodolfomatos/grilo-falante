@@ -70,9 +70,7 @@ def generate_gfid(content: str, gmif_level: str, suffix: str = "") -> str:
 
 
 def generate_capsule_header(
-    capsule_path: Path,
-    gmif_level: Optional[str] = None,
-    force: bool = False
+    capsule_path: Path, gmif_level: Optional[str] = None, force: bool = False
 ) -> str:
     """Generate GF-ID and GMIF header for a capsule"""
     if gmif_level is None:
@@ -109,7 +107,9 @@ def generate_capsule_header(
     return header + content
 
 
-def stamp_capsule(capsule_path: Path, gmif_level: Optional[str] = None, force: bool = False) -> bool:
+def stamp_capsule(
+    capsule_path: Path, gmif_level: Optional[str] = None, force: bool = False
+) -> bool:
     """Add GF-ID and GMIF header to a capsule file"""
     try:
         original = capsule_path.read_text(encoding="utf-8", errors="ignore")
@@ -129,7 +129,9 @@ def stamp_capsule(capsule_path: Path, gmif_level: Optional[str] = None, force: b
         return False
 
 
-def stamp_all_capsules(capsules_dir: Path, gmif_level: Optional[str] = None, force: bool = False) -> dict:
+def stamp_all_capsules(
+    capsules_dir: Path, gmif_level: Optional[str] = None, force: bool = False
+) -> dict:
     """Stamp all capsules in a directory"""
     results = {"stamped": [], "skipped": [], "errors": []}
 

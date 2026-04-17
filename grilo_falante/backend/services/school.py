@@ -179,8 +179,21 @@ class SchoolModeService:
     def _extract_keywords(self, text: str) -> list[str]:
         """Extract keywords from text."""
         stopwords = {
-            "the", "a", "an", "is", "are", "was", "were",
-            "what", "how", "why", "when", "where", "does", "do", "did",
+            "the",
+            "a",
+            "an",
+            "is",
+            "are",
+            "was",
+            "were",
+            "what",
+            "how",
+            "why",
+            "when",
+            "where",
+            "does",
+            "do",
+            "did",
         }
         words = re.findall(r"\b\w+\b", text.lower())
         return [w for w in words if w not in stopwords and len(w) > 3]
@@ -297,7 +310,11 @@ class SchoolModeService:
                         doi = doi.split("/")[-1]
 
                     title = work.get("title", "Untitled")
-                    source_key = f"openalex:{work['id'].split('/')[-1]}" if work.get("id") else f"openalex:{hashlib.md5(title.encode()).hexdigest()[:12]}"
+                    source_key = (
+                        f"openalex:{work['id'].split('/')[-1]}"
+                        if work.get("id")
+                        else f"openalex:{hashlib.md5(title.encode()).hexdigest()[:12]}"
+                    )
 
                     sources.append(
                         SourceDiscoveryResult(
@@ -364,8 +381,7 @@ class SchoolModeService:
             for sentence in sentences:
                 sentence = sentence.strip()
                 if any(
-                    kw in sentence.lower()
-                    for kw in ["therefore", "thus", "all", "always", "never"]
+                    kw in sentence.lower() for kw in ["therefore", "thus", "all", "always", "never"]
                 ):
                     f2_claims.append(f"[PROJECTION] {sentence}")
 
@@ -429,9 +445,7 @@ class SchoolModeService:
 
         return claims
 
-    async def _create_study_plan(
-        self, gap: Gap, sources: list[SourceDiscoveryResult]
-    ) -> StudyPlan:
+    async def _create_study_plan(self, gap: Gap, sources: list[SourceDiscoveryResult]) -> StudyPlan:
         """Create study plan from discovered sources."""
         steps = []
         for i, source in enumerate(sources[:5]):
