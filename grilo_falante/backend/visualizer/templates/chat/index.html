@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grilo Falante Chat</title>
+    <link rel="stylesheet" href="/chat/static/chat.css">
+    <link rel="stylesheet" href="/visualizer/static/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/" class="navbar-brand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 6v6l4 2"/>
+            </svg>
+            Grilo Falante
+        </a>
+        <div class="navbar-nav">
+            <a href="/chat" class="nav-tab active">Chat</a>
+            <a href="/visualizer" class="nav-tab">Visualizer</a>
+            <a href="/visualizer/graph" class="nav-tab">Graph</a>
+            <a href="/hub" class="nav-tab">Hub</a>
+        </div>
+    </nav>
+
+    <div class="chat-container">
+        <aside class="conversation-sidebar">
+            <div class="sidebar-header">
+                <h2>Conversations</h2>
+                <button class="btn-new-chat" id="newChatBtn">+ New</button>
+            </div>
+            <div class="conversation-list" id="conversationList">
+                <div class="loading">Loading conversations...</div>
+            </div>
+        </aside>
+
+        <main class="chat-main">
+            <div class="chat-header" id="chatHeader">
+                <div class="chat-title">New Conversation</div>
+                <div class="chat-model">Model: loading...</div>
+            </div>
+
+            <div class="messages-container" id="messagesContainer">
+                <div class="welcome-message">
+                    <div class="welcome-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+                        </svg>
+                    </div>
+                    <h2>Grilo Falante Chat</h2>
+                    <p>Conversational interface with epistemic governance. Claims and gaps are automatically detected and tracked.</p>
+                </div>
+            </div>
+
+            <div class="epistemic-bar" id="epistemicBar">
+                <div class="epistemic-stat claims-stat">
+                    <span class="stat-icon">⚠️</span>
+                    <span class="stat-label">Claims:</span>
+                    <span class="stat-value" id="claimsCount">0</span>
+                </div>
+                <div class="epistemic-stat gaps-stat">
+                    <span class="stat-icon">❓</span>
+                    <span class="stat-label">Gaps:</span>
+                    <span class="stat-value" id="gapsCount">0</span>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <textarea
+                        id="messageInput"
+                        placeholder="Type your message..."
+                        rows="1"
+                        autocomplete="off"
+                    ></textarea>
+                    <button class="btn-send" id="sendBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="input-hint">Press Enter to send, Shift+Enter for new line</div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="newChatModal">
+        <div class="modal">
+            <h3>Start New Conversation</h3>
+            <div class="form-group">
+                <label for="conversationTitle">Title (optional)</label>
+                <input type="text" id="conversationTitle" placeholder="New conversation">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-secondary" id="cancelNewChat">Cancel</button>
+                <button class="btn-primary" id="confirmNewChat">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/visualizer/static/chat/chat.js"></script>
+</body>
+</html>

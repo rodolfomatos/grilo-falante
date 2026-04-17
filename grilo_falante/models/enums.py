@@ -30,48 +30,84 @@ class GMIFLevel(str, Enum):
     """
     Grilo Falante Information Quality Scale.
 
-    M1: Primary empirical data - multiple independent sources
-    M2: Contextual - valid under specific assumptions
-    M3: Partial - structure support limited
-    M4: Doubtful - contradictions detected
-    M5: Interpretation - single clear source
-    M6: Derived - logical inference from data
-    M7: Synthesis - aggregated from multiple sources
-    M8: Conclusion - provisional conclusion
+    Human-readable labels replacing cryptic M1-M8 codes:
+
+    VERIFIED: Primary empirical data confirmed by multiple independent credible sources
+    UNVERIFIED: Claim made but not yet verified against sources
+    PARTIAL: Partially supported by available evidence
+    CONFLICTED: Contradicting sources detected - claim disputed
+    INTERPRETATION: Based on single source or expert interpretation
+    DERIVED: Logical inference from available data
+    SYNTHESIS: Aggregated from multiple sources with analysis
+    CONCLUSION: Provisional conclusion pending further verification
     """
 
-    M1_PRIMARY = "M1"  # Green - Primary empirical data
-    M2_CONTEXTUAL = "M2"  # Yellow - Contextual condition
-    M3_PARTIAL = "M3"  # Orange - Partial description
-    M4_DOUBTFUL = "M4"  # Red - Doubtful testimony
-    M5_INTERPRETATION = "M5"  # Yellow - Interpretation
-    M6_DERIVED = "M6"  # Orange - Derived evidence
-    M7_SYNTHESIS = "M7"  # Yellow - Synthesis
-    M8_CONCLUSION = "M8"  # White - Conclusion
+    # New human-readable labels
+    VERIFIED = "VERIFIED"  # 🟢 Green - Primary empirical data confirmed
+    UNVERIFIED = "UNVERIFIED"  # 🟡 Yellow - Claim not yet verified
+    PARTIAL = "PARTIAL"  # 🟠 Orange - Partial evidence support
+    CONFLICTED = "CONFLICTED"  # 🔴 Red - Contradicting sources
+    INTERPRETATION = "INTERPRETATION"  # 🔵 Blue - Single source interpretation
+    DERIVED = "DERIVED"  # 🟣 Purple - Logical inference from data
+    SYNTHESIS = "SYNTHESIS"  # 🟤 Brown - Multiple source aggregation
+    CONCLUSION = "CONCLUSION"  # ⚪ White - Provisional conclusion
+
+    # Backward compatibility aliases (deprecated, use VERIFIED etc)
+    M1_PRIMARY = "VERIFIED"
+    M2_CONTEXTUAL = "UNVERIFIED"
+    M3_PARTIAL = "PARTIAL"
+    M4_DOUBTFUL = "CONFLICTED"
+    M5_INTERPRETATION = "INTERPRETATION"
+    M6_DERIVED = "DERIVED"
+    M7_SYNTHESIS = "SYNTHESIS"
+    M8_CONCLUSION = "CONCLUSION"
 
     @property
     def color(self) -> str:
         """Return the color associated with this level."""
         colors = {
-            "M1": "#22c55e",  # Green
-            "M2": "#eab308",  # Yellow
-            "M3": "#f97316",  # Orange
-            "M4": "#ef4444",  # Red
-            "M5": "#eab308",  # Yellow
-            "M6": "#f97316",  # Orange
-            "M7": "#eab308",  # Yellow
-            "M8": "#ffffff",  # White
+            "VERIFIED": "#22c55e",  # Green
+            "UNVERIFIED": "#eab308",  # Yellow
+            "PARTIAL": "#f97316",  # Orange
+            "CONFLICTED": "#ef4444",  # Red
+            "INTERPRETATION": "#3b82f6",  # Blue
+            "DERIVED": "#a855f7",  # Purple
+            "SYNTHESIS": "#78716c",  # Brown
+            "CONCLUSION": "#ffffff",  # White
+            # Backward compatibility
+            "M1": "#22c55e",
+            "M2": "#eab308",
+            "M3": "#f97316",
+            "M4": "#ef4444",
+            "M5": "#3b82f6",
+            "M6": "#a855f7",
+            "M7": "#78716c",
+            "M8": "#ffffff",
         }
         return colors.get(self.value, "#9ca3af")
+
+    @property
+    def label(self) -> str:
+        """Return human-readable label."""
+        return self.value
 
     @property
     def confidence_range(self) -> tuple[float, float]:
         """Return the expected confidence range for this level."""
         ranges = {
+            "VERIFIED": (0.8, 1.0),
+            "UNVERIFIED": (0.3, 0.6),
+            "PARTIAL": (0.4, 0.7),
+            "CONFLICTED": (0.0, 0.4),
+            "INTERPRETATION": (0.5, 0.8),
+            "DERIVED": (0.4, 0.7),
+            "SYNTHESIS": (0.5, 0.8),
+            "CONCLUSION": (0.3, 0.7),
+            # Backward compatibility
             "M1": (0.8, 1.0),
-            "M2": (0.6, 0.9),
+            "M2": (0.3, 0.6),
             "M3": (0.4, 0.7),
-            "M4": (0.1, 0.5),
+            "M4": (0.0, 0.4),
             "M5": (0.5, 0.8),
             "M6": (0.4, 0.7),
             "M7": (0.5, 0.8),
@@ -83,15 +119,15 @@ class GMIFLevel(str, Enum):
     def from_score(cls, confidence: float) -> "GMIFLevel":
         """Infer GMIF level from confidence score."""
         if confidence >= 0.8:
-            return cls.M1_PRIMARY
+            return cls.VERIFIED
         elif confidence >= 0.6:
-            return cls.M2_CONTEXTUAL
+            return cls.UNVERIFIED
         elif confidence >= 0.4:
-            return cls.M3_PARTIAL
+            return cls.PARTIAL
         elif confidence >= 0.2:
-            return cls.M5_INTERPRETATION
+            return cls.INTERPRETATION
         else:
-            return cls.M4_DOUBTFUL
+            return cls.CONFLICTED
 
 
 class CycleState(str, Enum):

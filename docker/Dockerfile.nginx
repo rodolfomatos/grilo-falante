@@ -18,6 +18,9 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy Let's Encrypt certificates
 COPY letsencrypt /etc/letsencrypt
 
+# Copy static files
+COPY chat-wrapper.html /usr/share/nginx/html/
+
 # Make certificates readable
 RUN chmod -R 755 /etc/letsencrypt
 

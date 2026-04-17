@@ -45,7 +45,27 @@ STATIC_DIR = BASE_DIR / "static"
 if STATIC_DIR.exists():
     app.mount("/visualizer/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
+# Chat static files
+CHAT_STATIC_DIR = BASE_DIR / "static" / "chat"
+if CHAT_STATIC_DIR.exists():
+    app.mount("/chat/static", StaticFiles(directory=str(CHAT_STATIC_DIR)), name="chat_static")
+
 data_fetcher = VisualizerData()
+
+
+# ============================================================================
+# CHAT ROUTES
+# ============================================================================
+
+@app.get("/chat")
+@app.get("/chat/")
+async def chat_index(request: Request):
+    """Chat interface - main page."""
+    chat_template_path = BASE_DIR / "templates" / "chat" / "index.html"
+    if chat_template_path.exists():
+        with open(chat_template_path, "r", encoding="utf-8") as f:
+            return HTMLResponse(f.read())
+    return HTMLResponse("<h1>Chat not found</h1>", status_code=404)
 
 
 @app.get("/visualizer")
@@ -105,7 +125,12 @@ async def view_graph(request: Request):
     from grilo_falante.backend.db.connection import init_pool
     await init_pool()
     graph = await data_fetcher.get_graph(limit=100)
-    html = render_template("graph.html", {"nodes": graph.nodes, "edges": graph.edges})
+    graph_dict = graph.to_dict()
+    nodes_plain = [
+        {"id": n["id"], "label": n["label"], "node_type": n["node_type"], "gmif_level": n.get("gmif_level")}
+        for n in graph_dict["nodes"]
+    ]
+    html = render_template("graph.html", {"nodes": nodes_plain, "edges": graph_dict["edges"]})
     return HTMLResponse(html)
 
 
@@ -143,7 +168,11 @@ async def health():
 
 @app.get("/")
 async def root():
-    return {"service": "Grilo Falante Visualizer", "version": "3.0", "docs": "/visualizer"}
+    """Landing page - Hub with all services."""
+    hub_path = project_root / "hub" / "index.html"
+    if hub_path.exists():
+        return FileResponse(hub_path)
+    return HTMLResponse("<h1>Grilo Falante Hub not found</h1>", status_code=404)
 
 
 @app.get("/hub")

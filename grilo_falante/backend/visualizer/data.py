@@ -80,6 +80,19 @@ class GraphData:
     nodes: List[GraphNodeData] = field(default_factory=list)
     edges: List[GraphEdgeData] = field(default_factory=list)
 
+    def to_dict(self) -> dict:
+        """Convert to dict for JSON serialization."""
+        return {
+            "nodes": [
+                {"id": n.id, "label": n.label, "node_type": n.node_type, "gmif_level": n.gmif_level}
+                for n in self.nodes
+            ],
+            "edges": [
+                {"source": e.source, "target": e.target, "edge_type": e.edge_type}
+                for e in self.edges
+            ]
+        }
+
 
 @dataclass
 class SourceData:

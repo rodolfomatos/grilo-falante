@@ -264,6 +264,10 @@ async def init_schema(conn: asyncpg.Connection) -> None:
         CREATE INDEX IF NOT EXISTS curator_history_idx ON curator_score_history(curator_id);
     """)
 
+    # Initialize chat schema
+    from grilo_falante.backend.db.schema_chat import init_schema_chat
+    await init_schema_chat(conn)
+
 
 async def check_health() -> dict:
     """Check database health."""

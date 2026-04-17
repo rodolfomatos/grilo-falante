@@ -2,13 +2,12 @@
 Vector Index — pgvector similarity search for claims
 
 Provides:
-- Embedding generation
-- Vector similarity search
+- Embedding generation via LLM service
+- Vector similarity search via pgvector
 - Consensus search (multiple similar results)
 """
 
 from typing import List, Optional
-import httpx
 
 from grilo_falante.config import settings
 
@@ -21,20 +20,36 @@ class VectorIndex:
     def __init__(self, embedding_url: Optional[str] = None):
         self.embedding_url = embedding_url or "http://localhost:11434"
         self.dimension = 768
+        self._llm_service = None
+
+    @property
+    def llm_service(self):
+        """Lazy-load LLM service."""
+        if self._llm_service is None:
+            from grilo_falante.backend.services.llm import get_llm_service
+            self._llm_service = get_llm_service()
+        return self._llm_service
 
     async def embed_text(self, text: str) -> List[float]:
-        """Generate embedding for text using Ollama."""
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                f"{self.embedding_url}/api/embeddings",
-                json={
-                    "model": settings.ollama_model,
-                    "prompt": text,
-                },
-            )
-            response.raise_for_status()
-            data = response.json()
-            return data.get("embedding", [])
+        """Generate embedding for text using LLM service."""
+        if hasattr(self.llm_service, 'embed'):
+            return await self.llm_service.embed(text)
+        
+        try:
+            import httpx
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(
+                    f"{self.embedding_url}/api/embeddings",
+                    json={
+                        "model": settings.ollama_model,
+                        "prompt": text,
+                    },
+                )
+                response.raise_for_status()
+                data = response.json()
+                return data.get("embedding", [])
+        except Exception:
+            return [0.0] * self.dimension
 
     async def search(
         self,
@@ -86,4 +101,4 @@ class VectorIndex:
         from grilo_falante.backend.db.repositories import ClaimRepository
 
         repo = ClaimRepository()
-        await repo.update_embedding(claim_id, embedding)
+        await repo.create_embedding(claim_id, embedding)

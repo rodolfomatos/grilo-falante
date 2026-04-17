@@ -135,8 +135,81 @@ class ClaimRepository:
                 )
             return [self._row_to_claim(row) for row in rows]
 
+    async def vector_search(
+        self,
+        query_embedding: list[float],
+        limit: int = 10,
+        match_threshold: float = 0.5,
+    ) -> list[dict]:
+        """
+        Search for claims using vector similarity (pgvector).
+        Returns list of claims with similarity scores.
+        """
+        async with acquire_connection() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT
+                    gc.*,
+                    1 - (ce.embedding <=> $1::vector) AS similarity
+                FROM governed_claims gc
+                JOIN claim_embeddings ce ON gc.id = ce.claim_id
+                WHERE 1 - (ce.embedding <=> $1::vector) >= $2
+                ORDER BY ce.embedding <=> $1::vector
+                LIMIT $3
+                """,
+                query_embedding,
+                match_threshold,
+                limit,
+            )
+            return [
+                {
+                    "id": row["id"],
+                    "claim_key": row["claim_key"],
+                    "claim_text": row["claim_text"],
+                    "gmif_level": row["gmif_level"],
+                    "gmif_confidence": row["gmif_confidence"],
+                    "similarity": row["similarity"],
+                    "source_id": row["source_id"],
+                    "validation_status": row["validation_status"],
+                    "created_at": row["created_at"],
+                }
+                for row in rows
+            ]
+
+    async def create_embedding(self, claim_id: int, embedding: list[float]) -> None:
+        """Create or update embedding for a claim."""
+        async with acquire_connection() as conn:
+            await conn.execute(
+                """
+                INSERT INTO claim_embeddings (claim_id, embedding)
+                VALUES ($1, $2)
+                ON CONFLICT (claim_id) DO UPDATE
+                SET embedding = $2, created_at = NOW()
+                """,
+                claim_id,
+                embedding,
+            )
+
+    async def get_embedding(self, claim_id: int) -> Optional[list[float]]:
+        """Get embedding for a claim."""
+        async with acquire_connection() as conn:
+            row = await conn.fetchrow(
+                "SELECT embedding FROM claim_embeddings WHERE claim_id = $1",
+                claim_id,
+            )
+            return list(row["embedding"]) if row else None
+
     def _row_to_claim(self, row: asyncpg.Record) -> GovernedClaim:
         """Convert database row to GovernedClaim."""
+        provenance = row["provenance"]
+        if isinstance(provenance, str):
+            provenance = json.loads(provenance) if provenance else {}
+
+        gmif_level = row["gmif_level"]
+        if gmif_level not in ("VERIFIED", "UNVERIFIED", "PARTIAL", "CONFLICTED", "INTERPRETATION", "DERIVED", "SYNTHESIS", "CONCLUSION"):
+            gmif_map = {"M1": "VERIFIED", "M2": "UNVERIFIED", "M3": "PARTIAL", "M4": "CONFLICTED", "M5": "INTERPRETATION", "M6": "DERIVED", "M7": "SYNTHESIS", "M8": "CONCLUSION"}
+            gmif_level = gmif_map.get(gmif_level, "UNVERIFIED")
+
         return GovernedClaim(
             id=row["id"],
             claim_key=row["claim_key"],
@@ -144,13 +217,13 @@ class ClaimRepository:
             claim_type=row["claim_type"],
             source_id=row["source_id"],
             session_id=row["session_id"],
-            gmif_level=row["gmif_level"],
+            gmif_level=gmif_level,
             gmif_confidence=row["gmif_confidence"],
             attribution=row["attribution"],
             epistemic_role=row["epistemic_role"],
             legitimacy_state=row["legitimacy_state"],
             validation_status=row["validation_status"],
-            provenance=row["provenance"] or {},
+            provenance=provenance or {},
             usage_count=row["usage_count"],
             last_used=row["last_used"],
             gfid=row["gfid"],
@@ -257,12 +330,15 @@ class GapRepository:
 
     def _row_to_gap(self, row: asyncpg.Record) -> Gap:
         """Convert database row to Gap."""
+        claim_template = row["claim_template"]
+        if isinstance(claim_template, str):
+            claim_template = json.loads(claim_template) if claim_template else {}
         return Gap(
             id=row["id"],
             gap_key=row["gap_key"],
             gap_type=row["gap_type"],
             query=row["query"],
-            claim_template=row["claim_template"] or {},
+            claim_template=claim_template or {},
             reason=row["reason"],
             expected_claim=row["expected_claim"],
             status=row["status"],
@@ -703,3 +779,232 @@ def generate_gfid(content_hash: str, gmif_level: str, suffix: str = "") -> str:
     short_hash = content_hash[:6] if len(content_hash) >= 6 else content_hash
     suffix_str = f"-{suffix}" if suffix else ""
     return f"GF-{date_str}-{gmif_level}-{short_hash}{suffix_str}"
+
+
+class ConversationRepository:
+    """Repository for chat conversations."""
+
+    async def create(
+        self,
+        conversation_key: str,
+        user_id: str = "anonymous",
+        title: str = "New Conversation",
+        model_used: Optional[str] = None,
+        system_prompt: Optional[str] = None,
+    ) -> dict:
+        """Create a new conversation."""
+        async with acquire_connection() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO conversations (conversation_key, user_id, title, model_used, system_prompt)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING *
+                """,
+                conversation_key,
+                user_id,
+                title,
+                model_used,
+                system_prompt,
+            )
+            return dict(row)
+
+    async def get_by_key(self, conversation_key: str) -> Optional[dict]:
+        """Get conversation by key."""
+        async with acquire_connection() as conn:
+            row = await conn.fetchrow(
+                "SELECT * FROM conversations WHERE conversation_key = $1", conversation_key
+            )
+            return dict(row) if row else None
+
+    async def list_by_user(
+        self, user_id: str = "anonymous", limit: int = 50, offset: int = 0
+    ) -> list[dict]:
+        """List conversations for a user."""
+        async with acquire_connection() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT * FROM conversations
+                WHERE user_id = $1 AND is_archived = FALSE
+                ORDER BY last_message_at DESC NULLS LAST, updated_at DESC
+                LIMIT $2 OFFSET $3
+                """,
+                user_id,
+                limit,
+                offset,
+            )
+            return [dict(row) for row in rows]
+
+    async def update_title(self, conversation_key: str, title: str) -> None:
+        """Update conversation title."""
+        async with acquire_connection() as conn:
+            await conn.execute(
+                """
+                UPDATE conversations
+                SET title = $2, updated_at = NOW()
+                WHERE conversation_key = $1
+                """,
+                conversation_key,
+                title,
+            )
+
+    async def archive(self, conversation_key: str) -> None:
+        """Archive a conversation."""
+        async with acquire_connection() as conn:
+            await conn.execute(
+                """
+                UPDATE conversations
+                SET is_archived = TRUE, updated_at = NOW()
+                WHERE conversation_key = $1
+                """,
+                conversation_key,
+            )
+
+    async def delete(self, conversation_key: str) -> None:
+        """Delete a conversation (GDPR)."""
+        async with acquire_connection() as conn:
+            await conn.execute(
+                "DELETE FROM conversations WHERE conversation_key = $1", conversation_key
+            )
+
+    async def update_last_message(self, conversation_key: str) -> None:
+        """Update last message timestamp and increment counter."""
+        async with acquire_connection() as conn:
+            await conn.execute(
+                """
+                UPDATE conversations
+                SET last_message_at = NOW(),
+                    updated_at = NOW(),
+                    message_count = message_count + 1
+                WHERE conversation_key = $1
+                """,
+                conversation_key,
+            )
+
+    async def update_stats(
+        self, conversation_key: str, claims_count: int = None, gaps_count: int = None
+    ) -> None:
+        """Update conversation stats."""
+        async with acquire_connection() as conn:
+            if claims_count is not None:
+                await conn.execute(
+                    """
+                    UPDATE conversations
+                    SET claims_count = $2, updated_at = NOW()
+                    WHERE conversation_key = $1
+                    """,
+                    conversation_key,
+                    claims_count,
+                )
+            if gaps_count is not None:
+                await conn.execute(
+                    """
+                    UPDATE conversations
+                    SET gaps_count = $2, updated_at = NOW()
+                    WHERE conversation_key = $1
+                    """,
+                    conversation_key,
+                    gaps_count,
+                )
+
+
+class MessageRepository:
+    """Repository for chat messages."""
+
+    async def create(
+        self,
+        message_key: str,
+        conversation_id: int,
+        role: str,
+        content: str,
+        model: Optional[str] = None,
+        tokens_used: Optional[int] = None,
+        inference_time_ms: Optional[int] = None,
+        claims_detected: list[int] = None,
+        gaps_identified: list[int] = None,
+        gmif_level: Optional[str] = None,
+    ) -> dict:
+        """Create a new message."""
+        async with acquire_connection() as conn:
+            row = await conn.fetchrow(
+                """
+                INSERT INTO messages
+                (message_key, conversation_id, role, content, model, tokens_used,
+                 inference_time_ms, claims_detected, gaps_identified, gmif_level)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                RETURNING *
+                """,
+                message_key,
+                conversation_id,
+                role,
+                content,
+                model,
+                tokens_used,
+                inference_time_ms,
+                claims_detected or [],
+                gaps_identified or [],
+                gmif_level,
+            )
+            return dict(row)
+
+    async def get_by_conversation(
+        self, conversation_id: int, limit: int = 100, offset: int = 0
+    ) -> list[dict]:
+        """Get messages for a conversation."""
+        async with acquire_connection() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT * FROM messages
+                WHERE conversation_id = $1
+                ORDER BY created_at ASC
+                LIMIT $2 OFFSET $3
+                """,
+                conversation_id,
+                limit,
+                offset,
+            )
+            return [dict(row) for row in rows]
+
+    async def get_recent_claims(self, conversation_id: int, limit: int = 20) -> list[dict]:
+        """Get claims detected in recent messages."""
+        async with acquire_connection() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT DISTINCT c.* FROM governed_claims c
+                JOIN message_claims mc ON c.id = mc.claim_id
+                JOIN messages m ON mc.message_id = m.id
+                WHERE m.conversation_id = $1
+                ORDER BY c.created_at DESC
+                LIMIT $2
+                """,
+                conversation_id,
+                limit,
+            )
+            return [dict(row) for row in rows]
+
+    async def link_claims(self, message_id: int, claim_ids: list[int]) -> None:
+        """Link claims to a message."""
+        async with acquire_connection() as conn:
+            for claim_id in claim_ids:
+                await conn.execute(
+                    """
+                    INSERT INTO message_claims (message_id, claim_id, relationship)
+                    VALUES ($1, $2, 'creates')
+                    ON CONFLICT DO NOTHING
+                    """,
+                    message_id,
+                    claim_id,
+                )
+
+    async def link_gaps(self, message_id: int, gap_ids: list[int]) -> None:
+        """Link gaps to a message."""
+        async with acquire_connection() as conn:
+            for gap_id in gap_ids:
+                await conn.execute(
+                    """
+                    INSERT INTO message_gaps (message_id, gap_id, relationship)
+                    VALUES ($1, $2, 'identifies')
+                    ON CONFLICT DO NOTHING
+                    """,
+                    message_id,
+                    gap_id,
+                )
