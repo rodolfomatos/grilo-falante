@@ -36,6 +36,7 @@ class LoadResult:
 @dataclass
 class SystemUseRecord:
     """Record of artefact usage for governance audit trail."""
+
     artefact_type: str = "Objeto Digital"
     record_type: str = "SystemUseRecord"
     source: str = ""
@@ -73,7 +74,7 @@ class Loader:
         self,
         ledger: Optional[Ledger] = None,
         system_path: Optional[Path] = None,
-        kernel_path: Optional[Path] = None
+        kernel_path: Optional[Path] = None,
     ):
         self.state_machine = StateMachine()
         self.ledger = ledger
@@ -107,7 +108,7 @@ class Loader:
                 message="Invalid LOAD act",
                 blocked=True,
                 block_reason="invalid_load_act",
-                error=f"Expected: '{self.VALID_LOAD_COMMAND}', Got: '{command}'"
+                error=f"Expected: '{self.VALID_LOAD_COMMAND}', Got: '{command}'",
             )
 
         if not self._initialized:
@@ -125,7 +126,7 @@ class Loader:
                     message="Failed to transition to LOADED state",
                     state=ctx.state.value,
                     blocked=True,
-                    block_reason="state_transition_failed"
+                    block_reason="state_transition_failed",
                 )
 
         ctx = self.state_machine.current_cycle
@@ -134,12 +135,12 @@ class Loader:
         self._materialize_use(
             source="regime.md",
             context="Explicit activation of governed cycle",
-            effect="Regime became operational through explicit LOAD act"
+            effect="Regime became operational through explicit LOAD act",
         )
         self._materialize_use(
             source="LOADER",
             context="Authority resolution for current governed cycle",
-            effect="Operational authority resolved to kernel-listed artefacts"
+            effect="Operational authority resolved to kernel-listed artefacts",
         )
 
         if self.ledger:
@@ -147,7 +148,7 @@ class Loader:
                 entry_type=LedgerEntryType.REGIME_EVENT,
                 content=f"Regime loaded: v3.0 (explicit LOAD act)",
                 entry_id=f"LOAD-{datetime.now().strftime('%y%m%d%H%M%S')}",
-                cycle_id=ctx.cycle_id
+                cycle_id=ctx.cycle_id,
             )
 
         return LoadResult(
@@ -157,7 +158,7 @@ class Loader:
             state=ctx.state.value,
             blocked=False,
             authoritative_artefacts=authoritative,
-            use_records=[r.to_dict() for r in self.use_records]
+            use_records=[r.to_dict() for r in self.use_records],
         )
 
     def unload(self) -> LoadResult:
@@ -169,16 +170,14 @@ class Loader:
         self.state_machine.end_cycle()
 
         self._materialize_use(
-            source="LOADER",
-            context="Explicit deactivation",
-            effect="Regime cycle terminated"
+            source="LOADER", context="Explicit deactivation", effect="Regime cycle terminated"
         )
 
         if self.ledger:
             self.ledger.add_entry(
                 entry_type=LedgerEntryType.REGIME_EVENT,
                 content="Regime unloaded",
-                cycle_id=ctx.cycle_id
+                cycle_id=ctx.cycle_id,
             )
 
         return LoadResult(success=True, message="Regime unloaded")
@@ -200,18 +199,11 @@ class Loader:
         return command
 
     def _materialize_use(
-        self,
-        source: str,
-        context: str,
-        effect: str,
-        artefact_type: str = "Objeto Digital"
+        self, source: str, context: str, effect: str, artefact_type: str = "Objeto Digital"
     ) -> SystemUseRecord:
         """Record artefact usage for audit trail."""
         record = SystemUseRecord(
-            artefact_type=artefact_type,
-            source=source,
-            context=context,
-            effect=effect
+            artefact_type=artefact_type, source=source, context=context, effect=effect
         )
         self.use_records.append(record)
         return record
@@ -249,16 +241,9 @@ class Loader:
             "validation_mechanisms": sections.get("Validation Mechanisms", []),
         }
 
-    def materialize_graph_use(
-        self,
-        graph_name: str,
-        state: str,
-        transition: str
-    ) -> Dict:
+    def materialize_graph_use(self, graph_name: str, state: str, transition: str) -> Dict:
         """Record graph usage for audit trail."""
         record = self._materialize_use(
-            source=graph_name,
-            context=f"State={state}",
-            effect=f"Validated transition={transition}"
+            source=graph_name, context=f"State={state}", effect=f"Validated transition={transition}"
         )
         return record.to_dict()

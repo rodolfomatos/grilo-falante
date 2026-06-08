@@ -58,8 +58,7 @@ class PluginRegistry:
         """
         if name in cls._plugins and not overwrite:
             raise ValueError(
-                f"Plugin '{name}' already registered. "
-                f"Use overwrite=True to replace."
+                f"Plugin '{name}' already registered. " f"Use overwrite=True to replace."
             )
 
         cls._plugins[name] = adapter_class
@@ -102,10 +101,7 @@ class PluginRegistry:
             ValueError: If plugin not found
         """
         if name not in cls._plugins:
-            raise ValueError(
-                f"Plugin '{name}' not found. "
-                f"Available: {cls.list_plugins()}"
-            )
+            raise ValueError(f"Plugin '{name}' not found. " f"Available: {cls.list_plugins()}")
 
         if name not in cls._instances:
             cls._instances[name] = cls._plugins[name]()
@@ -304,9 +300,11 @@ class PluginRegistry:
 
 class PluginNotFoundError(ValueError):
     """Raised when a plugin is not found in the registry."""
+
     pass
 
 
 class PluginRegistrationError(ValueError):
     """Raised when plugin registration fails."""
+
     pass

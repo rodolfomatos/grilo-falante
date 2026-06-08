@@ -63,10 +63,7 @@ class HybridRetriever:
         combined_results = await self._combine_with_epistemic(vector_results)
 
         if require_epistemic:
-            combined_results = [
-                r for r in combined_results
-                if r.get("epistemic_score", 0) > 0.2
-            ]
+            combined_results = [r for r in combined_results if r.get("epistemic_score", 0) > 0.2]
 
         combined_results.sort(key=lambda x: x.get("final_score", 0), reverse=True)
 
@@ -109,18 +106,14 @@ class HybridRetriever:
             semantic_score = result.get("score", 0)
 
             final_score = (
-                self.SEMANTIC_WEIGHT * semantic_score +
-                self.EPISTEMIC_WEIGHT * epistemic_score
+                self.SEMANTIC_WEIGHT * semantic_score + self.EPISTEMIC_WEIGHT * epistemic_score
             )
 
             result["final_score"] = round(final_score, 4)
             result["epistemic_score"] = round(epistemic_score, 4)
             result["semantic_score"] = round(semantic_score, 4)
 
-        return [
-            r for r in vector_results
-            if r.get("semantic_score", 0) > self.MIN_SCORE_THRESHOLD
-        ]
+        return [r for r in vector_results if r.get("semantic_score", 0) > self.MIN_SCORE_THRESHOLD]
 
     async def expand_query(self, query: str, max_terms: int = 5) -> List[str]:
         """

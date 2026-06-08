@@ -31,7 +31,9 @@ class Gap(BaseModel):
     status: GapStatus = Field(default=GapStatus.IDENTIFIED)
 
     # Resolution
-    resolved_claim_id: Optional[int] = Field(default=None, description="Claim that resolved this gap")
+    resolved_claim_id: Optional[int] = Field(
+        default=None, description="Claim that resolved this gap"
+    )
     resolved_by: Optional[int] = Field(default=None, description="Curator who resolved")
     resolved_at: Optional[datetime] = Field(default=None)
 
@@ -53,17 +55,16 @@ class Gap(BaseModel):
     @property
     def is_blocking(self) -> bool:
         """Check if gap should block operations."""
-        return (
-            self.gap_type == GapType.TIPO_A_FAILURE
-            and self.status == GapStatus.IDENTIFIED
-        )
+        return self.gap_type == GapType.TIPO_A_FAILURE and self.status == GapStatus.IDENTIFIED
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "id": self.id,
             "gap_key": self.gap_key,
-            "gap_type": self.gap_type.value if isinstance(self.gap_type, GapType) else self.gap_type,
+            "gap_type": self.gap_type.value
+            if isinstance(self.gap_type, GapType)
+            else self.gap_type,
             "query": self.query,
             "reason": self.reason,
             "status": self.status.value if isinstance(self.status, GapStatus) else self.status,

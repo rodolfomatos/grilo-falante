@@ -148,6 +148,7 @@ class OllamaService(LLMService):
                 async for line in response.aiter_lines():
                     if line:
                         import json
+
                         data = json.loads(line)
                         if "message" in data:
                             yield LLMStreamChunk(
@@ -235,6 +236,7 @@ class IAEDUService(LLMService):
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         import json
+
                         data = json.loads(line[6:])
                         if data.get("choices"):
                             delta = data["choices"][0].get("delta", {}).get("content", "")
@@ -310,6 +312,7 @@ class OpenWebUIService(LLMService):
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         import json
+
                         data = json.loads(line[6:])
                         if data.get("choices"):
                             delta = data["choices"][0].get("delta", {}).get("content", "")
@@ -385,6 +388,7 @@ class OpenAIService(LLMService):
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         import json
+
                         data = json.loads(line[6:])
                         if data.get("choices"):
                             delta = data["choices"][0].get("delta", {}).get("content", "")
@@ -414,6 +418,7 @@ class LLMServiceFactory:
             service = OpenAIService()
         elif provider == "bitnet":
             from grilo_falante.backend.services.llm.bitnet import BitNetService
+
             service = BitNetService()
         else:
             raise ValueError(f"Unknown LLM provider: {provider}")

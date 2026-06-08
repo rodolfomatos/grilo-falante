@@ -27,7 +27,7 @@ from grilo_admin.models import (
     ArticleType,
     ArticleClaim,
     ArticleClaimCreate,
-    ShadowDocument,
+    ArticleShadowDocument,
     ShadowDocumentCreate,
     SourceType,
     Falacia,
@@ -259,7 +259,7 @@ class ArticleManager:
         source_type: SourceType,
         content: Optional[str] = None,
         process_with_feynman: bool = True,
-    ) -> ShadowDocument:
+    ) -> ArticleShadowDocument:
         """Create a shadow document with Feynman processing."""
         shadow_id = str(uuid.uuid4())
         now = datetime.now().isoformat()
@@ -381,7 +381,7 @@ class ArticleManager:
         return claims
 
     @classmethod
-    def get_shadow_docs_for_article(cls, article_id: str) -> List[ShadowDocument]:
+    def get_shadow_docs_for_article(cls, article_id: str) -> List[ArticleShadowDocument]:
         """Get all shadow documents for an article."""
         docs = []
         for shadow_dict in cls._shadow_docs.values():
@@ -425,7 +425,7 @@ class ArticleManager:
         approved: bool,
         validated_by: str,
         notes: Optional[str] = None,
-    ) -> Optional[ShadowDocument]:
+    ) -> Optional[ArticleShadowDocument]:
         """Validate a shadow document (curator approval)."""
         shadow_dict = cls._shadow_docs.get(shadow_id)
         if not shadow_dict:
@@ -591,9 +591,9 @@ class ArticleManager:
         )
 
     @classmethod
-    def _dict_to_shadow_doc(cls, d: Dict[str, Any]) -> ShadowDocument:
+    def _dict_to_shadow_doc(cls, d: Dict[str, Any]) -> ArticleShadowDocument:
         """Convert dict to ShadowDocument."""
-        return ShadowDocument(
+        return ArticleShadowDocument(
             id=d["id"],
             article_id=d["article_id"],
             source_name=d["source_name"],
@@ -873,7 +873,7 @@ async def create_article_claim(
     )
 
 
-@router.get("/{article_id}/shadow-documents", response_model=List[ShadowDocument])
+@router.get("/{article_id}/shadow-documents", response_model=List[ArticleShadowDocument])
 async def get_shadow_documents(
     article_id: str,
     current_user: User = Depends(get_current_user),
@@ -885,7 +885,7 @@ async def get_shadow_documents(
     return ArticleManager.get_shadow_docs_for_article(article_id)
 
 
-@router.post("/{article_id}/shadow-documents", response_model=ShadowDocument, status_code=status.HTTP_201_CREATED)
+@router.post("/{article_id}/shadow-documents", response_model=ArticleShadowDocument, status_code=status.HTTP_201_CREATED)
 async def create_shadow_document(
     article_id: str,
     source_name: str,

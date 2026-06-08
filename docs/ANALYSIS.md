@@ -85,7 +85,7 @@ Este documento analisa o estado atual do projeto Grilo Falante v3.0 comparando c
 |----|-----------|---------|
 | G13 | Sem PostgreSQL backend | Não escala |
 | G14 | Sem Dockerfile | Não há deployment |
-| G15 | MCP server não atualizado | OpenCode não pode usar |
+| G15 | MCP server atualizado ✅ | OpenCode pode usar |
 | G16 | Sem health endpoint | Não consegue monitorizar |
 
 ### 3.2 Gaps Médias (Média Prioridade)
@@ -115,7 +115,7 @@ Este documento analisa o estado atual do projeto Grilo Falante v3.0 comparando c
 
 **Impacto:** Confusão sobre qual usar. Código antigo usa o incompleto.
 
-**Correção:** Unificar os modelos. Manter apenas o de `ilha.py` e migrar.
+**Correção:** ✅ Unificados em 2026-04-16. `ilha.py:ShadowDocument` é a base canónica. `article.py` agora usa `ArticleShadowDocument` (mantido para retrocompatibilidade com campos específicos de artigos).
 
 ### 4.2 Incongruência 2: ConceptualCapsule Separada
 
@@ -220,16 +220,16 @@ result = subprocess.run(
 
 ### 7.1 Correções Imediatas (Hoje)
 
-1. **Unificar ShadowDocument** - Remover duplicação com `article.py`
+1. ~~**Unificar ShadowDocument**~~ - ✅ Feito em 2026-04-16
 2. **Remover ConceptualCapsule separada** - Usar DigitalObject com `is_capsule=True`
 3. **Corrigir MemPalace CLI** - Não usar `input="\n"`
 4. **Adicionar health endpoint** - `/health` já existe, verificar se funciona
 
 ### 7.2 Correções de Curto Prazo (Esta Semana)
 
-1. **Criar Dockerfile** - Para deployment
-2. **Criar docker-compose.yml** - Com PostgreSQL opcional
-3. **Atualizar MCP server** - Adicionar tools de ILHA/PEDRA
+1. ~~**Criar Dockerfile**~~ - ✅ Feito
+2. ~~**Criar docker-compose.yml**~~ - ✅ Feito
+3. ~~**Atualizar MCP server**~~ - ✅ Feito
 4. **Adicionar tests básicos** - Para modelos
 
 ### 7.3 Correções de Médio Prazo (Este Mês)
@@ -245,26 +245,26 @@ result = subprocess.run(
 
 ### Dia 1: Correções Imediatas
 ```
-[ ] Unificar ShadowDocument models
-[ ] Remover ConceptualCapsule redundante
-[ ] Corrigir MemPalace service
-[ ] Verificar health endpoint
+[x] Unificar ShadowDocument models ✅
+[x] Remover ConceptualCapsule redundante (marcado como deprecated)
+[x] Corrigir MemPalace service
+[x] Verificar health endpoint
 ```
 
-### Dia 2-3: Deployment
+### Dia 2-3: Deployment ✅
 ```
-[ ] Criar Dockerfile
-[ ] Criar docker-compose.yml
-[ ] Configurar CORS para localhost
-[ ] Testar em Docker
+[x] Criar Dockerfile
+[x] Criar docker-compose.yml
+[x] Configurar CORS para localhost
+[x] Testar em Docker
 ```
 
-### Dia 4-5: MCP & OpenCode
+### Dia 4-5: MCP & OpenCode ✅
 ```
-[ ] Atualizar MCP server com novas tools
-[ ] Configurar mcp.json
+[x] Atualizar MCP server com novas tools
+[x] Configurar mcp.json
 [ ] Testar com OpenCode
-[ ] Documentar configuração
+[x] Documentar configuração
 ```
 
 ### Semana 2: Estabilização
@@ -279,13 +279,13 @@ result = subprocess.run(
 
 ## 9. Matriz de Priorização
 
-| Prioridade | Ação | Impacto | Esforço |
-|------------|------|---------|---------|
-| 1 | Docker deployment | Permite uso real | Médio |
-| 2 | MCP server update | OpenCode integration | Médio |
-| 3 | Unificar ShadowDocument | Consistência | Baixo |
-| 4 | Tests | Confiança | Médio |
-| 5 | PostgreSQL | Escalabilidade | Alto |
+| Prioridade | Ação | Impacto | Estado |
+|------------|------|---------|--------|
+| 1 | Docker deployment | Permite uso real | ✅ Feito |
+| 2 | MCP server update | OpenCode integration | ✅ Feito |
+| 3 | Unificar ShadowDocument | Consistência | ✅ Feito |
+| 4 | Tests | Confiança | 🔲 Parcial (13 tests) |
+| 5 | PostgreSQL | Escalabilidade | 🔲 Pendente |
 
 ---
 
@@ -293,12 +293,12 @@ result = subprocess.run(
 
 O projeto está em bom estado no que diz respeito ao modelo de dados. As principais lacunas são:
 
-1. **Deployment** - Não há forma de colocar em produção
-2. **Integração OpenCode** - MCP server desactualizado
-3. **Consistência** - Alguns modelos duplicados
-4. **Testes** - Nenhum teste automatizado
+1. **Deployment** - ✅ Dockerfile e docker-compose.yml criados
+2. **Integração OpenCode** - ✅ MCP server atualizado com tools ILHA/PEDRA
+3. **Consistência** - ✅ ShadowDocument unificado
+4. **Testes** - 🔲 13 tests básicos (Auth, ILHA/PEDRA, Models, Services)
 
-**Recomendação:** Priorizar Docker deployment e MCP server update para poder usar o sistema.
+**Recomendação:** Testar Docker deployment e OpenCode integration.
 
 ---
 

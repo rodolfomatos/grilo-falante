@@ -28,6 +28,7 @@ class PromptType(str, Enum):
 @dataclass
 class TriagemResult:
     """Result of TRIAGEM_E_PRESERVACAO workflow."""
+
     themes: List[Dict[str, str]]
     ideas: List[Dict[str, str]]
     selected_ideas: List[str]
@@ -38,6 +39,7 @@ class TriagemResult:
 @dataclass
 class RadiografiaResult:
     """Result of RADIOGRAFIA workflow."""
+
     errors: List[Dict[str, str]]
     corrections: List[Dict[str, str]]
     gray_zones: List[str]
@@ -46,6 +48,7 @@ class RadiografiaResult:
 @dataclass
 class AuditoriaHostilResult:
     """Result of AUDITORIA_HOSTIL_CANONICO workflow."""
+
     fase_1_materializacao: Dict[str, Any]
     fase_2_auditoria: Dict[str, Any]
     fase_3_feynman: List[Dict[str, str]]
@@ -55,6 +58,7 @@ class AuditoriaHostilResult:
 @dataclass
 class AutopsiaLiteraturaResult:
     """Result of AUTOPSIA_LITERATURA workflow."""
+
     fase_1_estrutural: Dict[str, Any]
     fase_2_fontes: List[Dict[str, Any]]
     fase_3_teorica: Dict[str, Any]
@@ -223,15 +227,19 @@ Antes de qualquer uso, requer triagem explícita."""
             line_lower = line.lower()
             if any(marker in line_lower for marker in error_markers):
                 error_count += 1
-                context_before = lines[max(0, i-2):i]
-                context_after = lines[i+1:min(len(lines), i+3)]
+                context_before = lines[max(0, i - 2) : i]
+                context_after = lines[i + 1 : min(len(lines), i + 3)]
 
-                errors.append({
-                    "id": f"error_{error_count}",
-                    "description": line[:200],
-                    "type": self._classify_error_type(line_lower),
-                    "context": " | ".join(context_before + [f">>> {line}"] + context_after)[:500],
-                })
+                errors.append(
+                    {
+                        "id": f"error_{error_count}",
+                        "description": line[:200],
+                        "type": self._classify_error_type(line_lower),
+                        "context": " | ".join(context_before + [f">>> {line}"] + context_after)[
+                            :500
+                        ],
+                    }
+                )
 
         return errors
 
@@ -247,15 +255,17 @@ Antes de qualquer uso, requer triagem explícita."""
             line_lower = line.lower()
             if any(marker in line_lower for marker in correction_markers):
                 correction_count += 1
-                context_before = lines[max(0, i-1):i]
+                context_before = lines[max(0, i - 1) : i]
 
-                corrections.append({
-                    "id": f"correction_{correction_count}",
-                    "formulation": line,
-                    "target": self._classify_correction_target(line_lower),
-                    "nature": self._classify_correction_nature(line_lower),
-                    "context": " | ".join(context_before + [f">>> {line}"]),
-                })
+                corrections.append(
+                    {
+                        "id": f"correction_{correction_count}",
+                        "formulation": line,
+                        "target": self._classify_correction_target(line_lower),
+                        "nature": self._classify_correction_nature(line_lower),
+                        "context": " | ".join(context_before + [f">>> {line}"]),
+                    }
+                )
 
         return corrections
 
@@ -379,11 +389,21 @@ Antes de qualquer uso, requer triagem explícita."""
                     "Overclaiming (conclusões além do que a fonte permite)?",
                     "Under-specification (fonte citada mas papel ambíguo)?",
                 ],
-                "markers": ["citações frágeis", "citações decorativas", "dependência excessiva de autoridade"],
+                "markers": [
+                    "citações frágeis",
+                    "citações decorativas",
+                    "dependência excessiva de autoridade",
+                ],
             },
             "fase_3_teorica": {
                 "instruction": "Avaliar compatibilidade entre quadros teóricos",
-                "frameworks": ["educação inclusiva", "sociocultural theory", "SLA", "psicologia cognitiva", "UDL"],
+                "frameworks": [
+                    "educação inclusiva",
+                    "sociocultural theory",
+                    "SLA",
+                    "psicologia cognitiva",
+                    "UDL",
+                ],
                 "identifications": [
                     "Tensões não resolvidas",
                     "Compatibilizações implícitas não justificadas",

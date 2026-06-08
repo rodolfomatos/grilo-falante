@@ -15,21 +15,47 @@ class QueryType(str):
 
 
 FACTUAL_MARKERS = [
-    "capital", "who is", "when did", "where is", "what is",
-    "qual é", "quem é", "quando é que", "onde fica", "o que é",
-    "how many", "how much", "what year", "what date",
+    "capital",
+    "who is",
+    "when did",
+    "where is",
+    "what is",
+    "qual é",
+    "quem é",
+    "quando é que",
+    "onde fica",
+    "o que é",
+    "how many",
+    "how much",
+    "what year",
+    "what date",
 ]
 
 EXPLORATORY_MARKERS = [
-    "interesting facts", "tell me about", "overview", "summarize",
-    "factos interessantes", "fala-me de", "resumo", "explica", "quais são",
-    "can you explain", "what do you think", "your opinion",
+    "interesting facts",
+    "tell me about",
+    "overview",
+    "summarize",
+    "factos interessantes",
+    "fala-me de",
+    "resumo",
+    "explica",
+    "quais são",
+    "can you explain",
+    "what do you think",
+    "your opinion",
 ]
 
 CORPUS_MARKERS = [
-    "according to the document", "in the paper", "according to your data",
-    "de acordo com o documento", "no artigo", "nos dados locais", "na base local",
-    "in your knowledge base", "from your training",
+    "according to the document",
+    "in the paper",
+    "according to your data",
+    "de acordo com o documento",
+    "no artigo",
+    "nos dados locais",
+    "na base local",
+    "in your knowledge base",
+    "from your training",
 ]
 
 

@@ -62,6 +62,7 @@ class PINAProtocol:
     def _generate_nca_id(self, source_document: str, location: str) -> str:
         """Generate a unique NCA-ID"""
         import hashlib
+
         source_hash = hashlib.md5(source_document.encode()).hexdigest()[:6]
         loc_hash = hashlib.md5(location.encode()).hexdigest()[:4]
         timestamp = datetime.now().strftime("%y%m%d%H%M%S")
@@ -72,7 +73,7 @@ class PINAProtocol:
         source_document: str,
         faithful_statement: str,
         location: str,
-        graph_scope: Optional[str] = None
+        graph_scope: Optional[str] = None,
     ) -> PINAResult:
         """
         Propose a Normative Candidate for PINA decision gate.
@@ -85,7 +86,9 @@ class PINAProtocol:
             faithful_statement=faithful_statement,
             location=location,
             graph_scope=graph_scope,
-            cycle_id=self.state_machine.current_cycle.cycle_id if self.state_machine.current_cycle else None
+            cycle_id=self.state_machine.current_cycle.cycle_id
+            if self.state_machine.current_cycle
+            else None,
         )
 
         self._candidates[nca_id] = candidate
@@ -103,13 +106,13 @@ class PINAProtocol:
                     "location": location,
                     "graph_scope": graph_scope,
                 },
-                cycle_id=candidate.cycle_id
+                cycle_id=candidate.cycle_id,
             )
 
         return PINAResult(
             success=True,
             nca_id=nca_id,
-            message=f"NCA {nca_id} proposed. Awaiting human decision: [A] Incorporate, [B] Do not incorporate, [C] Defer"
+            message=f"NCA {nca_id} proposed. Awaiting human decision: [A] Incorporate, [B] Do not incorporate, [C] Defer",
         )
 
     def decide(self, nca_id: str, decision: str) -> PINAResult:
@@ -121,11 +124,7 @@ class PINAProtocol:
             decision: "A" (Incorporate), "B" (Do not), or "C" (Defer)
         """
         if nca_id not in self._candidates:
-            return PINAResult(
-                success=False,
-                nca_id=nca_id,
-                message=f"NCA {nca_id} not found"
-            )
+            return PINAResult(success=False, nca_id=nca_id, message=f"NCA {nca_id} not found")
 
         candidate = self._candidates[nca_id]
 
@@ -135,7 +134,7 @@ class PINAProtocol:
             return PINAResult(
                 success=False,
                 nca_id=nca_id,
-                message=f"Invalid decision '{decision}'. Must be A, B, or C."
+                message=f"Invalid decision '{decision}'. Must be A, B, or C.",
             )
 
         candidate.decision = pinadecision
@@ -161,7 +160,7 @@ class PINAProtocol:
                     "decision": pinadecision.value,
                     "consequence": consequence,
                 },
-                cycle_id=candidate.cycle_id
+                cycle_id=candidate.cycle_id,
             )
 
         return PINAResult(
@@ -169,7 +168,7 @@ class PINAProtocol:
             nca_id=nca_id,
             message=consequence,
             decision=pinadecision.value,
-            active_invariants=len(self._active_invariants)
+            active_invariants=len(self._active_invariants),
         )
 
     def get_pending(self) -> list[dict]:

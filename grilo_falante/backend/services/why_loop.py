@@ -74,10 +74,7 @@ class WhyLoopService:
         return claims[:5]
 
     def generate_questions(
-        self,
-        synthesis_content: str,
-        topic: str,
-        current_depth: int = 1
+        self, synthesis_content: str, topic: str, current_depth: int = 1
     ) -> list[WhyQuestion]:
         """Generate why questions for a synthesis."""
         if current_depth > self.max_depth:
@@ -87,11 +84,13 @@ class WhyLoopService:
         claims = self.extract_claims(synthesis_content)
 
         if not claims:
-            questions.append(WhyQuestion(
-                question=f"Mas porquê? O que acontece se não for verdade?",
-                depth=current_depth,
-                status="pending"
-            ))
+            questions.append(
+                WhyQuestion(
+                    question=f"Mas porquê? O que acontece se não for verdade?",
+                    depth=current_depth,
+                    status="pending",
+                )
+            )
             return questions
 
         templates = self.QUESTION_TEMPLATES.get(current_depth, self.QUESTION_TEMPLATES[1])
@@ -100,20 +99,13 @@ class WhyLoopService:
             template = templates[i % len(templates)]
             question_text = template.replace("{topic}", topic[:30])
 
-            questions.append(WhyQuestion(
-                question=question_text,
-                depth=current_depth,
-                status="pending"
-            ))
+            questions.append(
+                WhyQuestion(question=question_text, depth=current_depth, status="pending")
+            )
 
         return questions
 
-    def execute(
-        self,
-        synthesis_expert: str,
-        topic: str,
-        max_iterations: int = 3
-    ) -> WhyLoopResult:
+    def execute(self, synthesis_expert: str, topic: str, max_iterations: int = 3) -> WhyLoopResult:
         """
         Run the full "porquê?" loop.
 
@@ -130,11 +122,7 @@ class WhyLoopService:
         current_content = synthesis_expert
 
         while iteration < min(max_iterations, self.max_depth):
-            questions = self.generate_questions(
-                current_content,
-                topic,
-                iteration + 1
-            )
+            questions = self.generate_questions(current_content, topic, iteration + 1)
 
             if not questions:
                 break
@@ -143,9 +131,11 @@ class WhyLoopService:
             iteration += 1
 
         return WhyLoopResult(
-            questions=[{"q": q.question, "depth": q.depth, "status": q.status} for q in all_questions],
+            questions=[
+                {"q": q.question, "depth": q.depth, "status": q.status} for q in all_questions
+            ],
             final_depth=iteration,
-            status="complete" if all_questions else "no_questions"
+            status="complete" if all_questions else "no_questions",
         )
 
     def format_output(self, result: WhyLoopResult) -> str:

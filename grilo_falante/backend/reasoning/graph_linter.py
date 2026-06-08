@@ -92,13 +92,15 @@ class GraphLinter:
             gmif_level = node.get("gmif_level", "M4")
 
             if not in_edges and gmif_level not in ("M1", "M2"):
-                issues.append(LintIssue(
-                    code=self.L1_ORPHAN,
-                    severity="warning",
-                    description=f"Orphan node without supporting claims",
-                    affected_nodes=[node.get("claim_key", str(claim_id))],
-                    details={"gmif_level": gmif_level},
-                ))
+                issues.append(
+                    LintIssue(
+                        code=self.L1_ORPHAN,
+                        severity="warning",
+                        description=f"Orphan node without supporting claims",
+                        affected_nodes=[node.get("claim_key", str(claim_id))],
+                        details={"gmif_level": gmif_level},
+                    )
+                )
 
         return issues
 
@@ -109,13 +111,15 @@ class GraphLinter:
         for claim_id, node in graph.items():
             for edge in node.get("out_edges", []):
                 if edge.get("target_id") == claim_id:
-                    issues.append(LintIssue(
-                        code=self.L2_SELF_REF,
-                        severity="error",
-                        description="Self-referential edge detected",
-                        affected_nodes=[node.get("claim_key", str(claim_id))],
-                        details={"relation": edge.get("relation")},
-                    ))
+                    issues.append(
+                        LintIssue(
+                            code=self.L2_SELF_REF,
+                            severity="error",
+                            description="Self-referential edge detected",
+                            affected_nodes=[node.get("claim_key", str(claim_id))],
+                            details={"relation": edge.get("relation")},
+                        )
+                    )
 
         return issues
 
@@ -134,13 +138,15 @@ class GraphLinter:
                     has_contradict = True
 
             if has_support and has_contradict:
-                issues.append(LintIssue(
-                    code=self.L3_CONTRADICTION,
-                    severity="error",
-                    description="Node has both supporting and contradicting edges",
-                    affected_nodes=[node.get("claim_key", str(claim_id))],
-                    details={"has_support": has_support, "has_contradict": has_contradict},
-                ))
+                issues.append(
+                    LintIssue(
+                        code=self.L3_CONTRADICTION,
+                        severity="error",
+                        description="Node has both supporting and contradicting edges",
+                        affected_nodes=[node.get("claim_key", str(claim_id))],
+                        details={"has_support": has_support, "has_contradict": has_contradict},
+                    )
+                )
 
         return issues
 
@@ -176,15 +182,18 @@ class GraphLinter:
                 if cycle:
                     node_keys = [
                         graph.get(cid, {}).get("claim_key", str(cid))
-                        for cid in cycle if cid in graph
+                        for cid in cycle
+                        if cid in graph
                     ]
-                    issues.append(LintIssue(
-                        code=self.L4_CYCLE,
-                        severity="error",
-                        description="Circular dependency detected",
-                        affected_nodes=node_keys,
-                        details={"cycle_length": len(cycle)},
-                    ))
+                    issues.append(
+                        LintIssue(
+                            code=self.L4_CYCLE,
+                            severity="error",
+                            description="Circular dependency detected",
+                            affected_nodes=node_keys,
+                            details={"cycle_length": len(cycle)},
+                        )
+                    )
 
         return issues
 
@@ -201,18 +210,18 @@ class GraphLinter:
                 source_id = edge.get("source_id")
                 if source_id and source_id in graph:
                     if graph[source_id].get("gmif_level") == "M4":
-                        m4_sources.append(
-                            graph[source_id].get("claim_key", str(source_id))
-                        )
+                        m4_sources.append(graph[source_id].get("claim_key", str(source_id)))
 
             if m4_sources:
-                issues.append(LintIssue(
-                    code=self.L5_UNSUPPORTED,
-                    severity="error",
-                    description="M1 conclusion sourced from M4 (doubtful) claims",
-                    affected_nodes=[node.get("claim_key", str(claim_id))],
-                    details={"m4_sources": m4_sources},
-                ))
+                issues.append(
+                    LintIssue(
+                        code=self.L5_UNSUPPORTED,
+                        severity="error",
+                        description="M1 conclusion sourced from M4 (doubtful) claims",
+                        affected_nodes=[node.get("claim_key", str(claim_id))],
+                        details={"m4_sources": m4_sources},
+                    )
+                )
 
         return issues
 
@@ -236,13 +245,15 @@ class GraphLinter:
                     break
 
             if not has_m1_m2_ancestor and ancestors:
-                issues.append(LintIssue(
-                    code=self.L6_MISSING_M1,
-                    severity="warning",
-                    description="Claim chain missing M1/M2 primary evidence",
-                    affected_nodes=[node.get("claim_key", str(claim_id))],
-                    details={"ancestor_count": len(ancestors)},
-                ))
+                issues.append(
+                    LintIssue(
+                        code=self.L6_MISSING_M1,
+                        severity="warning",
+                        description="Claim chain missing M1/M2 primary evidence",
+                        affected_nodes=[node.get("claim_key", str(claim_id))],
+                        details={"ancestor_count": len(ancestors)},
+                    )
+                )
 
         return issues
 
@@ -267,17 +278,19 @@ class GraphLinter:
             if gmif_level in level_expected:
                 min_exp, max_exp = level_expected[gmif_level]
                 if confidence < min_exp - 0.2 or confidence > max_exp + 0.2:
-                    issues.append(LintIssue(
-                        code=self.L7_CONFIDENCE_MISMATCH,
-                        severity="warning",
-                        description=f"Confidence {confidence} mismatches {gmif_level} expected range",
-                        affected_nodes=[node.get("claim_key", str(claim_id))],
-                        details={
-                            "gmif_level": gmif_level,
-                            "confidence": confidence,
-                            "expected_range": (min_exp, max_exp),
-                        },
-                    ))
+                    issues.append(
+                        LintIssue(
+                            code=self.L7_CONFIDENCE_MISMATCH,
+                            severity="warning",
+                            description=f"Confidence {confidence} mismatches {gmif_level} expected range",
+                            affected_nodes=[node.get("claim_key", str(claim_id))],
+                            details={
+                                "gmif_level": gmif_level,
+                                "confidence": confidence,
+                                "expected_range": (min_exp, max_exp),
+                            },
+                        )
+                    )
 
         return issues
 
@@ -322,11 +335,7 @@ class GraphLinter:
         for edge in node.get("in_edges", []):
             affected_ids.add(edge.get("source_id"))
 
-        affected_graph = {
-            cid: graph_data[cid]
-            for cid in affected_ids
-            if cid in graph_data
-        }
+        affected_graph = {cid: graph_data[cid] for cid in affected_ids if cid in graph_data}
 
         issues = {}
         issues[self.L1_ORPHAN] = self._detect_orphans(affected_graph)

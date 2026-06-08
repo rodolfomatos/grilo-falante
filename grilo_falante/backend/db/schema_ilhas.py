@@ -150,11 +150,13 @@ async def init_schema_ilhas(conn) -> None:
 
 async def drop_schema_ilhas(conn) -> None:
     """Drop island/pedra schema (for testing)."""
-    await conn.execute("""
+    await conn.execute(
+        """
         DROP TABLE IF EXISTS ilha_relações CASCADE;
         DROP TABLE IF EXISTS ilha_reações CASCADE;
         DROP TABLE IF EXISTS ilha_membros CASCADE;
         DROP TABLE IF EXISTS pedras CASCADE;
         DROP TABLE IF EXISTS ilhas CASCADE;
         DROP TABLE IF EXISTS ledger_cronológico CASCADE;
-    """)
+    """
+    )

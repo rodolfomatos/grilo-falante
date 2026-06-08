@@ -218,8 +218,12 @@ async def validate_claim(claim_id: int, req: ValidateClaimRequest):
         raise HTTPException(status_code=403, detail="Curator is suspended")
 
     prev_status = claim.validation_status
-    new_status = ValidationState.APPROVED if req.decision == "approved" else ValidationState.REJECTED
-    new_legitimacy = LegitimacyState.ASSERTED if req.decision == "approved" else LegitimacyState.REJECTED
+    new_status = (
+        ValidationState.APPROVED if req.decision == "approved" else ValidationState.REJECTED
+    )
+    new_legitimacy = (
+        LegitimacyState.ASSERTED if req.decision == "approved" else LegitimacyState.REJECTED
+    )
 
     await repo.update_validation(claim_id, new_status, new_legitimacy)
 
@@ -326,6 +330,7 @@ async def school_mode(gap_key: str):
 async def get_pina_pending(limit: int = Query(20, le=100)):
     """Get all pending NCA candidates awaiting human decision."""
     from grilo_falante.regime import Acordar, Loader, Ledger
+
     ledger = Ledger()
     loader = Loader(ledger=ledger)
     pina = loader.pina
@@ -340,6 +345,7 @@ async def get_pina_pending(limit: int = Query(20, le=100)):
 async def get_pina_invariants():
     """Get all active invariants (incorporated rules)."""
     from grilo_falante.regime import Acordar, Loader, Ledger
+
     ledger = Ledger()
     loader = Loader(ledger=ledger)
     pina = loader.pina
@@ -354,6 +360,7 @@ async def get_pina_invariants():
 async def get_pina_status():
     """Get full PINA protocol status."""
     from grilo_falante.regime import Acordar, Loader, Ledger
+
     ledger = Ledger()
     loader = Loader(ledger=ledger)
     pina = loader.pina
@@ -395,7 +402,9 @@ async def get_curator(curator_id: int):
         "id": curator.id,
         "curator_key": curator.curator_key,
         "name": curator.name,
-        "curator_type": curator.curator_type.value if hasattr(curator.curator_type, 'value') else curator.curator_type,
+        "curator_type": curator.curator_type.value
+        if hasattr(curator.curator_type, "value")
+        else curator.curator_type,
         "accountability_score": curator.accountability_score,
         "specializations": curator.specializations,
     }
@@ -462,6 +471,7 @@ async def feynman_explain(req: FeynmanRequest):
     """Generate Feynman-style explanation."""
     service = FeynmanService()
     from grilo_falante.backend.services.feynman import FeynmanLevel
+
     level = FeynmanLevel(req.level)
     result = service.explain(req.topic, level)
     return {
@@ -515,6 +525,7 @@ async def ingest_pdf(
         raise HTTPException(status_code=409, detail="Source already exists")
 
     from grilo_falante.models import GovernedSource
+
     source = GovernedSource(
         source_key=req.source_key,
         title=req.title,
@@ -630,8 +641,10 @@ async def get_trusted_sources():
                 "id": s.id,
                 "source_key": s.source_key,
                 "title": s.title,
-                "tier": s.tier.value if hasattr(s.tier, 'value') else s.tier,
-                "validation_status": s.validation_status.value if hasattr(s.validation_status, 'value') else s.validation_status,
+                "tier": s.tier.value if hasattr(s.tier, "value") else s.tier,
+                "validation_status": s.validation_status.value
+                if hasattr(s.validation_status, "value")
+                else s.validation_status,
             }
             for s in sources
         ],
@@ -667,13 +680,15 @@ async def get_graph_dot():
 
     dot_lines = [
         "digraph epistemic_graph {",
-        '  rankdir=TB;',
-        '  node [shape=box];',
+        "  rankdir=TB;",
+        "  node [shape=box];",
     ]
 
     for claim in claims:
-        gmif = claim.gmif_level.value if hasattr(claim.gmif_level, 'value') else claim.gmif_level
-        dot_lines.append(f'  "{claim.claim_key}" [label="{claim.claim_text[:50]}...", gmif="{gmif}"];')
+        gmif = claim.gmif_level.value if hasattr(claim.gmif_level, "value") else claim.gmif_level
+        dot_lines.append(
+            f'  "{claim.claim_key}" [label="{claim.claim_text[:50]}...", gmif="{gmif}"];'
+        )
 
     dot_lines.append("}")
 
@@ -689,8 +704,12 @@ async def get_claim_card(claim_id: int):
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
 
-    gmif = claim.gmif_level.value if hasattr(claim.gmif_level, 'value') else claim.gmif_level
-    validation = claim.validation_status.value if hasattr(claim.validation_status, 'value') else claim.validation_status
+    gmif = claim.gmif_level.value if hasattr(claim.gmif_level, "value") else claim.gmif_level
+    validation = (
+        claim.validation_status.value
+        if hasattr(claim.validation_status, "value")
+        else claim.validation_status
+    )
 
     return {
         "id": claim.id,
@@ -700,9 +719,15 @@ async def get_claim_card(claim_id: int):
         "gmif_level": gmif,
         "gmif_confidence": claim.gmif_confidence,
         "validation_status": validation,
-        "legitimacy_state": claim.legitimacy_state.value if hasattr(claim.legitimacy_state, 'value') else claim.legitimacy_state,
-        "attribution": claim.attribution.value if hasattr(claim.attribution, 'value') else claim.attribution,
-        "epistemic_role": claim.epistemic_role.value if hasattr(claim.epistemic_role, 'value') else claim.epistemic_role,
+        "legitimacy_state": claim.legitimacy_state.value
+        if hasattr(claim.legitimacy_state, "value")
+        else claim.legitimacy_state,
+        "attribution": claim.attribution.value
+        if hasattr(claim.attribution, "value")
+        else claim.attribution,
+        "epistemic_role": claim.epistemic_role.value
+        if hasattr(claim.epistemic_role, "value")
+        else claim.epistemic_role,
         "created_at": claim.created_at.isoformat() if claim.created_at else None,
     }
 
@@ -712,6 +737,7 @@ async def get_claim_card(claim_id: int):
 async def get_kanban_state():
     """Get current kanban epistemico state."""
     from grilo_falante.cognitive import KanbanEpistemico
+
     kanban = KanbanEpistemico()
     state = kanban.get_state()
     return state.to_dict()
@@ -730,7 +756,11 @@ async def create_kanban_movement(req: CreateMovementRequest):
     from grilo_falante.cognitive import KanbanEpistemico, MovementType
 
     kanban = KanbanEpistemico()
-    mov_type = MovementType(req.movement_type) if req.movement_type in [m.value for m in MovementType] else MovementType.IDEA
+    mov_type = (
+        MovementType(req.movement_type)
+        if req.movement_type in [m.value for m in MovementType]
+        else MovementType.IDEA
+    )
 
     movement = kanban.create_movement(
         title=req.title,
@@ -782,6 +812,7 @@ class TriagemRequest(BaseModel):
 async def run_triagem(req: TriagemRequest):
     """Execute TRIAGEM_E_PRESERVACAO workflow."""
     from grilo_falante.cognitive import PromptWorkflows
+
     workflows = PromptWorkflows()
     result = workflows.triagem_workflow(req.conversation_content)
     return result
@@ -795,6 +826,7 @@ class RadiografiaRequest(BaseModel):
 async def run_radiografia(req: RadiografiaRequest):
     """Execute RADIOGRAFIA_ERROS workflow."""
     from grilo_falante.cognitive import PromptWorkflows
+
     workflows = PromptWorkflows()
     result = workflows.radiografia_workflow(req.conversation_content)
     return result
@@ -825,27 +857,34 @@ async def get_manual_index():
     for part_dir in sorted(MANUAL_PATH.iterdir()):
         if part_dir.is_dir() and part_dir.name.startswith("PARTE"):
             for md_file in sorted(part_dir.glob("*.md")):
-                chapters.append({
-                    "path": str(md_file.relative_to(MANUAL_PATH)),
-                    "file": md_file.name,
-                    "title": _extract_title(md_file),
-                    "part": part_dir.name,
-                })
+                chapters.append(
+                    {
+                        "path": str(md_file.relative_to(MANUAL_PATH)),
+                        "file": md_file.name,
+                        "title": _extract_title(md_file),
+                        "part": part_dir.name,
+                    }
+                )
         elif part_dir.name == "APENDICES":
             for md_file in sorted(part_dir.glob("*.md")):
-                chapters.append({
-                    "path": str(md_file.relative_to(MANUAL_PATH)),
-                    "file": md_file.name,
-                    "title": _extract_title(md_file),
-                    "part": "APENDICES",
-                })
+                chapters.append(
+                    {
+                        "path": str(md_file.relative_to(MANUAL_PATH)),
+                        "file": md_file.name,
+                        "title": _extract_title(md_file),
+                        "part": "APENDICES",
+                    }
+                )
         elif part_dir.name == "00_INDICE.md":
-            chapters.insert(0, {
-                "path": "00_INDICE.md",
-                "file": "00_INDICE.md",
-                "title": "Índice Geral",
-                "part": "ROOT",
-            })
+            chapters.insert(
+                0,
+                {
+                    "path": "00_INDICE.md",
+                    "file": "00_INDICE.md",
+                    "title": "Índice Geral",
+                    "part": "ROOT",
+                },
+            )
 
     return {
         "chapters": chapters,
@@ -904,16 +943,18 @@ async def search_manual(q: str = Query(..., min_length=2)):
 
             for i, line in enumerate(lines, 1):
                 if search_lower in line.lower():
-                    context_before = "\n".join(lines[max(0, i-3):i])
-                    context_after = "\n".join(lines[i:min(len(lines), i+2)])
+                    context_before = "\n".join(lines[max(0, i - 3) : i])
+                    context_after = "\n".join(lines[i : min(len(lines), i + 2)])
 
-                    results.append({
-                        "file": str(md_file.relative_to(MANUAL_PATH)),
-                        "line": i,
-                        "match": line.strip(),
-                        "context_before": context_before,
-                        "context_after": context_after,
-                    })
+                    results.append(
+                        {
+                            "file": str(md_file.relative_to(MANUAL_PATH)),
+                            "line": i,
+                            "match": line.strip(),
+                            "context_before": context_before,
+                            "context_after": context_after,
+                        }
+                    )
 
                     if len(results) >= 20:
                         break

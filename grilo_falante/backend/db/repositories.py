@@ -44,15 +44,23 @@ class ClaimRepository:
                 """,
                 claim.claim_key,
                 claim.claim_text,
-                claim.claim_type.value if hasattr(claim.claim_type, 'value') else claim.claim_type,
+                claim.claim_type.value if hasattr(claim.claim_type, "value") else claim.claim_type,
                 claim.source_id,
                 claim.session_id,
-                claim.gmif_level.value if hasattr(claim.gmif_level, 'value') else claim.gmif_level,
+                claim.gmif_level.value if hasattr(claim.gmif_level, "value") else claim.gmif_level,
                 claim.gmif_confidence,
-                claim.attribution.value if hasattr(claim.attribution, 'value') else claim.attribution,
-                claim.epistemic_role.value if hasattr(claim.epistemic_role, 'value') else claim.epistemic_role,
-                claim.legitimacy_state.value if hasattr(claim.legitimacy_state, 'value') else claim.legitimacy_state,
-                claim.validation_status.value if hasattr(claim.validation_status, 'value') else claim.validation_status,
+                claim.attribution.value
+                if hasattr(claim.attribution, "value")
+                else claim.attribution,
+                claim.epistemic_role.value
+                if hasattr(claim.epistemic_role, "value")
+                else claim.epistemic_role,
+                claim.legitimacy_state.value
+                if hasattr(claim.legitimacy_state, "value")
+                else claim.legitimacy_state,
+                claim.validation_status.value
+                if hasattr(claim.validation_status, "value")
+                else claim.validation_status,
                 json.dumps(claim.provenance),
                 claim.gfid,
             )
@@ -63,9 +71,7 @@ class ClaimRepository:
     async def get_by_id(self, claim_id: int) -> Optional[GovernedClaim]:
         """Get claim by ID."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM governed_claims WHERE id = $1", claim_id
-            )
+            row = await conn.fetchrow("SELECT * FROM governed_claims WHERE id = $1", claim_id)
             return self._row_to_claim(row) if row else None
 
     async def get_by_key(self, claim_key: str) -> Optional[GovernedClaim]:
@@ -91,8 +97,8 @@ class ClaimRepository:
                 WHERE id = $1
                 """,
                 claim_id,
-                new_status.value if hasattr(new_status, 'value') else new_status,
-                new_legitimacy.value if hasattr(new_legitimacy, 'value') else new_legitimacy,
+                new_status.value if hasattr(new_status, "value") else new_status,
+                new_legitimacy.value if hasattr(new_legitimacy, "value") else new_legitimacy,
             )
 
     async def search(
@@ -166,12 +172,12 @@ class GapRepository:
                 RETURNING id, created_at
                 """,
                 gap.gap_key,
-                gap.gap_type.value if hasattr(gap.gap_type, 'value') else gap.gap_type,
+                gap.gap_type.value if hasattr(gap.gap_type, "value") else gap.gap_type,
                 gap.query,
                 json.dumps(gap.claim_template),
                 gap.reason,
                 gap.expected_claim,
-                gap.status.value if hasattr(gap.status, 'value') else gap.status,
+                gap.status.value if hasattr(gap.status, "value") else gap.status,
             )
             gap.id = row["id"]
             gap.created_at = row["created_at"]
@@ -180,22 +186,16 @@ class GapRepository:
     async def get_by_id(self, gap_id: int) -> Optional[Gap]:
         """Get gap by ID."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM gaps WHERE id = $1", gap_id
-            )
+            row = await conn.fetchrow("SELECT * FROM gaps WHERE id = $1", gap_id)
             return self._row_to_gap(row) if row else None
 
     async def get_by_key(self, gap_key: str) -> Optional[Gap]:
         """Get gap by key."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM gaps WHERE gap_key = $1", gap_key
-            )
+            row = await conn.fetchrow("SELECT * FROM gaps WHERE gap_key = $1", gap_key)
             return self._row_to_gap(row) if row else None
 
-    async def list_by_status(
-        self, status: GapStatus, limit: int = 20
-    ) -> list[Gap]:
+    async def list_by_status(self, status: GapStatus, limit: int = 20) -> list[Gap]:
         """List gaps by status."""
         async with acquire_connection() as conn:
             rows = await conn.fetch(
@@ -205,7 +205,7 @@ class GapRepository:
                 ORDER BY created_at DESC
                 LIMIT $2
                 """,
-                status.value if hasattr(status, 'value') else status,
+                status.value if hasattr(status, "value") else status,
                 limit,
             )
             return [self._row_to_gap(row) for row in rows]
@@ -220,13 +220,11 @@ class GapRepository:
                 RETURNING *
                 """,
                 gap_key,
-                new_status.value if hasattr(new_status, 'value') else new_status,
+                new_status.value if hasattr(new_status, "value") else new_status,
             )
             return self._row_to_gap(row) if row else None
 
-    async def resolve(
-        self, gap_key: str, resolved_claim_id: int, resolved_by: int
-    ) -> Gap:
+    async def resolve(self, gap_key: str, resolved_claim_id: int, resolved_by: int) -> Gap:
         """Mark gap as resolved."""
         async with acquire_connection() as conn:
             row = await conn.fetchrow(
@@ -278,7 +276,9 @@ class CuratorRepository:
                 """,
                 curator.curator_key,
                 curator.name,
-                curator.curator_type.value if hasattr(curator.curator_type, 'value') else curator.curator_type,
+                curator.curator_type.value
+                if hasattr(curator.curator_type, "value")
+                else curator.curator_type,
                 curator.model_name,
                 curator.specializations,
                 curator.accountability_score,
@@ -290,22 +290,16 @@ class CuratorRepository:
     async def get_by_id(self, curator_id: int) -> Optional[Curator]:
         """Get curator by ID."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM curators WHERE id = $1", curator_id
-            )
+            row = await conn.fetchrow("SELECT * FROM curators WHERE id = $1", curator_id)
             return self._row_to_curator(row) if row else None
 
     async def get_by_key(self, curator_key: str) -> Optional[Curator]:
         """Get curator by key."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM curators WHERE curator_key = $1", curator_key
-            )
+            row = await conn.fetchrow("SELECT * FROM curators WHERE curator_key = $1", curator_key)
             return self._row_to_curator(row) if row else None
 
-    async def update_score(
-        self, curator_id: int, new_score: float, reason: str
-    ) -> Curator:
+    async def update_score(self, curator_id: int, new_score: float, reason: str) -> Curator:
         """Update curator score with history."""
         async with acquire_transaction() as conn:
             # Get old score
@@ -396,8 +390,10 @@ class SourceRepository:
                 source.url,
                 source.source_type,
                 source.source_origin,
-                source.tier.value if hasattr(source.tier, 'value') else source.tier,
-                source.validation_status.value if hasattr(source.validation_status, 'value') else source.validation_status,
+                source.tier.value if hasattr(source.tier, "value") else source.tier,
+                source.validation_status.value
+                if hasattr(source.validation_status, "value")
+                else source.validation_status,
                 source.ingestion_origin,
                 json.dumps(source.raw_metadata),
             )
@@ -408,9 +404,7 @@ class SourceRepository:
     async def get_by_id(self, source_id: int) -> Optional[GovernedSource]:
         """Get source by ID."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM governed_sources WHERE id = $1", source_id
-            )
+            row = await conn.fetchrow("SELECT * FROM governed_sources WHERE id = $1", source_id)
             return self._row_to_source(row) if row else None
 
     async def get_by_key(self, source_key: str) -> Optional[GovernedSource]:
@@ -597,7 +591,7 @@ class ShadowDocumentRepository:
                 json.dumps(shadow.citations),
                 shadow.limits,
                 shadow.misuse_risks,
-                shadow.status.value if hasattr(shadow.status, 'value') else shadow.status,
+                shadow.status.value if hasattr(shadow.status, "value") else shadow.status,
                 shadow.validation_notes,
                 shadow.f1_count,
                 shadow.f2_count,
@@ -650,7 +644,7 @@ class StudyPlanRepository:
                 plan.gap_key,
                 plan.topic,
                 json.dumps([s.model_dump() for s in plan.steps]),
-                plan.status.value if hasattr(plan.status, 'value') else plan.status,
+                plan.status.value if hasattr(plan.status, "value") else plan.status,
                 plan.current_step,
                 plan.completed_steps,
             )
@@ -661,9 +655,7 @@ class StudyPlanRepository:
     async def get_by_key(self, plan_key: str) -> Optional[StudyPlan]:
         """Get study plan by key."""
         async with acquire_connection() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM study_plans WHERE plan_key = $1", plan_key
-            )
+            row = await conn.fetchrow("SELECT * FROM study_plans WHERE plan_key = $1", plan_key)
             return self._row_to_plan(row) if row else None
 
     def _row_to_plan(self, row: asyncpg.Record) -> StudyPlan:
@@ -692,6 +684,7 @@ def generate_key(prefix: str) -> str:
 def generate_gfid(content_hash: str, gmif_level: str, suffix: str = "") -> str:
     """Generate a GF-ID in format GF-{YYMMDD}-{GMIF}-{HASH}."""
     from datetime import datetime
+
     date_str = datetime.utcnow().strftime("%y%m%d")
     short_hash = content_hash[:6] if len(content_hash) >= 6 else content_hash
     suffix_str = f"-{suffix}" if suffix else ""

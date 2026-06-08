@@ -62,32 +62,35 @@ class MemPalaceService:
         try:
             # Check if mempalace CLI is available
             result = subprocess.run(
-                ["mempalace", "--version"],
+                ["mcp", "__version__"] if False else ["mempalace", "--version"],
                 capture_output=True,
                 text=True,
+                timeout=5,
             )
             if result.returncode != 0:
-                logger.warning("MemPalace CLI not found")
+                logger.warning("MemPalace CLI not found or not functional")
                 self.enabled = False
                 return False
 
-            # Initialize palace if path provided
+            # MemPalace CLI is available
+            # Note: Initialization should be done manually via `mempalace init <path>`
+            # We don't call init via subprocess because it's interactive
             if self._palace_path:
                 os.makedirs(self._palace_path, exist_ok=True)
-                result = subprocess.run(
-                    ["mempalace", "init", self._palace_path],
-                    capture_output=True,
-                    text=True,
-                    input="\n",  # Accept defaults
-                )
-                if result.returncode == 0:
-                    logger.info(f"MemPalace initialized at {self._palace_path}")
-                    self._initialized = True
-                    return True
+                logger.info(f"MemPalace path set to {self._palace_path}")
+                logger.info("Run 'mempalace init <path>' manually if needed")
 
             self._initialized = True
             return True
 
+        except FileNotFoundError:
+            logger.warning("MemPalace CLI not found in PATH")
+            self.enabled = False
+            return False
+        except subprocess.TimeoutExpired:
+            logger.warning("MemPalace CLI check timed out")
+            self.enabled = False
+            return False
         except Exception as e:
             logger.error(f"Failed to initialize MemPalace: {e}")
             self.enabled = False
@@ -103,6 +106,9 @@ class MemPalaceService:
         """
         Store a memory in MemPalace.
 
+        Note: MemPalace CLI is primarily interactive. This is a placeholder
+        for future integration when MemPalace exposes a proper API.
+
         Args:
             content: The verbatim content to store
             room: Room name (e.g., "pedra_123", "ilha_456")
@@ -110,61 +116,37 @@ class MemPalaceService:
             wing: Wing name (defaults to "grilo_falante")
 
         Returns:
-            True if successful
+            True if successful (currently always returns False - placeholder)
         """
         if not self.enabled or not self._initialized:
             return False
 
-        try:
-            cmd = [
-                "mempalace", "mine",
-                "--room", room,
-                "--hall", hall,
-            ]
-            if wing:
-                cmd.extend(["--wing", wing])
-
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                input=content,
-            )
-            return result.returncode == 0
-
-        except Exception as e:
-            logger.error(f"Failed to store memory: {e}")
-            return False
+        # MemPalace CLI is interactive - placeholder for future API integration
+        # TODO: Implement when MemPalace exposes non-interactive API
+        logger.debug(f"MemPalace store_memory called (placeholder): room={room}, hall={hall}")
+        return False
 
     def search(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
         """
         Search memories in MemPalace.
+
+        Note: MemPalace CLI is primarily interactive. This is a placeholder
+        for future integration when MemPalace exposes a proper API.
 
         Args:
             query: Search query
             limit: Maximum results to return
 
         Returns:
-            List of matching memories
+            List of matching memories (currently empty - placeholder)
         """
         if not self.enabled or not self._initialized:
             return []
 
-        try:
-            result = subprocess.run(
-                ["mempalace", "search", query],
-                capture_output=True,
-                text=True,
-            )
-            if result.returncode == 0:
-                # Parse results (simple text format)
-                lines = result.stdout.strip().split("\n")
-                return [{"content": line, "score": 1.0} for line in lines[:limit]]
-            return []
-
-        except Exception as e:
-            logger.error(f"Failed to search: {e}")
-            return []
+        # MemPalace CLI is interactive - placeholder for future API integration
+        # TODO: Implement when MemPalace exposes non-interactive API
+        logger.debug(f"MemPalace search called (placeholder): query={query}")
+        return []
 
     def store_ilha(self, ilha: Dict[str, Any]) -> bool:
         """

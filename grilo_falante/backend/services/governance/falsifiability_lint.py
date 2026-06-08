@@ -25,7 +25,7 @@ class LintResult:
 
 
 def extract_falsification_conditions(
-    propositions: List[Proposition]
+    propositions: List[Proposition],
 ) -> List[FalsificationCondition]:
     """Extract falsification conditions from foundational and derived propositions."""
     conditions = []
@@ -37,7 +37,7 @@ def extract_falsification_conditions(
                 proposition_id=prop.id,
                 condition_text=f"Condition that would falsify: {prop.statement[:100]}",
                 evidence_needed="Evidence contradicting the foundational claim",
-                status=FalsificationStatus.PENDING
+                status=FalsificationStatus.PENDING,
             )
             conditions.append(condition)
 
@@ -49,7 +49,7 @@ def extract_falsification_conditions(
                     proposition_id=prop.id,
                     condition_text="Derived proposition without supporting claims",
                     evidence_needed="Chain of evidence from foundational to derived",
-                    status=FalsificationStatus.PENDING
+                    status=FalsificationStatus.PENDING,
                 )
                 conditions.append(condition)
 
@@ -119,8 +119,7 @@ def check_derived_support(propositions: List[Proposition]) -> List[str]:
 
 
 def evaluate_lint_for_promotion(
-    propositions: List[Proposition],
-    lint_result: Optional[LintResult] = None
+    propositions: List[Proposition], lint_result: Optional[LintResult] = None
 ) -> Tuple[str, List[str]]:
     """
     Evaluate if propositions can be promoted based on lint results.

@@ -62,7 +62,9 @@ class Settings(BaseSettings):
 
     # IAEDU (University of Porto academic API)
     iaedu_api_key: Optional[str] = None
-    iaedu_endpoint: str = "https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream"
+    iaedu_endpoint: str = (
+        "https://api.iaedu.pt/agent-chat/api/v1/agent/cmamvd3n40000c801qeacoad2/stream"
+    )
     iaedu_channel_id: str = "cmh0rfgmn0i64j801uuoletwy"
 
     # OpenWebUI

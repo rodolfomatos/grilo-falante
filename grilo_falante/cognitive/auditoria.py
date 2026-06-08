@@ -49,6 +49,7 @@ class IssueStatus(str, Enum):
 @dataclass
 class AuditIssue:
     """An issue found during hostile audit."""
+
     id: Optional[int] = None
     issue_key: str = ""
     axis: AuditAxis = AuditAxis.AUTOMATIC_MODE
@@ -65,6 +66,7 @@ class AuditIssue:
 @dataclass
 class AuditReport:
     """Complete hostile audit report."""
+
     report_key: str = ""
     audit_date: datetime = field(default_factory=datetime.utcnow)
     axes_results: Dict[str, Dict[str, Any]] = field(default_factory=dict)
@@ -185,22 +187,26 @@ class AuditoriaHostil:
             inference_markers = ["therefore", "thus", "hence", "consequently", " logo", "portanto"]
             if any(marker in text for marker in inference_markers):
                 if claim.get("gmif_level") in ("M4", "M3"):
-                    issues.append({
-                        "type": "implicit_inference",
-                        "claim_id": claim.get("id"),
-                        "finding": "M4/M3 claim contains inference markers",
-                    })
+                    issues.append(
+                        {
+                            "type": "implicit_inference",
+                            "claim_id": claim.get("id"),
+                            "finding": "M4/M3 claim contains inference markers",
+                        }
+                    )
                     compliant = False
 
             promotion_markers = ["prove", "demonstrate", "demonstrates"]
             if any(marker in text for marker in promotion_markers):
-                    if claim.get("gmif_level") not in ("M1", "M2"):
-                        issues.append({
+                if claim.get("gmif_level") not in ("M1", "M2"):
+                    issues.append(
+                        {
                             "type": "unjustified_promotion",
                             "claim_id": claim.get("id"),
                             "finding": "Non-M1/M2 claim attempts promotion",
-                        })
-                        compliant = False
+                        }
+                    )
+                    compliant = False
 
         return {
             "compliant": compliant,
@@ -222,11 +228,13 @@ class AuditoriaHostil:
                 severity_counts[AuditSeverity.MAJOR.value] += 1
             elif validation_status == "contradicted":
                 severity_counts[AuditSeverity.CRITICAL.value] += 1
-                issues.append({
-                    "type": "contradicted_claim",
-                    "claim_id": claim.get("id"),
-                    "severity": AuditSeverity.CRITICAL.value,
-                })
+                issues.append(
+                    {
+                        "type": "contradicted_claim",
+                        "claim_id": claim.get("id"),
+                        "severity": AuditSeverity.CRITICAL.value,
+                    }
+                )
 
         return {
             "severity_counts": severity_counts,
@@ -256,11 +264,13 @@ class AuditoriaHostil:
                 operative_count += 1
 
             if node_data.get("is_operative") and node_data.get("is_conceptual"):
-                issues.append({
-                    "type": "graph_type_confusion",
-                    "node_id": node_id,
-                    "finding": "Node marked as both conceptual and operative",
-                })
+                issues.append(
+                    {
+                        "type": "graph_type_confusion",
+                        "node_id": node_id,
+                        "finding": "Node marked as both conceptual and operative",
+                    }
+                )
 
         return {
             "compliant": len(issues) == 0,
@@ -279,18 +289,22 @@ class AuditoriaHostil:
             event_types[action] = event_types.get(action, 0) + 1
 
             if action == "reject" and not record.get("reason"):
-                issues.append({
-                    "type": "rejection_without_reason",
-                    "record_id": record.get("id"),
-                    "finding": "Rejection event missing reason",
-                })
+                issues.append(
+                    {
+                        "type": "rejection_without_reason",
+                        "record_id": record.get("id"),
+                        "finding": "Rejection event missing reason",
+                    }
+                )
 
             if not record.get("curator_key") and action not in ("system", "auto"):
-                issues.append({
-                    "type": "action_without_authority",
-                    "record_id": record.get("id"),
-                    "finding": "Action taken without curator authority",
-                })
+                issues.append(
+                    {
+                        "type": "action_without_authority",
+                        "record_id": record.get("id"),
+                        "finding": "Action taken without curator authority",
+                    }
+                )
 
         return {
             "compliant": len(issues) == 0,
@@ -314,11 +328,13 @@ class AuditoriaHostil:
                     for r in records
                 )
                 if has_audit:
-                    issues.append({
-                        "type": "premature_audit",
-                        "claim_id": claim.get("id"),
-                        "finding": "Claim in 'derived' state already audited",
-                    })
+                    issues.append(
+                        {
+                            "type": "premature_audit",
+                            "claim_id": claim.get("id"),
+                            "finding": "Claim in 'derived' state already audited",
+                        }
+                    )
 
         blocked_count = states.get("blocked", 0) + states.get("suspended", 0)
         retormavel_count = states.get("retomavel", 0)
@@ -345,15 +361,17 @@ class AuditoriaHostil:
                 except ValueError:
                     severity = AuditSeverity.MINOR
 
-                issues.append(AuditIssue(
-                    id=issue_id,
-                    issue_key=f"issue_{issue_id:04d}",
-                    axis=AuditAxis(axis_key),
-                    severity=severity,
-                    title=issue_data.get("type", "unknown"),
-                    finding=issue_data.get("finding", ""),
-                    status=IssueStatus.OPEN,
-                ))
+                issues.append(
+                    AuditIssue(
+                        id=issue_id,
+                        issue_key=f"issue_{issue_id:04d}",
+                        axis=AuditAxis(axis_key),
+                        severity=severity,
+                        title=issue_data.get("type", "unknown"),
+                        finding=issue_data.get("finding", ""),
+                        status=IssueStatus.OPEN,
+                    )
+                )
 
         return issues
 
@@ -361,10 +379,7 @@ class AuditoriaHostil:
         """Generate audit summary."""
         total_issues = len(report.issues)
         critical = sum(1 for i in report.issues if i.severity == AuditSeverity.CRITICAL)
-        compliant_axes = sum(
-            1 for r in report.axes_results.values()
-            if r.get("compliant", False)
-        )
+        compliant_axes = sum(1 for r in report.axes_results.values() if r.get("compliant", False))
 
         return (
             f"Audit {report.report_key}: {compliant_axes}/5 axes compliant. "
@@ -381,14 +396,10 @@ class AuditoriaHostil:
             )
 
         if any(i.severity == AuditSeverity.CRITICAL for i in issues):
-            recommendations.append(
-                "CRITICAL: Address contradicted claims immediately."
-            )
+            recommendations.append("CRITICAL: Address contradicted claims immediately.")
 
         if any(i.axis == AuditAxis.EPISTEMIC_GRAPHS for i in issues):
-            recommendations.append(
-                "Clarify conceptual vs operative graph distinction."
-            )
+            recommendations.append("Clarify conceptual vs operative graph distinction.")
 
         if not recommendations:
             recommendations.append("No immediate actions required.")

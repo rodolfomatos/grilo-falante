@@ -27,9 +27,7 @@ def generate_loop_id() -> str:
 
 
 def open_loop_from_claim(
-    claim_id: str,
-    claim_text: str,
-    criticality: LoopCriticality = LoopCriticality.MEDIUM
+    claim_id: str, claim_text: str, criticality: LoopCriticality = LoopCriticality.MEDIUM
 ) -> OpenLoop:
     """Create an open loop from a claim."""
     return OpenLoop(
@@ -40,13 +38,12 @@ def open_loop_from_claim(
         criticality=criticality,
         closure_policy="claim_validation",
         created_at=datetime.now().isoformat(),
-        updated_at=datetime.now().isoformat()
+        updated_at=datetime.now().isoformat(),
     )
 
 
 def open_loop_from_proposition(
-    proposition: Proposition,
-    criticality: LoopCriticality = LoopCriticality.MEDIUM
+    proposition: Proposition, criticality: LoopCriticality = LoopCriticality.MEDIUM
 ) -> OpenLoop:
     """Create an open loop from a proposition."""
     return OpenLoop(
@@ -57,13 +54,12 @@ def open_loop_from_proposition(
         criticality=criticality,
         closure_policy="proposition_validation",
         created_at=datetime.now().isoformat(),
-        updated_at=datetime.now().isoformat()
+        updated_at=datetime.now().isoformat(),
     )
 
 
 def open_loop_from_tension(
-    tension: TensionRecord,
-    criticality: Optional[LoopCriticality] = None
+    tension: TensionRecord, criticality: Optional[LoopCriticality] = None
 ) -> OpenLoop:
     """Create an open loop from a tension record."""
     if criticality is None:
@@ -82,14 +78,12 @@ def open_loop_from_tension(
         criticality=criticality,
         closure_policy="tension_resolution",
         created_at=datetime.now().isoformat(),
-        updated_at=datetime.now().isoformat()
+        updated_at=datetime.now().isoformat(),
     )
 
 
 def close_loop(
-    loop: OpenLoop,
-    closure_type: ClosureType,
-    evidence: Optional[str] = None
+    loop: OpenLoop, closure_type: ClosureType, evidence: Optional[str] = None
 ) -> ClosureRecord:
     """Close an open loop with evidence-based closure."""
     loop.status = LoopStatus.CLOSED
@@ -99,7 +93,7 @@ def close_loop(
         loop_id=loop.id,
         closure_type=closure_type,
         evidence=evidence,
-        closed_at=datetime.now().isoformat()
+        closed_at=datetime.now().isoformat(),
     )
 
 
@@ -112,7 +106,7 @@ def suspend_loop(loop: OpenLoop, reason: str) -> ClosureRecord:
         loop_id=loop.id,
         closure_type=ClosureType.SUSPENSION,
         evidence=reason,
-        closed_at=datetime.now().isoformat()
+        closed_at=datetime.now().isoformat(),
     )
 
 
@@ -125,21 +119,18 @@ def block_loop(loop: OpenLoop, reason: str) -> ClosureRecord:
         loop_id=loop.id,
         closure_type=ClosureType.BLOCKED,
         evidence=reason,
-        closed_at=datetime.now().isoformat()
+        closed_at=datetime.now().isoformat(),
     )
 
 
 def register_trusted_commitment(
-    loop: OpenLoop,
-    commitment_text: str,
-    committed_by: str,
-    materialization: str
+    loop: OpenLoop, commitment_text: str, committed_by: str, materialization: str
 ) -> TrustedCommitment:
     """Register a trusted commitment for a loop."""
     loop.trusted_commitment = {
         "text": commitment_text,
         "committed_by": committed_by,
-        "materialization": materialization
+        "materialization": materialization,
     }
     loop.status = LoopStatus.SCHEDULED
     loop.updated_at = datetime.now().isoformat()
@@ -150,15 +141,14 @@ def register_trusted_commitment(
         commitment_text=commitment_text,
         materialization=materialization,
         committed_by=committed_by,
-        created_at=datetime.now().isoformat()
+        created_at=datetime.now().isoformat(),
     )
 
 
 def can_promote(loops: List[OpenLoop]) -> Tuple[bool, List[str]]:
     """Check if loops can be promoted based on critical open loops."""
     blocked_loops = [
-        l for l in loops
-        if l.status == LoopStatus.OPEN and l.criticality == LoopCriticality.HIGH
+        l for l in loops if l.status == LoopStatus.OPEN and l.criticality == LoopCriticality.HIGH
     ]
 
     if blocked_loops:
@@ -169,8 +159,7 @@ def can_promote(loops: List[OpenLoop]) -> Tuple[bool, List[str]]:
 
 
 def evaluate_loops_for_promotion(
-    loops: List[OpenLoop],
-    trusted_commitments: Optional[List[TrustedCommitment]] = None
+    loops: List[OpenLoop], trusted_commitments: Optional[List[TrustedCommitment]] = None
 ) -> Tuple[str, List[str]]:
     """
     Evaluate if loops can be promoted.
@@ -191,10 +180,7 @@ def evaluate_loops_for_promotion(
 
 
 def apply_closure_policy(
-    loop: OpenLoop,
-    policy: str,
-    evidence: Optional[str] = None,
-    committed_by: Optional[str] = None
+    loop: OpenLoop, policy: str, evidence: Optional[str] = None, committed_by: Optional[str] = None
 ) -> ClosureRecord:
     """
     Apply a closure policy to an open loop.
@@ -216,7 +202,7 @@ def apply_closure_policy(
             loop,
             commitment_text=evidence or "",
             committed_by=committed_by,
-            materialization="materialized"
+            materialization="materialized",
         )
         return close_loop(loop, ClosureType.TRUSTED_COMMITMENT, evidence)
 
@@ -242,8 +228,7 @@ def get_loops_by_criticality(loops: List[OpenLoop]) -> Dict[str, List[OpenLoop]]
 def get_open_critical_loops(loops: List[OpenLoop]) -> List[OpenLoop]:
     """Get all open loops with HIGH criticality."""
     return [
-        l for l in loops
-        if l.status == LoopStatus.OPEN and l.criticality == LoopCriticality.HIGH
+        l for l in loops if l.status == LoopStatus.OPEN and l.criticality == LoopCriticality.HIGH
     ]
 
 
@@ -263,17 +248,18 @@ def get_loop_summary(loops: List[OpenLoop]) -> Dict[str, Any]:
     }
 
 
-def summarize_closure_state(
-    loops: List[OpenLoop],
-    closures: List[ClosureRecord]
-) -> Dict[str, Any]:
+def summarize_closure_state(loops: List[OpenLoop], closures: List[ClosureRecord]) -> Dict[str, Any]:
     """Summarize the closure state of loops."""
     loop_summary = get_loop_summary(loops)
 
     closure_summary = {
         "total": len(closures),
-        "evidence_based": len([c for c in closures if c.closure_type == ClosureType.EVIDENCE_BASED]),
-        "trusted_commitment": len([c for c in closures if c.closure_type == ClosureType.TRUSTED_COMMITMENT]),
+        "evidence_based": len(
+            [c for c in closures if c.closure_type == ClosureType.EVIDENCE_BASED]
+        ),
+        "trusted_commitment": len(
+            [c for c in closures if c.closure_type == ClosureType.TRUSTED_COMMITMENT]
+        ),
         "suspension": len([c for c in closures if c.closure_type == ClosureType.SUSPENSION]),
         "blocked": len([c for c in closures if c.closure_type == ClosureType.BLOCKED]),
     }
@@ -281,7 +267,7 @@ def summarize_closure_state(
     return {
         "loops": loop_summary,
         "closures": closure_summary,
-        "can_promote": can_promote(loops)[0]
+        "can_promote": can_promote(loops)[0],
     }
 
 

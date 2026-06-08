@@ -181,7 +181,11 @@ class Article(ArticleBase):
 
 
 class ShadowDocumentBase(BaseModel):
-    """Base shadow document properties."""
+    """Base shadow document properties.
+
+    DEPRECATED: Use ShadowDocument from grilo_admin.models.ilha instead.
+    This base class is kept for backward compatibility.
+    """
     source_name: str
     source_type: SourceType
     source_reference: Optional[str] = None
@@ -189,25 +193,46 @@ class ShadowDocumentBase(BaseModel):
 
 
 class ShadowDocumentCreate(ShadowDocumentBase):
-    """Shadow document creation request."""
+    """Shadow document creation request.
+
+    DEPRECATED: Use ShadowDocument from grilo_admin.models.ilha instead.
+    """
     article_id: str
     content: Optional[str] = None
     process_with_feynman: bool = True
 
 
-class ShadowDocumentInDB(ShadowDocumentBase):
-    """Shadow document as stored in database."""
+class ShadowDocumentInDB(BaseModel):
+    """Shadow document as stored in database.
+
+    DEPRECATED: Use ShadowDocument from grilo_admin.models.ilha instead.
+    This class is kept for backward compatibility with article workflow.
+    """
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     article_id: str
 
+    # Shadow document content from ILHA model
+    source_name: str
+    source_type: SourceType
+    source_reference: Optional[str] = None
+    source_url: Optional[str] = None
+
     content_preview: str = ""
 
+    # Feynman layers (aligned with ILHA ShadowDocument)
     feynman_f1: Optional[str] = None
     feynman_f2: Optional[str] = None
     feynman_f3_gaps: List[str] = Field(default_factory=list)
 
+    # Extracted claims (aligned with ILHA ShadowDocument)
     extracted_claims: List[str] = Field(default_factory=list)
 
+    # Additional epistemic metadata (aligned with ILHA ShadowDocument)
+    evidence_level: str = "weak"
+    assumptions: List[str] = Field(default_factory=list)
+    misuse_risks: List[str] = Field(default_factory=list)
+
+    # Article-specific validation
     needs_human_validation: bool = True
     validation_status: ValidationStatus = ValidationStatus.PENDING
     validated_by: Optional[str] = None
@@ -217,23 +242,52 @@ class ShadowDocumentInDB(ShadowDocumentBase):
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
+    def to_ilha_shadow_document(self) -> "ShadowDocument":
+        """Convert to ILHA ShadowDocument for unified storage."""
+        from grilo_admin.models.ilha import ShadowDocument
+        return ShadowDocument(
+            id=self.id,
+            source_name=self.source_name,
+            source_type=self.source_type.value if hasattr(self.source_type, 'value') else self.source_type,
+            source_reference=self.source_reference,
+            feynman_f1=self.feynman_f1,
+            feynman_f2=self.feynman_f2,
+            feynman_f3_gaps=self.feynman_f3_gaps,
+            extracted_claims=self.extracted_claims,
+            evidence_level=self.evidence_level,
+            assumptions=self.assumptions,
+            misuse_risks=self.misuse_risks,
+            created_at=self.created_at.isoformat() if isinstance(self.created_at, datetime) else self.created_at,
+        )
 
-class ShadowDocument(ShadowDocumentBase):
-    """Shadow document as returned by API."""
+
+class ShadowDocument(BaseModel):
+    """Shadow document as returned by API.
+
+    DEPRECATED: Use ShadowDocument from grilo_admin.models.ilha instead.
+    This class is kept for backward compatibility with article workflow.
+    """
     id: str
     article_id: str
+    source_name: str
+    source_type: str
+    source_reference: Optional[str] = None
+    source_url: Optional[str] = None
     content_preview: str
     feynman_f1: Optional[str] = None
     feynman_f2: Optional[str] = None
     feynman_f3_gaps: List[str]
     extracted_claims: List[str]
+    evidence_level: str = "weak"
+    assumptions: List[str] = Field(default_factory=list)
+    misuse_risks: List[str] = Field(default_factory=list)
     needs_human_validation: bool
-    validation_status: ValidationStatus
+    validation_status: str
     validated_by: Optional[str] = None
-    validated_at: Optional[datetime] = None
+    validated_at: Optional[str] = None
     validation_notes: Optional[str] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: str
+    updated_at: str
 
     class Config:
         from_attributes = True

@@ -40,10 +40,7 @@ class Acordar:
         self.ledger = ledger
 
     def execute(
-        self,
-        temporal_anchor: str,
-        intention: str,
-        mode: str = "exploratory"
+        self, temporal_anchor: str, intention: str, mode: str = "exploratory"
     ) -> AcordarResult:
         """
         Execute the ACORDAR ritual.
@@ -58,23 +55,16 @@ class Acordar:
         """
         if self.state_machine.current_cycle is None:
             return AcordarResult(
-                success=False,
-                message="No active cycle. Execute grilo_load first."
+                success=False, message="No active cycle. Execute grilo_load first."
             )
 
         ctx = self.state_machine.current_cycle
 
         if not temporal_anchor or not temporal_anchor.strip():
-            return AcordarResult(
-                success=False,
-                message="Temporal anchor is required"
-            )
+            return AcordarResult(success=False, message="Temporal anchor is required")
 
         if not intention or not intention.strip():
-            return AcordarResult(
-                success=False,
-                message="Intention declaration is required"
-            )
+            return AcordarResult(success=False, message="Intention declaration is required")
 
         self.state_machine.set_temporal_anchor(temporal_anchor)
         self.state_machine.set_intention(intention)
@@ -82,15 +72,11 @@ class Acordar:
 
         if not self.state_machine.activate():
             return AcordarResult(
-                success=False,
-                message=f"Failed to transition from {ctx.state.value} to ACTIVE"
+                success=False, message=f"Failed to transition from {ctx.state.value} to ACTIVE"
             )
 
         if not self.state_machine.govern():
-            return AcordarResult(
-                success=False,
-                message="Failed to transition to GOVERNING state"
-            )
+            return AcordarResult(success=False, message="Failed to transition to GOVERNING state")
 
         ctx = self.state_machine.current_cycle
 
@@ -104,14 +90,14 @@ class Acordar:
                     "mode": mode,
                     "cycle_id": ctx.cycle_id,
                 },
-                cycle_id=ctx.cycle_id
+                cycle_id=ctx.cycle_id,
             )
 
         return AcordarResult(
             success=True,
             message="ACORDAR completed. Regime is now governing.",
             temporal_anchor=temporal_anchor,
-            intention_declared=intention
+            intention_declared=intention,
         )
 
     async def vai_dormir_async(self) -> dict:
@@ -189,11 +175,13 @@ class Acordar:
                     "cycle_id": ctx.cycle_id,
                     "relatório": str(relatório.get("passos_executados", [])),
                 },
-                cycle_id=ctx.cycle_id
+                cycle_id=ctx.cycle_id,
             )
 
         relatório["success"] = True
-        relatório["message"] = "Regime hibernated. Sleep cycle complete. Use grilo_resume to continue."
+        relatório[
+            "message"
+        ] = "Regime hibernated. Sleep cycle complete. Use grilo_resume to continue."
 
         return relatório
 
@@ -217,12 +205,12 @@ class Acordar:
                 entry_type=LedgerEntryType.REGIME_EVENT,
                 content="VAI_DORMIR: Regime hibernated (sync)",
                 metadata={"cycle_id": ctx.cycle_id},
-                cycle_id=ctx.cycle_id
+                cycle_id=ctx.cycle_id,
             )
 
         return {
             "success": True,
-            "message": "Regime hibernated. Use vai_dormir_async() for full sleep cycle."
+            "message": "Regime hibernated. Use vai_dormir_async() for full sleep cycle.",
         }
 
     def _coletar_interações_do_dia(self) -> list:
@@ -247,13 +235,10 @@ class Acordar:
                 entry_type=LedgerEntryType.REGIME_EVENT,
                 content="ACORDAR (resume): Regime resumed",
                 metadata={"cycle_id": ctx.cycle_id},
-                cycle_id=ctx.cycle_id
+                cycle_id=ctx.cycle_id,
             )
 
-        return {
-            "success": True,
-            "message": "Regime resumed and governing."
-        }
+        return {"success": True, "message": "Regime resumed and governing."}
 
     def get_status(self) -> dict:
         """Get ACORDAR status"""

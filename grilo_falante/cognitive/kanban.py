@@ -33,6 +33,7 @@ class MovementType(str, Enum):
 @dataclass
 class EpistemicMovement:
     """An epistemically relevant movement tracked in the kanban."""
+
     id: Optional[int] = None
     movement_key: str = ""
     title: str = ""
@@ -52,6 +53,7 @@ class EpistemicMovement:
 @dataclass
 class KanbanState:
     """State of the Kanban board."""
+
     identified: List[EpistemicMovement] = field(default_factory=list)
     explored: List[EpistemicMovement] = field(default_factory=list)
     audited: List[EpistemicMovement] = field(default_factory=list)
@@ -222,10 +224,7 @@ class KanbanEpistemico:
 
     def list_by_column(self, column: KanbanColumn) -> List[EpistemicMovement]:
         """List all movements in a column."""
-        return [
-            m for m in self._movements.values()
-            if m.column == column
-        ]
+        return [m for m in self._movements.values() if m.column == column]
 
     def count_by_column(self) -> Dict[str, int]:
         """Get counts per column."""

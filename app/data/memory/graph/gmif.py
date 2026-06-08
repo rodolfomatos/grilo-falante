@@ -123,10 +123,11 @@ class GMIFClassifier:
                 description="Multiple sources, high confidence, no risks",
             )
         
-        # M5: Clear source, no risks
+        # M5: Clear source, no risks, no assumptions
         if (len(sources) >= self.SOURCES_MIN_FOR_M5 and 
             confidence >= self.CONFIDENCE_MEDIUM and
-            not risks):
+            not risks and
+            not assumptions):
             return GMIFClassification(
                 type=GMIFType.M5_INTERPRETATION,
                 confidence=confidence,

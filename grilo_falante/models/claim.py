@@ -79,10 +79,7 @@ class GovernedClaim(Claim):
 
     def is_blocking(self) -> bool:
         """Check if claim should block (M4 with low confidence)."""
-        return (
-            self.gmif_level == GMIFLevel.M4_DOUBTFUL
-            and self.gmif_confidence < 0.3
-        )
+        return self.gmif_level == GMIFLevel.M4_DOUBTFUL and self.gmif_confidence < 0.3
 
     def to_card(self) -> dict:
         """Convert to ClaimCard format for UI."""
@@ -90,10 +87,16 @@ class GovernedClaim(Claim):
             "id": self.id,
             "claim_key": self.claim_key,
             "claim_text": self.claim_text,
-            "gmif_level": self.gmif_level.value if isinstance(self.gmif_level, GMIFLevel) else self.gmif_level,
+            "gmif_level": self.gmif_level.value
+            if isinstance(self.gmif_level, GMIFLevel)
+            else self.gmif_level,
             "gmif_confidence": self.gmif_confidence,
-            "validation_status": self.validation_status.value if isinstance(self.validation_status, ValidationState) else self.validation_status,
-            "legitimacy_state": self.legitimacy_state.value if isinstance(self.legitimacy_state, LegitimacyState) else self.legitimacy_state,
+            "validation_status": self.validation_status.value
+            if isinstance(self.validation_status, ValidationState)
+            else self.validation_status,
+            "legitimacy_state": self.legitimacy_state.value
+            if isinstance(self.legitimacy_state, LegitimacyState)
+            else self.legitimacy_state,
             "source_id": self.source_id,
             "provenance": self.provenance,
         }

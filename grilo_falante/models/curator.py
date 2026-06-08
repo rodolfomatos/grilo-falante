@@ -92,5 +92,6 @@ class Curator(BaseModel):
         """
         if self.last_activity:
             import datetime as dt
+
             if (datetime.utcnow() - self.last_activity).days >= days:
                 self.accountability_score = max(0.0, self.accountability_score - 0.3)

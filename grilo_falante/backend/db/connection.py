@@ -12,8 +12,7 @@ import asyncpg
 
 # Database configuration
 DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:postgres@localhost:5432/grilo_falante"
+    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/grilo_falante"
 )
 
 # Pool singleton
@@ -73,7 +72,8 @@ async def init_schema(conn: asyncpg.Connection) -> None:
     Creates all necessary tables for Grilo Falante regime.
     """
 
-    await conn.execute("""
+    await conn.execute(
+        """
         -- Extension for vector similarity
         CREATE EXTENSION IF NOT EXISTS vector;
 
@@ -263,7 +263,8 @@ async def init_schema(conn: asyncpg.Connection) -> None:
         );
 
         CREATE INDEX IF NOT EXISTS curator_history_idx ON curator_score_history(curator_id);
-    """)
+    """
+    )
 
 
 async def check_health() -> dict:

@@ -67,10 +67,13 @@ def evaluate_epistemic_policy(
     num_inferences = 0
 
     if lint:
-        num_inferences = len([
-            n for n in (lint.get("weak_nodes") or [])
-            if isinstance(n, str) and n.startswith("inf_")
-        ])
+        num_inferences = len(
+            [
+                n
+                for n in (lint.get("weak_nodes") or [])
+                if isinstance(n, str) and n.startswith("inf_")
+            ]
+        )
 
     is_factoid = num_claims <= 2 and num_inferences == 0
     has_contradictions = bool(contradictions)
@@ -107,11 +110,7 @@ def evaluate_epistemic_policy(
     if POLICY["require_multi_source"] and len(claims) > 2:
         sources = _graph_source_ids(consensus=consensus, fragility=fragility)
         if not sources:
-            sources = set(
-                str(c.get("source_id"))
-                for c in claims
-                if c.get("source_id") is not None
-            )
+            sources = set(str(c.get("source_id")) for c in claims if c.get("source_id") is not None)
         if len(claims) > 1 and len(sources) < POLICY["min_sources"]:
             return "block", "insufficient_source_diversity"
 

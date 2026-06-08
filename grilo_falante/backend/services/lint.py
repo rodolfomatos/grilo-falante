@@ -47,8 +47,14 @@ class CognitiveLint:
 
     BLOCK_PATTERNS = [
         (r"\b(just|simply)\b.*\?", "Leading question pattern - don't assume answer"),
-        (r"\b(can|could|would|should)\s+we\s+(just|simply)\s", "Bypass pattern - don't skip validation"),
-        (r"\bThis\s+is\s+(obviously|clearly|trivially)\s", "Fluency assumption - evidence required"),
+        (
+            r"\b(can|could|would|should)\s+we\s+(just|simply)\s",
+            "Bypass pattern - don't skip validation",
+        ),
+        (
+            r"\bThis\s+is\s+(obviously|clearly|trivially)\s",
+            "Fluency assumption - evidence required",
+        ),
         (r"\bTrust\s+me\b", "Authority claim without evidence"),
         (r"\bBelieve\s+me\b", "Authority claim without evidence"),
         (r"^\s*\(?(?:Note|TODO|FIXME|HACK)\b", "Unresolved marker"),

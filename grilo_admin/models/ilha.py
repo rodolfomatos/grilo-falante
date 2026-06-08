@@ -105,7 +105,9 @@ class DigitalObject(BaseModel):
 
 class ConceptualCapsule(BaseModel):
     """
-    A ConceptualCapsule is a DigitalObject with closed, validated synthesis.
+    DEPRECATED: Use DigitalObject with is_capsule=True instead.
+
+    A ConceptualCapsule was a DigitalObject with closed, validated synthesis.
     It's everything needed to replicate an idea in another context.
 
     CC = <C, A, Σ, Δ>
@@ -114,14 +116,21 @@ class ConceptualCapsule(BaseModel):
     Σ: Interpretation regime
     Δ: Normative effect
 
-    Note: This is now modeled as a DigitalObject with is_capsule=True.
-    This class is kept for semantic clarity.
+    This class is kept for backward compatibility but should not be used.
+    Use DigitalObject with:
+    - is_capsule=True
+    - title (maps to C: Content)
+    - capsule_scope (maps to A: Scope)
+    - capsule_interpretation (maps to Σ: Interpretation regime)
+    - capsule_normative_effect (maps to Δ: Normative effect)
+
+    Validation is now tracked via gmif_level in PEDRA.
     """
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    content: str  # C: Content
-    scope: str = ""  # A: Scope
-    interpretation_regime: str = ""  # Σ: Interpretation regime
-    normative_effect: str = ""  # Δ: Normative effect
+    content: str  # C: Content (deprecated, use DigitalObject.title)
+    scope: str = ""  # A: Scope (deprecated, use DigitalObject.capsule_scope)
+    interpretation_regime: str = ""  # Σ: Interpretation regime (deprecated)
+    normative_effect: str = ""  # Δ: Normative effect (deprecated)
 
     # Links
     source_document_id: Optional[str] = None

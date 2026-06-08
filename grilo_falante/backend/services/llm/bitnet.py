@@ -91,7 +91,8 @@ class BitNetService(LLMService):
                     usage={
                         "prompt_tokens": data.get("prompt_eval_count", 0),
                         "completion_tokens": data.get("eval_count", 0),
-                        "total_tokens": data.get("prompt_eval_count", 0) + data.get("eval_count", 0),
+                        "total_tokens": data.get("prompt_eval_count", 0)
+                        + data.get("eval_count", 0),
                     },
                     finish_reason="stop" if data.get("done", False) else None,
                 )
@@ -145,6 +146,7 @@ class BitNetService(LLMService):
 
                         try:
                             import json
+
                             data = json.loads(line)
                         except json.JSONDecodeError:
                             continue
