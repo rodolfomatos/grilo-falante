@@ -21,7 +21,7 @@ def test_claim_to_card():
     )
     card = claim.to_card()
     assert card["claim_key"] == "test:1"
-    assert card["gmif_level"] == "M1"
+    assert card["gmif_level"] == "VERIFIED"
 
 
 def test_curator_score_boundaries():

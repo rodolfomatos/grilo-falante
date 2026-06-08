@@ -66,3 +66,34 @@ These represent opportunities for future AES-aligned work but were not introduce
 2. Establish regular AES cadence using the created project structure
 3. Begin implementing regime features from the roadmap using AES ticket workflow
 4. Continue hostile analysis practice for all new work
+## Additional Fixes Made During Integration
+
+During the merge with origin/main, we discovered and fixed two additional issues:
+
+### 1. GMIF Service Backward Compatibility Issue
+- **File:** `grilo_falante/backend/services/gmif.py`
+- **Problem:** The GMIF service was returning raw M1-M8 codes, but the GMIFLevel enum now uses human-readable labels (VERIFIED, UNVERIFIED, etc.) with backward compatibility aliases.
+- **Fix:** Added mapping from old codes (M1-M8) to new enum values in the `classify` method.
+- **Verification:** 
+  - `grilo_falante/tests/test_services.py::test_gmif_classification` now passes
+  - All grilo_falante tests pass
+
+### 2. Test Updates to Match New GMIF Behavior
+- **Files:** 
+  - `grilo_falante/tests/test_services.py`
+  - `grilo_falante/tests/test_models.py`
+- **Problem:** Tests expected old M1-M8 codes in output, but the system now uses new human-readable labels.
+- **Fix:** Updated tests to expect the new labels (VERIFIED, etc.) where appropriate.
+- **Verification:**
+  - `grilo_falante/tests/test_services.py::test_gmif_classification` passes
+  - `grilo_falante/tests/test_models.py::test_claim_to_card` passes
+  - All model and service tests pass
+
+### Overall Integration Result
+- All 15 tests pass (15/15)
+- AES alignment work preserved:
+  - GMIF classification fix in app/data/memory/graph/gmif.py
+  - AES documentation: CLAUDE.md, REQUIREMENTS.md, ROADMAP.md, DESIGN.md, CHECKLIST.md, QUALITY_GATES.md
+  - AES project structure: aes/ directory with kanban, sprints, tickets, handoffs, verification
+  - AES alignment summary: AES_ALIGNMENT_SUMMARY.md
+- The system now correctly implements the GMIF classification with proper backward compatibility to the new enum system while maintaining alignment with the epistemic governance vision.

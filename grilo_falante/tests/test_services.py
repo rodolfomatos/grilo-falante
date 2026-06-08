@@ -34,7 +34,7 @@ def test_gmif_classification():
         "The study shows that X causes Y",
         source_count=3,
     )
-    assert level == GMIFLevel.M1_PRIMARY
+    assert level == GMIFLevel.VERIFIED
 
 
 def test_cognitive_lint_blocking():

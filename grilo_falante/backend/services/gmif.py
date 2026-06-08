@@ -122,7 +122,19 @@ class GMIFClassifier:
         # Calculate confidence
         confidence = cls._calculate_confidence(best_level, level_scores, source_count)
 
-        return GMIFLevel(best_level), confidence
+        # Map old codes to GMIFLevel enum values
+        code_to_enum = {
+            "M1": "VERIFIED",
+            "M2": "UNVERIFIED",
+            "M3": "PARTIAL",
+            "M4": "CONFLICTED",
+            "M5": "INTERPRETATION",
+            "M6": "DERIVED",
+            "M7": "SYNTHESIS",
+            "M8": "CONCLUSION"
+        }
+        enum_value = code_to_enum[best_level]
+        return GMIFLevel(enum_value), confidence
 
     @classmethod
     def _calculate_confidence(
