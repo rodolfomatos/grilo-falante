@@ -56,7 +56,7 @@ def validate_transition(ctx: ClaimTransitionContext) -> None:
     if ctx.to_status not in allowed:
         allowed_str = ", ".join(allowed) if allowed else "None"
         raise TransitionError(
-            f"Invalid transition: {ctx.from_status} -> {ctx.to_status}. " f"Allowed: {allowed_str}"
+            f"Invalid transition: {ctx.from_status} -> {ctx.to_status}. Allowed: {allowed_str}"
         )
 
     if ctx.to_status == "promoted" and not ctx.has_audit:

@@ -24,6 +24,8 @@ from grilo_falante.models.shadow import ShadowDocument as ShadowDocumentComplete
 from grilo_falante.models.session import SessionPreferences
 from grilo_falante.models.study_plan import StudyPlan, StudyPlanStep
 from grilo_falante.models.governance import GovernanceRecord
+from grilo_falante.models.conversation import Conversation
+from grilo_falante.models.message import Message
 
 __all__ = [
     # Enums
@@ -53,4 +55,6 @@ __all__ = [
     "StudyPlan",
     "StudyPlanStep",
     "GovernanceRecord",
+    "Conversation",
+    "Message",
 ]

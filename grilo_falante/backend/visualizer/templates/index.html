@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Overview - Grilo Falante Visualizer{% endblock %}
+
+{% block content %}
+<div class="tabs">
+    <a href="/visualizer/" class="tab active">Overview</a>
+    <a href="/visualizer/ilhas" class="tab">Ilhas</a>
+    <a href="/visualizer/claims" class="tab">Claims</a>
+    <a href="/visualizer/graph" class="tab">Graph</a>
+</div>
+
+<div class="article">
+    <div class="article-header">
+        <h1 class="article-title">Grilo Falante Knowledge Base</h1>
+    </div>
+    <div class="article-content">
+        <p>Welcome to the Grilo Falante Visualizer. This wiki-like interface allows you to explore:</p>
+        
+        <h3>Recent Ilhas</h3>
+        {% if ilhas %}
+        <ul>
+            {% for ilha in ilhas[:10] %}
+            <li><a href="/visualizer/ilhas/{{ilha.ilha_key}}">{{ilha.title}}</a></li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p><em>No ilhas found.</em></p>
+        {% endif %}
+        
+        <h3>Recent Claims</h3>
+        {% if claims %}
+        <ul>
+            {% for claim in claims[:10] %}
+            <li>
+                <a href="/visualizer/claims/{{claim.claim_key}}">{{claim.claim_text[:80]}}...</a>
+                <span class="gmif-badge gmif-{{claim.gmif_level.lower()}}">{{claim.gmif_level}}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p><em>No claims found.</em></p>
+        {% endif %}
+        
+        <h3>Knowledge Gaps</h3>
+        {% if gaps %}
+        <ul>
+            {% for gap in gaps[:5] %}
+            <li>{{gap.query}} <span class="gmif-badge">{{gap.status}}</span></li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p><em>No gaps identified.</em></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

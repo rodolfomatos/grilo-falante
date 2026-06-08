@@ -1,0 +1,91 @@
+FROM nginx:alpine
+
+# Install curl for healthcheck and certbot for renewal
+RUN apk add --no-cache curl bash certbot
+
+# Remove default config
+RUN rm /etc/nginx/conf.d/default.conf
+
+# Create directories
+RUN mkdir -p /var/log/nginx \
+             /var/cache/nginx \
+             /etc/letsencrypt \
+             /docker-entrypoint.d
+
+# Copy nginx configuration
+COPY nginx.conf /etc/nginx/nginx.conf
+
+# Copy Let's Encrypt certificates
+COPY letsencrypt /etc/letsencrypt
+
+# Copy static files
+COPY chat-wrapper.html /usr/share/nginx/html/
+
+# Make certificates readable
+RUN chmod -R 755 /etc/letsencrypt
+
+# Create renewal script
+RUN echo '#!/bin/bash\n\
+# SSL Certificate Renewal Script for Grilo Falante\n\
+# This script renews SSL certificates and reloads nginx\n\
+\necho "Starting SSL certificate renewal..."\n\
+\n# Run certbot renew (dry-run first to check if renewal needed)\n\
+if certbot renew --dry-run --non-interactive 2>/dev/null; then\n\
+    echo "Certificate renewal needed, proceeding..."\n\
+    certbot renew --non-interactive --deploy-hook "nginx -s reload"\n\
+    echo "Certificate renewed and nginx reloaded"\nelse\n\
+    echo "No renewal needed or certbot not available, skipping..."\n\
+fi\n\
+' > /renew.sh && chmod +x /renew.sh
+
+# Create healthcheck script
+RUN echo '#!/bin/bash\n\
+# Healthcheck script - verifies nginx is running and SSL is valid\n\
+\n# Check nginx process is running\n\
+if ! pgrep nginx > /dev/null; then\n\
+    echo "ERROR: nginx process not found"\n\
+    exit 1\n\
+fi\n\
+\n# Check SSL certificate exists and is valid (not expired)\n\
+CERT_PATH="/etc/letsencrypt/live/llm.ilab.porto.pt/fullchain.pem"\n\
+if [ ! -f "$CERT_PATH" ]; then\n\
+    echo "ERROR: SSL certificate not found"\n\
+    exit 1\n\
+fi\n\
+\n# Check certificate expiry using openssl\n\
+EXPIRY=$(openssl x509 -in "$CERT_PATH" -noout -enddate 2>/dev/null | cut -d= -f2)\n\
+if [ -n "$EXPIRY" ]; then\n\
+    # Convert to epoch for comparison\n\
+    EXPIRY_EPOCH=$(date -d "$EXPIRY" +%s 2>/dev/null || echo "0")\n\
+    CURRENT_EPOCH=$(date +%s)\n\
+    DAYS_UNTIL_EXPIRY=$(( (EXPIRY_EPOCH - CURRENT_EPOCH) / 86400 ))\n\
+    \n\
+    if [ "$DAYS_UNTIL_EXPIRY" -lt 0 ]; then\n\
+        echo "ERROR: SSL certificate expired"\n\
+        exit 1\n\
+    elif [ "$DAYS_UNTIL_EXPIRY" -lt 7 ]; then\n\
+        echo "WARNING: SSL certificate expires in $DAYS_UNTIL_EXPIRY days"\n\
+    fi\n\
+fi\n\
+\n# Check we can reach the nginx status page\n\
+curl -sf http://localhost:80/health > /dev/null 2>&1 || true\n\
+\n# If we get here, everything is ok\n\
+echo "OK: nginx running, SSL certificate valid"\n\
+exit 0\n\
+' > /healthcheck.sh && chmod +x /healthcheck.sh
+
+# Expose HTTP and HTTPS
+EXPOSE 80 443
+
+# Volumes for persistent logs
+VOLUME ["/var/log/nginx", "/etc/letsencrypt"]
+
+# Healthcheck
+HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
+    CMD /healthcheck.sh
+
+# Start nginx with cron for certificate renewal
+CMD sh -c "nginx -g 'daemon off;' & \
+           echo 'Starting cron for certificate renewal...' && \
+           echo '0 0 * * * /renew.sh >> /var/log/cron.log 2>&1' > /etc/crontabs/root && \
+           crond -f"

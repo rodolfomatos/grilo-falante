@@ -42,6 +42,11 @@ class LLMStreamChunk:
 class LLMService(ABC):
     """Abstract base class for LLM services."""
 
+    @property
+    def available(self) -> bool:
+        """Check if the service is available (override in subclasses)."""
+        return False
+
     @abstractmethod
     async def chat(
         self,
@@ -86,6 +91,7 @@ class OllamaService(LLMService):
         self.model = model or settings.ollama_model
         self.temperature = settings.ollama_temperature
         self.num_ctx = settings.ollama_num_ctx
+        self.client = httpx.Client(timeout=5.0)
 
     @property
     def name(self) -> str:
@@ -94,6 +100,15 @@ class OllamaService(LLMService):
     @property
     def default_temperature(self) -> float:
         return self.temperature
+
+    @property
+    def available(self) -> bool:
+        """Check if Ollama is available."""
+        try:
+            response = self.client.get(f"{self.base_url}/api/tags")
+            return response.status_code == 200
+        except Exception:
+            return False
 
     async def chat(
         self,
@@ -112,6 +127,7 @@ class OllamaService(LLMService):
                     "messages": [{"role": m.role, "content": m.content} for m in messages],
                     "temperature": temp,
                     "num_ctx": self.num_ctx,
+                    "stream": False,
                     **kwargs,
                 },
             )
@@ -178,6 +194,17 @@ class IAEDUService(LLMService):
         self.base_url = "http://localhost:4000"
 
     @property
+    def name(self) -> str:
+        return "iaedu/chat"
+
+    @property
+    def default_temperature(self) -> float:
+        return 0.3
+
+    @property
+    def available(self) -> bool:
+        """Check if IAEDU API key is configured."""
+        return bool(self.api_key)
     def name(self) -> str:
         return "iaedu/chat"
 
@@ -255,10 +282,24 @@ class OpenWebUIService(LLMService):
     ):
         self.base_url = base_url or settings.openwebui_base_url
         self.api_key = api_key or settings.openwebui_api_key or "dummy"
+        self.client = httpx.Client(timeout=5.0)
 
     @property
     def name(self) -> str:
         return "openwebui"
+
+    @property
+    def default_temperature(self) -> float:
+        return 0.3
+
+    @property
+    def available(self) -> bool:
+        """Check if OpenWebUI is available."""
+        try:
+            response = self.client.get(f"{self.base_url}/api/tags")
+            return response.status_code == 200
+        except Exception:
+            return False
 
     async def chat(
         self,
@@ -335,6 +376,15 @@ class OpenAIService(LLMService):
     def name(self) -> str:
         return f"openai/{self.model}"
 
+    @property
+    def default_temperature(self) -> float:
+        return 0.3
+
+    @property
+    def available(self) -> bool:
+        """Check if OpenAI API key is configured."""
+        return bool(self.api_key)
+
     async def chat(
         self,
         messages: list[LLMMessage],
@@ -403,28 +453,55 @@ class LLMServiceFactory:
 
     @classmethod
     def get_service(cls, provider: Optional[str] = None) -> LLMService:
-        provider = provider or settings.llm_provider.value
+        """Get LLM service with automatic fallback.
 
-        if provider in cls._instances:
-            return cls._instances[provider]
+        Priority: requested provider → fallback chain → error
+        """
+        requested = provider or settings.llm_provider.value
 
+        providers_to_try = [requested]
+        if requested == "bitnet":
+            providers_to_try.extend(["ollama", "iaedu", "openai"])
+        elif requested == "ollama":
+            providers_to_try.extend(["iaedu", "openai"])
+        elif requested == "openwebui":
+            providers_to_try.extend(["ollama", "iaedu"])
+
+        for p in providers_to_try:
+            try:
+                service = cls._create_service(p)
+                if service.available:
+                    if p != requested:
+                        import logging
+                        logging.warning(
+                            f"Provider '{requested}' unavailable, using: {p}"
+                        )
+                    cls._instances[requested] = service
+                    return service
+            except Exception:
+                continue
+
+        raise ValueError(
+            f"No LLM provider available. Tried: {providers_to_try}. "
+            f"Please configure at least one LLM provider."
+        )
+
+    @classmethod
+    def _create_service(cls, provider: str) -> LLMService:
+        """Create service without fallback check (use get_service for that)."""
         if provider == "ollama":
-            service = OllamaService()
+            return OllamaService()
         elif provider == "iaedu":
-            service = IAEDUService()
+            return IAEDUService()
         elif provider == "openwebui":
-            service = OpenWebUIService()
+            return OpenWebUIService()
         elif provider == "openai":
-            service = OpenAIService()
+            return OpenAIService()
         elif provider == "bitnet":
             from grilo_falante.backend.services.llm.bitnet import BitNetService
-
-            service = BitNetService()
+            return BitNetService()
         else:
             raise ValueError(f"Unknown LLM provider: {provider}")
-
-        cls._instances[provider] = service
-        return service
 
     @classmethod
     def clear(cls):

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}Sources - Grilo Falante Visualizer{% endblock %}
+
+{% block content %}
+<div class="tabs">
+    <a href="/visualizer/" class="tab">Overview</a>
+    <a href="/visualizer/ilhas" class="tab">Ilhas</a>
+    <a href="/visualizer/claims" class="tab">Claims</a>
+    <a href="/visualizer/sources" class="tab active">Sources</a>
+</div>
+
+<div class="article">
+    <div class="article-header">
+        <h1 class="article-title">Governed Sources</h1>
+    </div>
+    <div class="article-content">
+        {% if sources %}
+            {% for source in sources %}
+            <div class="list-item">
+                <div class="list-item-content">
+                    <h3 class="list-item-title">
+                        <a href="{{source.url or '#'}}">{{source.title}}</a>
+                    </h3>
+                    <p class="list-item-snippet">{{source.authors|join(', ')}} ({{source.year}})</p>
+                    <div>
+                        <span class="gmif-badge">{{source.tier}}</span>
+                        {% if source.doi %}
+                        <span>DOI: {{source.doi}}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p><em>No sources found.</em></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

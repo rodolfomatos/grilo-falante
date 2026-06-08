@@ -833,6 +833,166 @@ async def run_radiografia(req: RadiografiaRequest):
 
 
 # ============================================================================
+# CHAT API - Integrated chat with epistemic governance
+# ============================================================================
+
+import json
+from fastapi import BackgroundTasks
+from fastapi.responses import StreamingResponse
+
+chat_service = None
+
+def get_chat_service():
+    global chat_service
+    if chat_service is None:
+        from grilo_falante.backend.services.chat_service import ChatService
+        chat_service = ChatService()
+    return chat_service
+
+
+class ChatConversationRequest(BaseModel):
+    title: str = "New Conversation"
+    model: Optional[str] = None
+
+
+class ChatMessageRequest(BaseModel):
+    conversation_key: str
+    message: str
+
+
+@app.get("/api/v1/chat/conversations")
+async def list_conversations(user_id: str = Query("anonymous", description="User ID")):
+    """List all conversations for a user."""
+    service = get_chat_service()
+    conversations = await service.list_conversations(user_id=user_id, limit=50)
+    return {
+        "conversations": [c.to_summary() for c in conversations],
+        "count": len(conversations),
+    }
+
+
+@app.post("/api/v1/chat/conversations")
+async def create_conversation(
+    req: ChatConversationRequest = None,
+    user_id: str = Query("anonymous", description="User ID"),
+):
+    """Create a new conversation."""
+    service = get_chat_service()
+    conversation = await service.create_conversation(
+        user_id=user_id,
+        title=req.title if req else "New Conversation",
+        model=req.model if req else None,
+    )
+    return conversation.to_summary()
+
+
+@app.get("/api/v1/chat/conversations/{conversation_key}")
+async def get_conversation(conversation_key: str):
+    """Get a conversation with its messages."""
+    service = get_chat_service()
+    conversation = await service.get_conversation(conversation_key)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    messages = await service.get_messages(conversation_key)
+
+    return {
+        "conversation": conversation.to_summary(),
+        "messages": [m.to_dict() for m in messages],
+    }
+
+
+@app.delete("/api/v1/chat/conversations/{conversation_key}")
+async def delete_conversation(conversation_key: str):
+    """Delete a conversation (GDPR compliance)."""
+    service = get_chat_service()
+    conversation = await service.get_conversation(conversation_key)
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    repo = service.conversation_repo
+    await repo.delete(conversation_key)
+    return {"status": "deleted", "conversation_key": conversation_key}
+
+
+@app.post("/api/v1/chat/message")
+async def send_message(
+    req: ChatMessageRequest,
+    user_id: str = Query("anonymous", description="User ID"),
+):
+    """Send a message and get streaming response."""
+    service = get_chat_service()
+
+    async def event_generator():
+        async for event in service.process_message_streaming(
+            conversation_key=req.conversation_key,
+            message=req.message,
+            user_id=user_id,
+        ):
+            event_type = event.get("type", "message")
+            event_data = event.get("data", {})
+
+            if event_type == "chunk":
+                yield f"event: chunk\ndata: {json.dumps(event_data)}\n\n".encode()
+            elif event_type == "claim":
+                yield f"event: claim\ndata: {json.dumps(event_data)}\n\n".encode()
+            elif event_type == "gap":
+                yield f"event: gap\ndata: {json.dumps(event_data)}\n\n".encode()
+            elif event_type == "done":
+                yield f"event: done\ndata: {json.dumps(event_data)}\n\n".encode()
+            else:
+                yield f"event: info\ndata: {json.dumps(event_data)}\n\n".encode()
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+@app.get("/api/v1/chat/conversations/{conversation_key}/claims")
+async def get_conversation_claims(conversation_key: str):
+    """Get all claims detected in a conversation."""
+    service = get_chat_service()
+    messages = await service.get_messages(conversation_key)
+
+    claim_ids = set()
+    for msg in messages:
+        claim_ids.update(msg.claims_detected)
+
+    claims = []
+    for claim_id in claim_ids:
+        claim = await service.claim_repo.get_by_id(claim_id)
+        if claim:
+            claims.append(claim.to_card())
+
+    return {"claims": claims, "count": len(claims)}
+
+
+@app.get("/api/v1/chat/conversations/{conversation_key}/gaps")
+async def get_conversation_gaps(conversation_key: str):
+    """Get all gaps identified in a conversation."""
+    service = get_chat_service()
+    messages = await service.get_messages(conversation_key)
+
+    gap_ids = set()
+    for msg in messages:
+        gap_ids.update(msg.gaps_identified)
+
+    gaps = []
+    for gap_id in gap_ids:
+        gap = await service.gap_repo.get_by_id(gap_id)
+        if gap:
+            gaps.append(gap.to_dict())
+
+    return {"gaps": gaps, "count": len(gaps)}
+
+
+# ============================================================================
 # MANUAL API - RAG-ready documentation server
 # ============================================================================
 

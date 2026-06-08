@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Gaps - Grilo Falante Visualizer{% endblock %}
+
+{% block content %}
+<div class="tabs">
+    <a href="/visualizer/" class="tab">Overview</a>
+    <a href="/visualizer/gaps" class="tab active">Gaps</a>
+</div>
+
+<div class="article">
+    <div class="article-header">
+        <h1 class="article-title">Knowledge Gaps</h1>
+    </div>
+    <div class="article-content">
+        {% if gaps %}
+            {% for gap in gaps %}
+            <div class="list-item">
+                <div class="list-item-content">
+                    <h3 class="list-item-title">{{gap.query}}</h3>
+                    <div>
+                        <span class="gmif-badge">{{gap.gap_type}}</span>
+                        <span class="gmif-badge">{{gap.status}}</span>
+                        {% if gap.reason %}
+                        <p>{{gap.reason}}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p><em>No gaps identified.</em></p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -203,11 +203,11 @@ button:hover{{background:#0056b3}}
 </div>
 <h3>By GMIF Type</h3>
 <div class="grid">
-{type_badges or '<p>No classifications yet.</p>'}
+{type_badges or "<p>No classifications yet.</p>"}
 </div>
 <h3>Claims</h3>
 <div class="grid" id="grid">
-{node_cards or '<p>No claims yet.</p>'}
+{node_cards or "<p>No claims yet.</p>"}
 </div>
 <script>
 function filter(){{

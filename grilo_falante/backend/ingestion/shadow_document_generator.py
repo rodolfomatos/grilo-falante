@@ -32,7 +32,7 @@ class ShadowDocumentGenerator:
     """
 
     CANONICAL_QUESTION = (
-        "O que tens de aceitar para que este documento " "seja válido nos seus próprios termos?"
+        "O que tens de aceitar para que este documento seja válido nos seus próprios termos?"
     )
 
     WHAT_IT_IS = [
@@ -337,7 +337,7 @@ Formato JSON de resposta:
                 ]
             )
             for i, claim in enumerate(shadow.f1_claims if hasattr(shadow, "f1_claims") else []):
-                lines.append(f"{i+1}. {claim}")
+                lines.append(f"{i + 1}. {claim}")
             lines.append("")
 
             lines.extend(
@@ -347,7 +347,7 @@ Formato JSON de resposta:
                 ]
             )
             for i, claim in enumerate(shadow.f2_claims if hasattr(shadow, "f2_claims") else []):
-                lines.append(f"{i+1}. {claim}")
+                lines.append(f"{i + 1}. {claim}")
             lines.append("")
 
         if shadow.assumptions:

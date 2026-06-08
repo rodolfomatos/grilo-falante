@@ -59,7 +59,7 @@ class Gap(BaseModel):
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
-        return {
+        result = {
             "id": self.id,
             "gap_key": self.gap_key,
             "gap_type": self.gap_type.value
@@ -72,3 +72,10 @@ class Gap(BaseModel):
             "resolved_claim_id": self.resolved_claim_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+        if self.claim_template:
+            result["claim_template"] = self.claim_template if isinstance(self.claim_template, dict) else {}
+        return result
+
+    def model_dump(self, **kwargs):
+        """Pydantic v2 compatible method."""
+        return self.to_dict()

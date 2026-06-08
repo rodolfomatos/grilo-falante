@@ -646,103 +646,6 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="grilo_pedras_list",
-            description="List all pedras (reusable contexts)",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "limit": {
-                        "type": "integer",
-                        "description": "Maximum results",
-                        "default": 50,
-                    },
-                },
-            },
-        ),
-        Tool(
-            name="grilo_pedras_get",
-            description="Get pedra details by ID",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "pedra_id": {
-                        "type": "string",
-                        "description": "Pedra ID",
-                    },
-                },
-                "required": ["pedra_id"],
-            },
-        ),
-        Tool(
-            name="grilo_pedra_add_shadow_document",
-            description="Add a shadow document to a pedra",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "pedra_id": {"type": "string", "description": "Pedra ID"},
-                    "source_name": {"type": "string", "description": "Source name"},
-                    "source_type": {"type": "string", "default": "document"},
-                    "source_reference": {"type": "string"},
-                    "feynman_f1": {"type": "string"},
-                    "feynman_f2": {"type": "string"},
-                    "feynman_f3_gaps": {"type": "array", "items": {"type": "string"}},
-                    "extracted_claims": {"type": "array", "items": {"type": "string"}},
-                    "evidence_level": {"type": "string", "default": "weak"},
-                    "assumptions": {"type": "array", "items": {"type": "string"}},
-                    "misuse_risks": {"type": "array", "items": {"type": "string"}},
-                },
-                "required": ["pedra_id", "source_name"],
-            },
-        ),
-        Tool(
-            name="grilo_pedra_add_digital_object",
-            description="Add a digital object to a pedra",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "pedra_id": {"type": "string", "description": "Pedra ID"},
-                    "type": {"type": "string", "default": "reference"},
-                    "reference": {"type": "string", "description": "URL or path"},
-                    "title": {"type": "string"},
-                    "description": {"type": "string"},
-                    "identity": {"type": "string"},
-                    "purpose": {"type": "string"},
-                    "authority": {"type": "string"},
-                    "is_capsule": {"type": "boolean", "default": False},
-                    "capsule_scope": {"type": "string"},
-                    "capsule_interpretation": {"type": "string"},
-                    "capsule_normative_effect": {"type": "string"},
-                },
-                "required": ["pedra_id", "reference"],
-            },
-        ),
-        Tool(
-            name="grilo_pedra_update",
-            description="Update pedra metadata",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "pedra_id": {"type": "string", "description": "Pedra ID"},
-                    "content_summary": {"type": "string"},
-                    "saliencia": {"type": "number"},
-                    "consequence_level": {"type": "number"},
-                    "gmif_level": {"type": "string"},
-                },
-                "required": ["pedra_id"],
-            },
-        ),
-        Tool(
-            name="grilo_pedra_get_content",
-            description="Get all content of a pedra including shadow documents and digital objects",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "pedra_id": {"type": "string", "description": "Pedra ID"},
-                },
-                "required": ["pedra_id"],
-            },
-        ),
-        Tool(
             name="grilo_dormir",
             description="Execute sleep cycle - batch sanitization",
             inputSchema={
@@ -770,6 +673,56 @@ async def list_tools() -> list[Tool]:
                         "description": "Optional task for bundle",
                     },
                 },
+            },
+        ),
+        # AutoMem tools (optional)
+        Tool(
+            name="grilo_automem_status",
+            description="Check AutoMem availability and status",
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
+        Tool(
+            name="grilo_automem_bridge_discovery",
+            description="Discover multi-hop connections between memories via bridge nodes",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "memory_id": {
+                        "type": "string",
+                        "description": "Starting memory ID",
+                    },
+                    "max_hops": {
+                        "type": "number",
+                        "default": 3,
+                        "description": "Maximum hops to traverse",
+                    },
+                },
+                "required": ["memory_id"],
+            },
+        ),
+        Tool(
+            name="grilo_automem_enrich",
+            description="Enrich a memory with auto-extracted entities",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "memory_id": {
+                        "type": "string",
+                        "description": "Memory ID to enrich",
+                    },
+                },
+                "required": ["memory_id"],
+            },
+        ),
+        Tool(
+            name="grilo_automem_consolidate",
+            description="Run consolidation cycle (decay, cluster, forget)",
+            inputSchema={
+                "type": "object",
+                "properties": {},
             },
         ),
     ]
@@ -1502,25 +1455,45 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             ]
 
         elif name == "grilo_semantic_search":
-            from grilo_falante.backend.memory import MemPalaceCache, MEMPALACE_AVAILABLE
+            from grilo_falante.backend.memory import (
+                MemPalaceCache,
+                AutoMemAdapter,
+                DualCacheRetriever,
+                MEMPALACE_AVAILABLE,
+            )
+            from grilo_falante.config import settings
 
-            if not MEMPALACE_AVAILABLE:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": "MemPalace not available",
-                                "results": [],
-                            }
-                        ),
-                    )
-                ]
-            cache = MemPalaceCache()
-            results = await cache.search(
+            # Initialize dual cache with AutoMem if enabled
+            automem_adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            # MemPalace fallback (if available)
+            mempalace = None
+            if MEMPALACE_AVAILABLE:
+                mempalace = MemPalaceCache()
+
+            # Dual cache retriever
+            dual_cache = DualCacheRetriever(
+                automem=automem_adapter,
+                mempalace=mempalace,
+                dual_write=settings.automem_dual_write,
+            )
+
+            results = await dual_cache.search(
                 arguments["query"],
                 limit=arguments.get("limit", 5),
             )
+
+            # Determine source for logging
+            source = "dual_cache"
+            if not settings.automem_enabled:
+                source = "mempalace"
+            elif not results:
+                source = "postgresql"
+
             return [
                 TextContent(
                     type="text",
@@ -1529,7 +1502,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                             "query": arguments["query"],
                             "results": results,
                             "count": len(results),
-                            "source": "mempalace",
+                            "source": source,
+                            "automem_enabled": settings.automem_enabled,
                         }
                     ),
                 )
@@ -1683,20 +1657,23 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             ]
 
         elif name == "grilo_ilhas_list":
-            from grilo_admin.routers.ilhas import ILHAManager
+            from grilo_falante.backend.db.ilhas_repository import IlhaRepository
 
-            ILHAManager.initialize()
+            repo = IlhaRepository()
             estado = arguments.get("estado")
             limit = arguments.get("limit", 50)
 
-            ilhas = ILHAManager.list_ilhas(limit=limit, interaction_type=estado)
+            if estado:
+                ilhas = await repo.listar(estado=estado, limit=limit)
+            else:
+                ilhas = await repo.listar(limit=limit)
 
             return [
                 TextContent(
                     type="text",
                     text=json.dumps(
                         {
-                            "ilhas": [i.model_dump(mode="json") for i in ilhas],
+                            "ilhas": [i.para_dict() for i in ilhas],
                             "count": len(ilhas),
                         }
                     ),
@@ -1704,12 +1681,12 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             ]
 
         elif name == "grilo_ilhas_get":
-            from grilo_admin.routers.ilhas import ILHAManager
+            from grilo_falante.backend.db.ilhas_repository import IlhaRepository
 
-            ILHAManager.initialize()
+            repo = IlhaRepository()
             ilha_id = arguments.get("ilha_id")
 
-            ilha = ILHAManager.get_ilha(ilha_id)
+            ilha = await repo.obter(ilha_id)
             if not ilha:
                 return [
                     TextContent(
@@ -1727,272 +1704,9 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                     type="text",
                     text=json.dumps(
                         {
-                            "ilha": ilha.model_dump(mode="json"),
-                            "pedras": [p.model_dump(mode="json") for p in ilha.pedras],
-                        }
-                    ),
-                )
-            ]
-
-        elif name == "grilo_pedras_list":
-            from grilo_admin.routers.ilhas import ILHAManager
-
-            ILHAManager.initialize()
-            limit = arguments.get("limit", 50)
-
-            pedras = []
-            for pedra_dict in ILHAManager._pedras.values():
-                pedras.append(ILHAManager._dict_to_pedra(pedra_dict))
-
-            pedras.sort(key=lambda x: x.created_at, reverse=True)
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "pedras": [p.model_dump(mode="json") for p in pedras[:limit]],
-                            "count": len(pedras),
-                        }
-                    ),
-                )
-            ]
-
-        elif name == "grilo_pedras_get":
-            from grilo_admin.routers.ilhas import ILHAManager
-
-            ILHAManager.initialize()
-            pedra_id = arguments.get("pedra_id")
-
-            pedra = ILHAManager.get_pedra(pedra_id)
-            if not pedra:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": f"Pedra {pedra_id} not found",
-                            }
-                        ),
-                    )
-                ]
-
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "pedra": pedra.model_dump(mode="json"),
-                        }
-                    ),
-                )
-            ]
-
-        elif name == "grilo_pedra_add_shadow_document":
-            from grilo_admin.routers.ilhas import ILHAManager
-            from grilo_admin.models.ilha import ShadowDocument
-
-            ILHAManager.initialize()
-            pedra_id = arguments.get("pedra_id")
-
-            pedra_dict = ILHAManager._pedras.get(pedra_id)
-            if not pedra_dict:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": f"Pedra {pedra_id} not found",
-                            }
-                        ),
-                    )
-                ]
-
-            shadow_doc = ShadowDocument(
-                source_name=arguments.get("source_name", "unknown"),
-                source_type=arguments.get("source_type", "document"),
-                source_reference=arguments.get("source_reference"),
-                feynman_f1=arguments.get("feynman_f1"),
-                feynman_f2=arguments.get("feynman_f2"),
-                feynman_f3_gaps=arguments.get("feynman_f3_gaps", []),
-                extracted_claims=arguments.get("extracted_claims", []),
-                evidence_level=arguments.get("evidence_level", "weak"),
-                assumptions=arguments.get("assumptions", []),
-                misuse_risks=arguments.get("misuse_risks", []),
-            )
-
-            pedra_dict.setdefault("shadow_documents", []).append(shadow_doc.model_dump())
-            pedra_dict["is_empty"] = False
-            ILHAManager.save()
-
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "success": True,
-                            "shadow_document_id": shadow_doc.id,
-                            "total_shadow_documents": len(pedra_dict["shadow_documents"]),
-                        }
-                    ),
-                )
-            ]
-
-        elif name == "grilo_pedra_add_digital_object":
-            from grilo_admin.routers.ilhas import ILHAManager
-            from grilo_admin.models.ilha import DigitalObject
-
-            ILHAManager.initialize()
-            pedra_id = arguments.get("pedra_id")
-
-            pedra_dict = ILHAManager._pedras.get(pedra_id)
-            if not pedra_dict:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": f"Pedra {pedra_id} not found",
-                            }
-                        ),
-                    )
-                ]
-
-            digital_obj = DigitalObject(
-                type=arguments.get("type", "reference"),
-                reference=arguments.get("reference", ""),
-                title=arguments.get("title"),
-                description=arguments.get("description"),
-                identity=arguments.get("identity"),
-                purpose=arguments.get("purpose"),
-                authority=arguments.get("authority"),
-                is_capsule=arguments.get("is_capsule", False),
-                capsule_scope=arguments.get("capsule_scope"),
-                capsule_interpretation=arguments.get("capsule_interpretation"),
-                capsule_normative_effect=arguments.get("capsule_normative_effect"),
-            )
-
-            pedra_dict.setdefault("digital_objects", []).append(digital_obj.model_dump())
-            pedra_dict["is_empty"] = False
-            ILHAManager.save()
-
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "success": True,
-                            "digital_object_id": digital_obj.id,
-                            "is_capsule": digital_obj.is_capsule,
-                            "total_digital_objects": len(pedra_dict["digital_objects"]),
-                        }
-                    ),
-                )
-            ]
-
-        elif name == "grilo_pedra_update":
-            from grilo_admin.routers.ilhas import ILHAManager
-
-            ILHAManager.initialize()
-            pedra_id = arguments.get("pedra_id")
-
-            pedra_dict = ILHAManager._pedras.get(pedra_id)
-            if not pedra_dict:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": f"Pedra {pedra_id} not found",
-                            }
-                        ),
-                    )
-                ]
-
-            if "content_summary" in arguments:
-                pedra_dict["content_summary"] = arguments["content_summary"]
-            if "saliencia" in arguments:
-                pedra_dict["saliencia"] = arguments["saliencia"]
-            if "consequence_level" in arguments:
-                pedra_dict["consequence_level"] = arguments["consequence_level"]
-            if "gmif_level" in arguments:
-                pedra_dict["gmif_level"] = arguments["gmif_level"]
-                gmif_event = {
-                    "gmif_level": arguments["gmif_level"],
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "source": "mcp_update",
-                }
-                pedra_dict.setdefault("gmif_events", []).append(gmif_event)
-
-            ILHAManager.save()
-            pedra = ILHAManager.get_pedra(pedra_id)
-
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "success": True,
-                            "pedra": pedra.model_dump(mode="json") if pedra else None,
-                        }
-                    ),
-                )
-            ]
-
-        elif name == "grilo_pedra_get_content":
-            from grilo_admin.routers.ilhas import ILHAManager
-
-            ILHAManager.initialize()
-            pedra_id = arguments.get("pedra_id")
-
-            pedra = ILHAManager.get_pedra(pedra_id)
-            if not pedra:
-                return [
-                    TextContent(
-                        type="text",
-                        text=json.dumps(
-                            {
-                                "error": f"Pedra {pedra_id} not found",
-                            }
-                        ),
-                    )
-                ]
-
-            return [
-                TextContent(
-                    type="text",
-                    text=json.dumps(
-                        {
-                            "id": pedra.id,
-                            "ilha_id": pedra.ilha_id,
-                            "content_summary": pedra.content_summary,
-                            "is_empty": pedra.is_empty,
-                            "shadow_documents": [
-                                {
-                                    "id": sd.id,
-                                    "source_name": sd.source_name,
-                                    "source_type": sd.source_type,
-                                    "extracted_claims": sd.extracted_claims,
-                                    "evidence_level": sd.evidence_level,
-                                }
-                                for sd in pedra.shadow_documents
-                            ],
-                            "digital_objects": [
-                                {
-                                    "id": do.id,
-                                    "type": do.type,
-                                    "reference": do.reference,
-                                    "title": do.title,
-                                    "is_capsule": do.is_capsule,
-                                }
-                                for do in pedra.digital_objects
-                            ],
-                            "gmif_level": pedra.gmif_level,
-                            "saliencia": pedra.saliencia,
-                            "consequence_level": pedra.consequence_level,
-                            "gmif_events": [
-                                {"gmif_level": e.gmif_level, "timestamp": e.timestamp}
-                                for e in pedra.gmif_events
-                            ],
+                            "ilha": ilha.para_dict(),
+                            "membros": [m.para_dict() for m in ilha.membros],
+                            "relações": [r.para_dict() for r in ilha.relações],
                         }
                     ),
                 )
@@ -2023,6 +1737,116 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                             "bundle": resultado.bundle,
                         }
                     ),
+                )
+            ]
+
+        elif name == "grilo_automem_status":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "enabled": adapter.enabled,
+                            "available": adapter.is_available,
+                            "falkordb_url": settings.falkordb_url,
+                            "qdrant_url": settings.qdrant_url,
+                        }
+                    ),
+                )
+            ]
+
+        elif name == "grilo_automem_bridge_discovery":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            if not adapter.is_available:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"error": "AutoMem not available"}),
+                    )
+                ]
+
+            memory_id = arguments.get("memory_id")
+            max_hops = arguments.get("max_hops", 3)
+
+            bridges = await adapter.bridge_discovery(memory_id, max_hops)
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(
+                        {
+                            "bridges": bridges,
+                            "count": len(bridges),
+                        }
+                    ),
+                )
+            ]
+
+        elif name == "grilo_automem_enrich":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            if not adapter.is_available:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"error": "AutoMem not available"}),
+                    )
+                ]
+
+            memory_id = arguments.get("memory_id")
+            enriched = await adapter.enrich(memory_id)
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(enriched),
+                )
+            ]
+
+        elif name == "grilo_automem_consolidate":
+            from grilo_falante.backend.memory import AutoMemAdapter
+            from grilo_falante.config import settings
+
+            adapter = AutoMemAdapter(
+                enabled=settings.automem_enabled,
+                falkordb_url=settings.falkordb_url,
+                qdrant_url=settings.qdrant_url,
+            )
+
+            if not adapter.is_available:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({"error": "AutoMem not available"}),
+                    )
+                ]
+
+            result = await adapter.consolidate()
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(result),
                 )
             ]
 

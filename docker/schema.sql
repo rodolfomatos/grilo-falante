@@ -1,7 +1,7 @@
 -- Grilo Falante v3.0 - Database Schema
--- PostgreSQL with pgvector extension
+-- PostgreSQL with pgvector extension for embeddings
 
--- Extension for vector similarity
+-- Enable pgvector extension
 CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Curator table
@@ -292,4 +292,18 @@ CREATE TABLE IF NOT EXISTS ledger_cronológico (
 );
 
 CREATE INDEX IF NOT EXISTS ledger_data_idx ON ledger_cronológico(data);
+
+-- Claim embeddings for vector similarity search
+CREATE TABLE IF NOT EXISTS claim_embeddings (
+    id SERIAL PRIMARY KEY,
+    claim_id INTEGER NOT NULL REFERENCES governed_claims(id) ON DELETE CASCADE,
+    embedding vector(768) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(claim_id)
+);
+
+CREATE INDEX IF NOT EXISTS claim_embeddings_ivf_idx ON claim_embeddings
+    USING ivfflat (embedding vector_cosine_ops) WITH (lists = 100);
+
+CREATE INDEX IF NOT EXISTS claim_embeddings_claim_idx ON claim_embeddings(claim_id);
 CREATE INDEX IF NOT EXISTS ledger_session_idx ON ledger_cronológico(session_id);

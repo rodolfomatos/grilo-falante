@@ -29,6 +29,18 @@ This directory contains the foundational documents that describe the vision and 
 | `docs_epistemic_memory_model.md` | Memory model documentation |
 | `docs_epistemic_scoring.md` | Epistemic scoring documentation |
 | `docs_implementation_plan.md` | Implementation plan |
+| `ANALISE_COMPARATIVA_AUTOMEM_VS_GRILO_FALANTE.md` | Comparison with AutoMem project |
+| `RFC_028_ARQUITETURA_HIBRIDA_AUTOMEM.md` | RFC for hybrid AutoMem + Grilo Falante architecture |
+
+## Integration Notes
+
+### AutoMem Integration
+AutoMem can be added as an **optional recall layer** without replacing existing systems:
+- FalkorDB for improved graph relationships
+- Qdrant for faster vector search
+- Bridge discovery for multi-hop island connections
+
+See RFC 028 for detailed integration proposal.
 
 ## Shadow Documents & Schema
 

@@ -1,0 +1,50 @@
+.grilo-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    z-index: 9999;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.grilo-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.grilo-nav-logo {
+    color: #00d4ff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.grilo-nav-links {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.grilo-nav-link {
+    color: #94a3b8;
+    text-decoration: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.grilo-nav-link:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.1);
+}
+
+body {
+    padding-top: 48px !important;
+}

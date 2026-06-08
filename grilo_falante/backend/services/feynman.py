@@ -217,7 +217,7 @@ ask "why" and we'll go deeper!
         lines = []
         for i, item in enumerate(chain):
             indent = "  " * i
-            lines.append(f"{indent}{i+1}. {item}")
+            lines.append(f"{indent}{i + 1}. {item}")
 
         if final:
             lines.append(f"\n→ Axiom reached: {final}")

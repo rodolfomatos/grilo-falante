@@ -179,9 +179,9 @@ class Acordar:
             )
 
         relatório["success"] = True
-        relatório[
-            "message"
-        ] = "Regime hibernated. Sleep cycle complete. Use grilo_resume to continue."
+        relatório["message"] = (
+            "Regime hibernated. Sleep cycle complete. Use grilo_resume to continue."
+        )
 
         return relatório
 
