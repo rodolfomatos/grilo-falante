@@ -1,0 +1,34 @@
+# Structured Plan Template — gerado pelo Phase 00 Elicitation
+# Campos obrigatórios marcados com (required)
+
+elicited: true
+elicited_at: ""  # (required) ISO datetime
+
+# ── Projecto ──────────────────────────────────────────────────────────────────
+name: ""              # (required) Nome curto do projecto
+goal: ""              # (required) Objectivo de uma linha
+platform: ""          # web | mobile | desktop | cli | api | library
+language: ""          # linguagem primária
+framework: ""         # framework principal
+engine: ""            # motor gráfico/jogo (se aplicável)
+dimension: ""         # 2d | 3d | none (se aplicável)
+map_source: ""        # openstreetmap | google-maps | none
+scope: ""             # mvp | full | prototype
+
+# ── Tickets estimados ─────────────────────────────────────────────────────────
+estimated_tickets: 0  # (required) Número estimado de tickets
+
+# ── Premissas declaradas ─────────────────────────────────────────────────────
+assumptions:
+  - desc: ""          # Descrição da premissa
+    certainty: medium # high | medium | low
+    impact_if_false: ""  # O que acontece se esta premissa for falsa
+
+# ── Questões em aberto (fora de scope ou por decidir) ────────────────────────
+open_questions:
+  - q: ""             # A questão
+    status: deferred  # deferred | blocked | unresolved
+    note: ""          # Porque ficou em aberto
+
+# ── Tickets (preenchidos automaticamente na aprovação) ────────────────────────
+tickets: []
