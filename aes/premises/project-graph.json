@@ -1,0 +1,29 @@
+{
+    "title": "Grilo Falante v3.0 — Project Premise Graph",
+    "description": "Core epistemic premises for Grilo Falante system operation",
+    "version": "1.0.0",
+    "created": "2026-06-21",
+    "premises": [
+        {"id": "prem_python_available", "label": "Python 3.10+ está disponível", "type": "FOUNDATIONAL", "verify": "cmd:python3 --version"},
+        {"id": "prem_postgres_running", "label": "PostgreSQL com pgvector está a correr", "type": "FOUNDATIONAL", "verify": "cmd:pg_isready -h localhost -p 5433"},
+        {"id": "prem_regime_loaded", "label": "Regime epistémico está carregado", "type": "FOUNDATIONAL", "verify": "manual"},
+        {"id": "prem_schema_valid", "label": "Schema da base de dados está completo", "type": "ASSUMPTION", "verify": "manual"},
+        {"id": "prem_imports_valid", "label": "Todos os imports Python resolvem", "type": "ASSUMPTION", "verify": "cmd:python3 -c \"from grilo_falante.backend.mcp.server import app\""},
+        {"id": "prem_no_truth", "label": "Sistema nunca produz verdades absolutas", "type": "CONSTRAINT", "verify": "manual"},
+        {"id": "prem_no_bypass", "label": "Decisões não podem saltar a governança", "type": "CONSTRAINT", "verify": "manual"},
+        {"id": "prem_validation_ready", "label": "Pipeline de validação epistémica operacional", "type": "DERIVED", "verify": "manual"},
+        {"id": "prem_mcp_running", "label": "MCP server expõe 52+ ferramentas", "type": "DERIVED", "verify": "cmd:python3 -m grilo_falante.backend.mcp.server --help"},
+        {"id": "prem_api_serving", "label": "API REST FastAPI está a servir", "type": "DERIVED", "verify": "manual"}
+    ],
+    "edges": [
+        {"from": "prem_python_available", "to": "prem_validation_ready", "relation": "DEPENDS_ON"},
+        {"from": "prem_postgres_running", "to": "prem_validation_ready", "relation": "DEPENDS_ON"},
+        {"from": "prem_regime_loaded", "to": "prem_validation_ready", "relation": "DEPENDS_ON"},
+        {"from": "prem_schema_valid", "to": "prem_validation_ready", "relation": "SUPPORTS"},
+        {"from": "prem_imports_valid", "to": "prem_validation_ready", "relation": "SUPPORTS"},
+        {"from": "prem_no_truth", "to": "prem_validation_ready", "relation": "CONSTRAINS"},
+        {"from": "prem_no_bypass", "to": "prem_validation_ready", "relation": "CONSTRAINS"},
+        {"from": "prem_validation_ready", "to": "prem_mcp_running", "relation": "SUPPORTS"},
+        {"from": "prem_validation_ready", "to": "prem_api_serving", "relation": "SUPPORTS"}
+    ]
+}

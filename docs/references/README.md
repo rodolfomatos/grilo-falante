@@ -1,13 +1,14 @@
-# Reference Documents
+# Diretório Obsoleto
 
-External documents that informed the design of Grilo Falante v3.0.
+Este diretório (`docs/references/`) contém duplicados de documentos que foram movidos para `docs/reference/`.
 
-| Document | Description |
-|----------|-------------|
-| `memo_anchor_feynman_pedagogico_gf_ema_memoria_insular.md` | Complete vision for insular memory system |
-| `documento_modelo_cognitivo_comparativo.md` | Comparative analysis with other cognitive architectures |
-| `capsula_aprendizagem_sem_memoria_e_artigos.md` | Principles of delegated learning |
-| `grafo_modelo_cognitivo_canonico_v_2.md` | Canonical cognitive model ontology |
-| `Modelo Gráfico de Meta-Informação.md` | GMIF - Evidence and inference framework |
+**Por favor, use `docs/reference/` como fonte de verdade.**
 
-These documents are source material and should be consulted for deeper understanding of the epistemic governance architecture.
+Os ficheiros aqui mantêm-se apenas para referência histórica. Não devem ser editados.
+Para contribuir, atualize o ficheiro correspondente em `docs/reference/`.
+
+Duplicados conhecidos:
+- `grafo_modelo_cognitivo_canonico_v_2.md` → `docs/reference/grafo_modelo_cognitivo_canonico_v_2.md`
+- `documento_modelo_cognitivo_comparativo.md` → `docs/reference/documento_modelo_cognitivo_comparativo.md`
+- `capsula_aprendizagem_sem_memoria_e_artigos.md` → `docs/reference/capsula_aprendizagem_sem_memoria_e_artigos.md`
+- `memo_anchor_feynman_pedagogico_gf_ema_memoria_insular.md` → `docs/reference/memo_anchor_feynman_pedagogico_gf_ema_memoria_insular.md`

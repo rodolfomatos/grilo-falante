@@ -263,12 +263,27 @@ async def init_schema(conn: asyncpg.Connection) -> None:
         );
 
         CREATE INDEX IF NOT EXISTS curator_history_idx ON curator_score_history(curator_id);
+
+        -- Claim embeddings table for vector similarity search
+        CREATE TABLE IF NOT EXISTS claim_embeddings (
+            id SERIAL PRIMARY KEY,
+            claim_id INTEGER NOT NULL REFERENCES governed_claims(id) ON DELETE CASCADE,
+            embedding vector(1536) NOT NULL,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+            UNIQUE(claim_id)
+        );
+
+        CREATE INDEX IF NOT EXISTS claim_embeddings_claim_idx ON claim_embeddings(claim_id);
     """
     )
 
     # Initialize chat schema
     from grilo_falante.backend.db.schema_chat import init_schema_chat
     await init_schema_chat(conn)
+
+    # Initialize island/pedra schema
+    from grilo_falante.backend.db.schema_ilhas import init_schema_ilhas
+    await init_schema_ilhas(conn)
 
 
 async def check_health() -> dict:

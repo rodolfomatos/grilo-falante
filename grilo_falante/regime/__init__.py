@@ -32,6 +32,8 @@ from .loader import (
 from .acordar import (
     Acordar,
     AcordarResult,
+    GitContext,
+    IslandContext,
 )
 from .pina import (
     PINAProtocol,
@@ -69,6 +71,8 @@ __all__ = [
     "SystemUseRecord",
     "Acordar",
     "AcordarResult",
+    "GitContext",
+    "IslandContext",
     "PINAProtocol",
     "PINADecision",
     "NormativeCandidateRecord",

@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from grilo_falante.config import settings
 from grilo_falante.backend.api.auth import AuthMiddleware, verify_api_key
-from grilo_falante.backend.db.connection import init_pool, close_pool, check_health, init_schema
+from grilo_falante.backend.db.connection import init_pool, close_pool, acquire_connection, check_health, init_schema
 from grilo_falante.backend.db.repositories import (
     ClaimRepository,
     GapRepository,
@@ -76,7 +76,7 @@ async def startup_event():
     """Initialize resources on startup."""
     await init_pool()
     try:
-        async with close_pool.__self__.acquire_connection() as conn:
+        async with acquire_connection() as conn:
             await init_schema(conn)
     except Exception:
         pass

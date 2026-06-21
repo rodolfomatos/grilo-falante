@@ -1,0 +1,32 @@
+// GF — Premise Graph
+// Core premises for Grilo Falante operation
+// Generated: 2026-06-21
+
+digraph T001_gf_premises {
+    rankdir=TB;
+    compound=true;
+    newrank=true;
+
+    node [style=filled, fontname="monospace", fontsize=11];
+    edge [fontname="monospace", fontsize=9];
+
+    "prem_python_available"
+        [label="Python 3.10+ is available",
+         type=FOUNDATIONAL, fillcolor="#ff6b6b", shape=doubleoctagon];
+
+    "prem_regime_loaded"
+        [label="Epistemic regime is loaded and active",
+         type=FOUNDATIONAL, fillcolor="#ff6b6b", shape=doubleoctagon];
+
+    "prem_no_bypass"
+        [label="Decisions must not bypass governance",
+         type=CONSTRAINT, fillcolor="#4d96ff", shape=diamond];
+
+    "prem_validation_pipeline_ready"
+        [label="Validation pipeline is operational",
+         type=DERIVED, fillcolor="#6bcb77", shape=box];
+
+    "prem_python_available" -> "prem_validation_pipeline_ready" [label=DEPENDS_ON];
+    "prem_regime_loaded" -> "prem_validation_pipeline_ready" [label=DEPENDS_ON];
+    "prem_no_bypass" -> "prem_validation_pipeline_ready" [label=CONSTRAINS];
+}

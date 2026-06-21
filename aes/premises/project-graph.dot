@@ -1,0 +1,89 @@
+// Grilo Falante v3.0 — Project Premise Graph
+// Core epistemic premises for system operation
+//
+// FOUNDATIONAL - if false, system collapses
+// ASSUMPTION   - likely true, not guaranteed
+// DERIVED      - logical consequence of other premises
+// CONSTRAINT   - externally imposed limit
+
+digraph gf_project_premises {
+    rankdir=TB;
+    compound=true;
+    fontname="monospace";
+    newrank=true;
+    label="Grilo Falante — Project Premise Graph";
+    fontsize=14;
+    labelloc=t;
+
+    node [style=filled, fontname="monospace", fontsize=11];
+    edge [fontname="monospace", fontsize=9];
+
+    subgraph cluster_foundational {
+        label="Foundational";
+        fontsize=12;
+        style=dashed;
+        color="#ff6b6b";
+
+        "prem_python_available"
+            [label="Python 3.10+ está disponível", type=FOUNDATIONAL, fillcolor="#ff6b6b", shape=doubleoctagon];
+
+        "prem_postgres_running"
+            [label="PostgreSQL com pgvector está a correr", type=FOUNDATIONAL, fillcolor="#ff6b6b", shape=doubleoctagon];
+
+        "prem_regime_loaded"
+            [label="Regime epistémico está carregado", type=FOUNDATIONAL, fillcolor="#ff6b6b", shape=doubleoctagon];
+    }
+
+    subgraph cluster_assumptions {
+        label="Assumptions";
+        fontsize=12;
+        style=dashed;
+        color="#ffd93d";
+
+        "prem_schema_valid"
+            [label="Schema da base de dados está completo", type=ASSUMPTION, fillcolor="#ffd93d", shape=ellipse];
+
+        "prem_imports_valid"
+            [label="Todos os imports Python resolvem", type=ASSUMPTION, fillcolor="#ffd93d", shape=ellipse];
+    }
+
+    subgraph cluster_constraints {
+        label="Constraints";
+        fontsize=12;
+        style=dashed;
+        color="#4d96ff";
+
+        "prem_no_truth"
+            [label="Sistema nunca produz verdades absolutas", type=CONSTRAINT, fillcolor="#4d96ff", shape=diamond];
+
+        "prem_no_bypass"
+            [label="Decisões não podem saltar a governança", type=CONSTRAINT, fillcolor="#4d96ff", shape=diamond];
+    }
+
+    subgraph cluster_derived {
+        label="Derived";
+        fontsize=12;
+        style=dashed;
+        color="#6bcb77";
+
+        "prem_validation_ready"
+            [label="Pipeline de validação epistémica operacional", type=DERIVED, fillcolor="#6bcb77", shape=box];
+
+        "prem_mcp_running"
+            [label="MCP server expõe 52+ ferramentas", type=DERIVED, fillcolor="#6bcb77", shape=box];
+
+        "prem_api_serving"
+            [label="API REST FastAPI está a servir", type=DERIVED, fillcolor="#6bcb77", shape=box];
+    }
+
+    "prem_python_available"  -> "prem_validation_ready" [label=DEPENDS_ON];
+    "prem_postgres_running"  -> "prem_validation_ready" [label=DEPENDS_ON];
+    "prem_regime_loaded"     -> "prem_validation_ready" [label=DEPENDS_ON];
+    "prem_schema_valid"      -> "prem_validation_ready" [label=SUPPORTS];
+    "prem_imports_valid"     -> "prem_validation_ready" [label=SUPPORTS];
+    "prem_no_truth"          -> "prem_validation_ready" [label=CONSTRAINS];
+    "prem_no_bypass"         -> "prem_validation_ready" [label=CONSTRAINS];
+
+    "prem_validation_ready"  -> "prem_mcp_running"      [label=SUPPORTS];
+    "prem_validation_ready"  -> "prem_api_serving"      [label=SUPPORTS];
+}

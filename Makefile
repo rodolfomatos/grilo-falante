@@ -1,4 +1,5 @@
 .PHONY: help dev test lint format clean build \
+	check doctor coverage \
 	docker-build docker-up docker-down docker-logs docker-restart \
 	docker-start docker-stop \
 	docker-visualizer docker-api docker-mcp docker-db \
@@ -10,7 +11,9 @@
 	mcp-config mcp-install-opencode mcp-install-claude \
 	health health-api health-db health-visualizer \
 	test-unit test-integration test-all \
-	lint-fix format-fix
+	lint-fix format-fix \
+	check-premises \
+	validate docs-check check-epistemic premise-check metrics roadmap install-hooks
 
 # =============================================================================
 # Grilo Falante v3.0 - Makefile
@@ -29,6 +32,10 @@ help:
 	@echo "  lint             Run linter (check only)"
 	@echo "  lint-fix         Run linter with auto-fix"
 	@echo "  format           Format code"
+	@echo "  format-check     Check formatting without modifying"
+	@echo "  check            Run lint + format-check + tests (CI gate)"
+	@echo "  doctor           Diagnose environment and project health"
+	@echo "  coverage         Run tests with coverage report"
 	@echo "  clean            Clean build artifacts"
 	@echo ""
 	@echo "=== Docker ==="
@@ -92,45 +99,74 @@ test: test-all
 
 test-unit:
 	@echo "Running unit tests..."
-	@PYTHONPATH=. pytest grilo_falante/tests/unit/ -v -x 2>/dev/null || \
-	PYTHONPATH=. pytest grilo_falante/tests/ -v -x -k "not integration" 2>/dev/null || \
-	echo "No unit tests found or pytest not installed"
+	@command -v pytest >/dev/null 2>&1 || { echo "ERROR: pytest not found. Run 'make install-dev'"; exit 1; }
+	@PYTHONPATH=. pytest grilo_falante/tests/ -v -x -k "not integration"
 
 test-integration:
 	@echo "Running integration tests..."
-	@PYTHONPATH=. pytest grilo_falante/tests/integration/ -v -x 2>/dev/null || \
-	echo "No integration tests found"
+	@command -v pytest >/dev/null 2>&1 || { echo "ERROR: pytest not found. Run 'make install-dev'"; exit 1; }
+	@if [ -d "grilo_falante/tests/integration/" ]; then PYTHONPATH=. pytest grilo_falante/tests/integration/ -v -x; else echo "No integration test directory found"; fi
 
 test-all:
 	@echo "Running all tests..."
-	@PYTHONPATH=. pytest grilo_falante/tests/ -v 2>/dev/null || \
-	PYTHONPATH=. pytest grilo_falante/ -v --ignore=grilo_falante/tests/ 2>/dev/null || \
-	echo "Tests not found or pytest not installed"
+	@command -v pytest >/dev/null 2>&1 || { echo "ERROR: pytest not found. Run 'make install-dev'"; exit 1; }
+	@PYTHONPATH=. pytest grilo_falante/tests/ app/tests/ -v
 
 lint:
 	@echo "Running linter..."
-	@python -m ruff check grilo_falante/ 2>/dev/null || \
-	PATH="$$HOME/.local/bin:$$PATH" ruff check grilo_falante/ 2>/dev/null || \
-	echo "ruff not installed"
+	@command -v ruff >/dev/null 2>&1 || { echo "ERROR: ruff not found. Run 'make install-dev'"; exit 1; }
+	@ruff check grilo_falante/ app/
 
 lint-fix:
 	@echo "Running linter with auto-fix..."
-	@python -m ruff check grilo_falante/ --fix 2>/dev/null || \
-	PATH="$$HOME/.local/bin:$$PATH" ruff check grilo_falante/ --fix 2>/dev/null || \
-	echo "ruff not installed"
+	@command -v ruff >/dev/null 2>&1 || { echo "ERROR: ruff not found. Run 'make install-dev'"; exit 1; }
+	@ruff check grilo_falante/ app/ --fix
 
 format:
 	@echo "Formatting code..."
-	@python -m ruff format grilo_falante/ 2>/dev/null || \
-	PATH="$$HOME/.local/bin:$$PATH" ruff format grilo_falante/ 2>/dev/null || \
-	echo "ruff not installed"
+	@command -v ruff >/dev/null 2>&1 || { echo "ERROR: ruff not found. Run 'make install-dev'"; exit 1; }
+	@ruff format grilo_falante/ app/
+
+check: lint format-check test-all
+	@echo "=== All checks passed ==="
+
+doctor:
+	@echo "=== Environment Doctor ==="
+	@echo -n "Python: "; python3 --version 2>&1 || echo "NOT FOUND"
+	@echo -n "pytest: "; python3 -m pytest --version 2>&1 || echo "NOT FOUND"
+	@echo -n "ruff: "; ruff --version 2>&1 || echo "NOT FOUND"
+	@echo -n "Docker: "; docker --version 2>&1 || echo "NOT FOUND"
+	@echo -n "PostgreSQL: "; pg_isready --version 2>&1 || echo "NOT FOUND"
+	@echo ""
+	@echo "=== Dependencies ==="
+	@python3 -m pip list 2>/dev/null | grep -iE "fastapi|uvicorn|asyncpg|pydantic|httpx|structlog" || echo "Some deps missing"
+	@echo ""
+	@echo "=== Project Structure ==="
+	@for d in aes/tickets aes/sprints aes/handoffs aes/verification docs/HOSTILE_INSIGHTS.md; do \
+		if [ -e "$$d" ]; then echo "  [OK] $$d"; else echo "  [MISSING] $$d"; fi; \
+	done
+	@echo ""
+	@echo "=== AES Hooks ==="
+	@for h in .aes/hooks/pre-build.sh .aes/hooks/pre-review.sh .aes/hooks/pre-merge.sh; do \
+		if [ -x "$$h" ]; then echo "  [OK] $$h"; else echo "  [MISSING/NOT EXEC] $$h"; fi; \
+	done
+
+coverage:
+	@echo "Running tests with coverage..."
+	@command -v pytest >/dev/null 2>&1 || { echo "ERROR: pytest not found. Run 'make install-dev'"; exit 1; }
+	@PYTHONPATH=. pytest grilo_falante/tests/ app/tests/ -v --cov=grilo_falante --cov=app --cov-report=term --cov-report=html
+
+format-check:
+	@echo "Checking formatting..."
+	@command -v ruff >/dev/null 2>&1 || { echo "ERROR: ruff not found. Run 'make install-dev'"; exit 1; }
+	@ruff format grilo_falante/ app/ --check
 
 clean:
 	@echo "Cleaning build artifacts..."
 	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
 	@find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
-	@rm -rf build/ dist/ .pytest_cache/ .ruff_cache/
+	@rm -rf build/ dist/ .pytest_cache/ .ruff_cache/ coverage_html/
 
 # =============================================================================
 # Run Locally
@@ -279,6 +315,173 @@ audit-hostile:
 	@PYTHONPATH=. python3 -c "from grilo_falante.models import GMIFLevel; print('=== GMIF LEVELS ==='); [print(f'  {l.value}: {l.name}') for l in GMIFLevel]"
 	@echo ""
 	@PYTHONPATH=. python3 -c "from grilo_falante.backend.services import CognitiveLint; lint = CognitiveLint(); print('=== BLOCKING PATTERNS ==='); [print(f'  {p}') for p in lint.BLOCK_PATTERNS]"
+
+check-premises:
+	@echo "=== Premise Graph Validation ==="
+	@command -v grilo >/dev/null 2>&1 || { echo "ERROR: grilo CLI not found. Run 'make install' first"; exit 1; }
+	@if [ -d "aes/premises" ]; then \
+		count=0; failed=0; \
+		for f in aes/premises/*.dot; do \
+			[ -f "$$f" ] || continue; \
+			count=$$((count+1)); \
+			if grilo validate-dot --graph "$$f" --json >/dev/null 2>&1; then \
+				name=$$(basename "$$f"); \
+				echo "  PASS  $$name"; \
+			else \
+				failed=$$((failed+1)); \
+				grilo validate-dot --graph "$$f" 2>&1; \
+			fi; \
+		done; \
+		if [ "$$count" -eq 0 ]; then \
+			echo "  No .dot files found in aes/premises/"; \
+		else \
+			total=$$((count)); \
+			passed=$$((count - failed)); \
+			echo ""; \
+			echo "  ──────────────────────────────────"; \
+			echo "  $$passed passed, $$failed failed ($$total total)"; \
+		fi; \
+	else \
+		echo "  Directory aes/premises/ not found"; \
+	fi
+
+validate:
+	@echo "=== Quick Validation ==="
+	@bash -n hooks/*.sh .aes/hooks/*.sh .aes/plugins/*.sh 2>&1 || { echo "Syntax error in scripts"; exit 1; }
+	@command -v shellcheck >/dev/null 2>&1 && shellcheck hooks/*.sh .aes/hooks/*.sh .aes/plugins/*.sh 2>/dev/null || \
+		echo "shellcheck not installed, skipping"
+	@echo "Validate passed"
+
+docs-check:
+	@echo "=== Documentation Check ==="
+	@for f in docs/VISION.md docs/REQUIREMENTS.md docs/ROADMAP.md; do \
+		if [ -f "$$f" ]; then echo "  [OK] $$f"; else echo "  [MISSING] $$f"; fi; \
+	done
+	@if command -v grilo >/dev/null 2>&1; then \
+		for f in docs/*.md; do \
+			[ -f "$$f" ] || continue; \
+			name=$$(basename "$$f"); \
+			if grilo lint-text --file "$$f" --json >/dev/null 2>&1; then \
+				echo "  PASS  $$name"; \
+			else \
+				echo "  FAIL  $$name (cognitive lint)"; \
+				grilo lint-text --file "$$f" 2>&1; \
+			fi; \
+		done; \
+	else \
+		echo "  grilo CLI not available — cognitive linting skipped"; \
+	fi
+
+check-epistemic:
+	@echo "=== Epistemic Quality Gate ==="
+	@if command -v grilo &>/dev/null; then \
+		if [ -d "aes/premises" ] && ls aes/premises/*.dot >/dev/null 2>&1; then \
+			grilo check-epistemic --dir aes/premises/ || exit 1; \
+		else \
+			echo "  No premise graphs found — skipping"; \
+		fi \
+	elif python3 -m grilo_falante.cli check-epistemic --help >/dev/null 2>&1; then \
+		if [ -d "aes/premises" ] && ls aes/premises/*.dot >/dev/null 2>&1; then \
+			python3 -m grilo_falante.cli check-epistemic --dir aes/premises/ || exit 1; \
+		else \
+			echo "  No premise graphs found — skipping"; \
+		fi \
+	else \
+		echo "  WARN  grilo CLI not available — epistemic gate skipped"; \
+	fi
+
+premise-check:
+	@echo "=== Premise Graph Validation ==="
+	@if command -v grilo >/dev/null 2>&1; then \
+		if [ -d "aes/premises" ] && ls aes/premises/*.dot >/dev/null 2>&1; then \
+			for f in aes/premises/*.dot; do \
+				[ -f "$$f" ] || continue; \
+				name=$$(basename "$$f"); \
+				if grilo validate-dot --graph "$$f" --json >/dev/null 2>&1; then \
+					echo "  PASS  $$name"; \
+				else \
+					echo "  FAIL  $$name"; \
+					grilo validate-dot --graph "$$f" 2>&1; \
+				fi; \
+			done; \
+		else \
+			echo "  No .dot files found in aes/premises/"; \
+		fi \
+	else \
+		if [ -d "aes/premises" ] && ls aes/premises/*.dot >/dev/null 2>&1; then \
+			for f in aes/premises/*.dot; do \
+				[ -f "$$f" ] || continue; \
+				name=$$(basename "$$f"); \
+				if command -v dot &>/dev/null; then \
+					dot -Tsvg "$$f" -o /dev/null 2>/dev/null && echo "  PASS  $$name" || echo "  FAIL  $$name"; \
+				else \
+					grep -q '^digraph ' "$$f" 2>/dev/null && echo "  PASS  $$name" || echo "  FAIL  $$name (no digraph)"; \
+				fi; \
+			done; \
+		else \
+			echo "  No premise graphs found — skipping"; \
+		fi; \
+	fi
+
+metrics:
+	@echo "=== Project Metrics ==="
+	@echo -n "Python files: "; find grilo_falante/ app/ -name "*.py" 2>/dev/null | wc -l
+	@echo -n "Shell scripts: "; find hooks/ .aes/hooks/ scripts/ -name "*.sh" 2>/dev/null | wc -l
+	@echo -n "Markdown files: "; find docs/ aes/ -name "*.md" 2>/dev/null | wc -l
+	@echo -n "DOT graphs: "; find aes/premises/ -name "*.dot" 2>/dev/null | wc -l
+	@echo -n "Total LOC Python: "
+	@find grilo_falante/ app/ -name "*.py" -exec cat {} + 2>/dev/null | wc -l || echo "0"
+	@echo ""
+	@echo "=== Ticket Status ==="
+	@if [ -f aes/kanban.md ]; then \
+		grep "^|" aes/kanban.md | grep "T[0-9]" || echo "  No tickets found in kanban"; \
+	else \
+		echo "  No kanban file found"; \
+	fi
+	@echo ""
+	@if [ -d aes/tickets ]; then \
+		total=0; done=0; \
+		for f in aes/tickets/*.md; do \
+			[ -f "$$f" ] || continue; \
+			total=$$((total+1)); \
+			grep -q "status: done" "$$f" && done=$$((done+1)) || true; \
+		done; \
+		echo "Tickets: $$done/$$total done"; \
+	fi
+
+roadmap:
+	@echo "=== Roadmap ==="
+	@if [ -f docs/ROADMAP.md ]; then \
+		grep -E "^## |^- \[[ x]\]" docs/ROADMAP.md || echo "  No roadmap items found"; \
+	else \
+		echo "  No ROADMAP.md found"; \
+	fi
+	@echo ""
+	@if [ -f aes/kanban.md ]; then \
+		echo "=== Sprint Status ==="; \
+		grep -E "^|.*sprint" aes/kanban.md | grep -v "^-" | head -20; \
+	fi
+
+install-hooks:
+	@echo "Installing hooks..."
+	@mkdir -p .aes/hooks .aes/plugins
+	@if [ -d hooks ]; then \
+		for hook in hooks/*.sh; do \
+			[ -f "$$hook" ] || continue; \
+			name=$$(basename "$$hook"); \
+			cp "$$hook" ".aes/hooks/$$name"; \
+			chmod +x ".aes/hooks/$$name"; \
+			echo "  Installed hook: $$name"; \
+		done; \
+	fi
+	@if [ -d .aes/plugins ]; then \
+		for plugin in .aes/plugins/*.sh; do \
+			[ -f "$$plugin" ] || continue; \
+			chmod +x "$$plugin"; \
+			echo "  Plugin ready: $$(basename $$plugin)"; \
+		done; \
+	fi
+	@echo "Hooks installed."
 
 # =============================================================================
 # Git

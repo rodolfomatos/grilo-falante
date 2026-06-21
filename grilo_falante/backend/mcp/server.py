@@ -63,17 +63,43 @@ _state_machine = _loader.state_machine
 _acordar = Acordar(state_machine=_state_machine, ledger=_ledger)
 _pina = PINAProtocol(state_machine=_state_machine, ledger=_ledger)
 _validator = TransitionValidator(state_machine=_state_machine)
+_pina_mode: str = "confirm"  # auto | confirm | disabled
 
 # Chat session management
-_chat_sessions: dict[str, "ChatShell"] = {}
+_chat_sessions: dict[str, Any] = {}
 
 
-def get_chat_shell(session_id: str) -> "ChatShell":
+class _ChatShellStub:
+    """Stub ChatShell when app.skills.chat_shell is unavailable."""
+    def __init__(self, session_id: str = ""):
+        self.session_id = session_id
+    async def chat(self, message: str, **kwargs):
+        return {"role": "assistant", "content": f"[ChatShell unavailable] {message}"}
+    async def end(self):
+        pass
+
+
+def _load_chat_shell():
+    """Load ChatShell from app.skills with fallback stub."""
+    try:
+        from app.skills.chat_shell import ChatShell
+        return ChatShell
+    except ImportError:
+        import logging
+        logging.getLogger(__name__).warning(
+            "app.skills.chat_shell not available; using stub"
+        )
+        return _ChatShellStub
+
+
+def get_chat_shell(session_id: str) -> "_ChatShellStub":
     """Get or create a chat shell session."""
-    from app.skills.chat_shell import ChatShell
-
+    ChatShellCls = _load_chat_shell()
     if session_id not in _chat_sessions:
-        _chat_sessions[session_id] = ChatShell(session_id=session_id)
+        instance = ChatShellCls(session_id=session_id)
+        if isinstance(instance, _ChatShellStub):
+            instance.session_id = session_id
+        _chat_sessions[session_id] = instance
     return _chat_sessions[session_id]
 
 
@@ -107,36 +133,53 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="grilo_acordar",
-            description="Execute ACORDAR wake-up ritual with temporal anchoring and intention",
+            description="Execute ACORDAR wake-up ritual with external time verification, island restoration, and git context",
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "temporal_anchor": {
-                        "type": "string",
-                        "description": "Date/time context (e.g., '2026-04-15')",
-                    },
                     "intention": {
                         "type": "string",
-                        "description": "What the human intends to accomplish",
+                        "description": "What the human intends to accomplish this cycle",
+                    },
+                    "temporal_anchor": {
+                        "type": "string",
+                        "description": "Optional human-supplied anchor for cross-reference (system clock is always used)",
                     },
                     "mode": {
                         "type": "string",
                         "enum": ["exploratory", "committed"],
                         "default": "exploratory",
                     },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID for island restoration",
+                        "default": "mcp",
+                    },
                 },
-                "required": ["temporal_anchor", "intention"],
+                "required": ["intention"],
             },
         ),
         Tool(
             name="grilo_vai_dormir",
-            description="Hibernate the regime (VAI_DORMIR)",
-            inputSchema={"type": "object", "properties": {}},
+            description="Hibernate the regime (VAI_DORMIR) with handoff and island consolidation",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {"type": "string", "description": "Session ID", "default": "mcp"},
+                    "handoff_dir": {"type": "string", "description": "Handoff output directory", "default": "aes/handoffs"},
+                    "collect_interactions": {"type": "boolean", "description": "Collect interactions for island processing", "default": True},
+                },
+            },
         ),
         Tool(
             name="grilo_resume",
-            description="Resume the regime from hibernation",
-            inputSchema={"type": "object", "properties": {}},
+            description="Resume the regime from hibernation, restoring context from handoff",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "handoff_dir": {"type": "string", "description": "Handoff directory to read context from", "default": "aes/handoffs"},
+                },
+            },
         ),
         Tool(
             name="grilo_get_ledger_stats",
@@ -192,6 +235,34 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "limit": {"type": "number", "default": 20, "description": "Maximum results"},
                 },
+            },
+        ),
+        Tool(
+            name="grilo_pina_detect",
+            description="Scan text for Normative Occurrences and propose as NCAs",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "text": {"type": "string", "description": "Text to scan for normative content"},
+                    "source_document": {"type": "string", "description": "Source reference"},
+                    "auto_propose": {"type": "boolean", "default": True, "description": "Auto-propose detected norms as NCA candidates"},
+                },
+                "required": ["text", "source_document"],
+            },
+        ),
+        Tool(
+            name="grilo_pina_configure",
+            description="Configure PINA protocol mode",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "mode": {
+                        "type": "string",
+                        "enum": ["auto", "confirm", "disabled"],
+                        "description": "auto=auto-incorporate trivial norms, confirm=always ask human, disabled=no PINA",
+                    },
+                },
+                "required": ["mode"],
             },
         ),
         Tool(
@@ -659,8 +730,8 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
-            name="grilo_acordar",
-            description="Execute wake cycle - restore context",
+            name="grilo_island_restore",
+            description="Restore island context directly (without state machine cycle)",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -775,9 +846,10 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
         elif name == "grilo_acordar":
             result = _acordar.execute(
-                temporal_anchor=arguments["temporal_anchor"],
                 intention=arguments["intention"],
+                temporal_anchor=arguments.get("temporal_anchor"),
                 mode=arguments.get("mode", "exploratory"),
+                session_id=arguments.get("session_id", "mcp"),
             )
             return [
                 TextContent(
@@ -788,17 +860,29 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                             "message": result.message,
                             "temporal_anchor": result.temporal_anchor,
                             "intention_declared": result.intention_declared,
+                            "source": result.source,
+                            "verified_timestamp": result.verified_timestamp,
+                            "git": result.git,
+                            "islands": result.islands,
+                            "anchor_mismatch": result.anchor_mismatch,
+                            "warnings": result.warnings,
                         }
                     ),
                 )
             ]
 
         elif name == "grilo_vai_dormir":
-            result = _acordar.vai_dormir()
+            result = await _acordar.vai_dormir_async(
+                session_id=arguments.get("session_id", "mcp"),
+                handoff_dir=arguments.get("handoff_dir", "aes/handoffs"),
+                collect_interactions=arguments.get("collect_interactions", True),
+            )
             return [TextContent(type="text", text=json.dumps(result))]
 
         elif name == "grilo_resume":
-            result = _acordar.resume()
+            result = _acordar.resume(
+                handoff_dir=arguments.get("handoff_dir", "aes/handoffs"),
+            )
             return [TextContent(type="text", text=json.dumps(result))]
 
         elif name == "grilo_get_ledger_stats":
@@ -862,6 +946,74 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                     ),
                 )
             ]
+
+        elif name == "grilo_pina_detect":
+            text = arguments["text"]
+            source = arguments["source_document"]
+            auto_propose = arguments.get("auto_propose", True)
+
+            norm_patterns = [
+                (r"\b(must|shall|must not|shall not|never|always)\b", "obligation"),
+                (r"\b(should|should not|ought to)\b", "recommendation"),
+                (r"\b(forbidden|prohibited|banned|not allowed)\b", "prohibition"),
+                (r"\b(require|requires|required|mandatory)\b", "requirement"),
+                (r"\b(rule|policy|principle|invariant)\b", "normative_declaration"),
+            ]
+
+            import re
+            detections = []
+            for pattern, kind in norm_patterns:
+                for match in re.finditer(pattern, text, re.IGNORECASE):
+                    start = max(0, match.start() - 40)
+                    end = min(len(text), match.end() + 40)
+                    context = text[start:end].strip()
+                    detections.append({
+                        "kind": kind,
+                        "matched": match.group(),
+                        "context": f"...{context}...",
+                    })
+
+            proposed = []
+            if auto_propose and detections:
+                for det in detections[:3]:
+                    result = _pina.propose_candidate(
+                        source_document=source,
+                        faithful_statement=f"[{det['kind']}] {det['context']}",
+                        location=f"char_{det.get('matched', '?')}",
+                    )
+                    if result.success:
+                        proposed.append(result.nca_id)
+
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "detections": len(detections),
+                        "detected": detections[:10],
+                        "auto_proposed": len(proposed),
+                        "proposed_ncas": proposed,
+                        "pending_count": len(_pina.get_pending()),
+                    })
+                )
+            ]
+
+        elif name == "grilo_pina_configure":
+            global _pina_mode
+            new_mode = arguments["mode"]
+            if new_mode not in ("auto", "confirm", "disabled"):
+                return [TextContent(
+                    type="text",
+                    text=json.dumps({"error": f"Invalid mode: {new_mode}. Must be auto, confirm, or disabled"})
+                )]
+            _pina_mode = new_mode
+            return [TextContent(
+                type="text",
+                text=json.dumps({
+                    "success": True,
+                    "pina_mode": _pina_mode,
+                    "message": f"PINA mode set to '{_pina_mode}'"
+                })
+            )]
 
         elif name == "grilo_validate_transition":
             result = _validator.validate_transition(
@@ -1631,9 +1783,9 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                     )
                 ]
 
-            from app.skills.chat_shell import ChatShell
+            ChatShellCls = _load_chat_shell()
 
-            shell = ChatShell()
+            shell = ChatShellCls()
             result = shell.import_session(session_script)
 
             if not result.get("success"):
@@ -1719,7 +1871,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             resultado = await ir_dormir(session_id=session_id, interações=[])
             return [TextContent(type="text", text=json.dumps(resultado))]
 
-        elif name == "grilo_acordar":
+        elif name == "grilo_island_restore":
+            """Direct island restoration (without state machine)."""
             from app.regime.acordar import acordar
 
             session_id = arguments.get("session_id", "mcp")

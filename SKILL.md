@@ -1,4 +1,7 @@
 ---
+summary: Grilo Falante v3.0 — Epistemic Governance Regime via MCP. Apply GMIF classification, premise propagation, and hostile audit to any input. Persists claims to PostgreSQL with pgvector similarity search.
+version: 3.0.0
+last_updated: 2026-06-21
 name: grilo_falante
 description: análise epistemológica de conteúdo - GMIF classification, PostgreSQL persistence, GF-IDs
 trigger: /grilo
