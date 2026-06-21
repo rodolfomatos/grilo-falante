@@ -44,6 +44,7 @@
 24. [Graphify](PARTE_6_INTEGRACOES/24_graphify.md)
 25. [OpenWebUI](PARTE_6_INTEGRACOES/25_openwebui.md)
 26. [Ollama](PARTE_6_INTEGRACOES/26_ollama.md)
+27. [AES](PARTE_6_INTEGRACOES/27_aes.md)
 
 ### PARTE 7: Referência
 27. [Cheatsheet](PARTE_7_REFERENCIA/27_cheatsheet.md)
@@ -68,6 +69,7 @@ A3. [FAQ](APENDICES/A3_faq.md)
 | Configurar Docker? | PARTE_4/16 |
 | Resolver problemas? | PARTE_5/22 |
 | Integrar Graphify? | PARTE_6/24 |
+| Integrar AES? | PARTE_6/27 |
 | Retomar sessão? | APENDICES/A1 |
 
 ---
