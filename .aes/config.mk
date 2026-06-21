@@ -6,3 +6,4 @@ AES_FORMAT=ruff
 AES_BUILD=echo
 AES_RUN=echo
 AES_BACKEND=local
+AES_EXTRA_DIRS=adr
