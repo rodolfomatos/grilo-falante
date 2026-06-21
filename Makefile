@@ -463,7 +463,7 @@ roadmap:
 	fi
 
 install-hooks:
-	@echo "Installing hooks..."
+	@echo "Installing AES hooks..."
 	@mkdir -p .aes/hooks .aes/plugins
 	@if [ -d hooks ]; then \
 		for hook in hooks/*.sh; do \
@@ -471,17 +471,29 @@ install-hooks:
 			name=$$(basename "$$hook"); \
 			cp "$$hook" ".aes/hooks/$$name"; \
 			chmod +x ".aes/hooks/$$name"; \
-			echo "  Installed hook: $$name"; \
+			echo "  AES hook: $$name"; \
 		done; \
 	fi
 	@if [ -d .aes/plugins ]; then \
 		for plugin in .aes/plugins/*.sh; do \
 			[ -f "$$plugin" ] || continue; \
 			chmod +x "$$plugin"; \
-			echo "  Plugin ready: $$(basename $$plugin)"; \
+			echo "  Plugin: $$(basename $$plugin)"; \
 		done; \
 	fi
-	@echo "Hooks installed."
+	@echo "AES hooks installed."
+
+install-git-hooks:
+	@echo "Installing git pre-commit hook..."
+	@mkdir -p .git/hooks
+	@if [ -f hooks/pre-commit-gf.sh ]; then \
+		cp hooks/pre-commit-gf.sh .git/hooks/pre-commit; \
+		chmod +x .git/hooks/pre-commit; \
+		echo "  Installed: .git/hooks/pre-commit"; \
+		echo "  Cognitive Lint will now run on staged .md files."; \
+	else \
+		echo "  hooks/pre-commit-gf.sh not found. Skipping."; \
+	fi
 
 # =============================================================================
 # Git

@@ -20,6 +20,7 @@ make test                 # Run all tests
 make coverage             # Tests with coverage report
 make run-api              # Start FastAPI locally
 make run-mcp              # Start MCP server locally
+make install-git-hooks    # Install hooks/pre-commit-gf.sh into .git/hooks/
 ```
 
 ## Project Structure
@@ -57,6 +58,40 @@ docs/                       # Documentation
   hooks/                    # Anti-drift hooks
   plugins/                  # Pre/post check plugins
 ```
+
+## Epistemic Protocols — MCP Tools
+
+Every cycle must start with ACORDAR and end with VAI_DORMIR.
+
+### ACORDAR (início de ciclo)
+```
+grilo_acordar intention=<string> [temporal_anchor] [mode=exploratory|committed]
+```
+- temporal_anchor vem do relógio do sistema (fonte externa), não do modelo
+- Se fornecido, o anchor humano é cruzado com o relógio; discrepâncias são sinalizadas
+- Devolve: estado, âncora verificada, contexto git (branch, commit, dirty), ilhas ativas, warnings
+
+### VAI_DORMIR (fecho de ciclo)
+```
+grilo_vai_dormir [session_id] [handoff_dir=aes/handoffs]
+```
+- Coleta estado do ciclo, escreve handoff em `aes/handoffs/`, processa ilhas, hiberna
+- `grilo_resume` lê o handoff mais recente e restaura contexto
+
+### PINA (gate normativo)
+```
+grilo_pina_propose   # Propor candidato normativo (NCA)
+grilo_pina_decide    # A=Incorporar, B=Não incorporar, C=Diferir
+grilo_pina_detect    # Scannear texto por ocorrências normativas
+grilo_pina_configure # Modo: auto | confirm | disabled
+```
+- Modo `confirm` (default): toda NCA precisa de decisão A/B/C humana
+- Modo `auto`: incorpora normas triviais automaticamente
+- Modo `disabled`: PINA não é executado
+
+### Pre-commit Hook
+`hooks/pre-commit-gf.sh` corre Cognitive Lint (BLOCK/WARN patterns) em `.md` staged.
+Instalar com: `make install-git-hooks` (copia para .git/hooks/pre-commit)
 
 ## I/O Contracts
 
