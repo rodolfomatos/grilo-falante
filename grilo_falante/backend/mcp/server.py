@@ -25,13 +25,13 @@ from grilo_falante.backend.db.repositories import (
 )
 from grilo_falante.backend.services import (
     CuratorScoringService,
-    FeynmanLevel,
     FeynmanService,
     GFIDService,
     GMIFClassifier,
     QueryPipeline,
     SchoolModeService,
 )
+from grilo_falante.backend.services.feynman import FeynmanLevel
 from grilo_falante.models import (
     Curator,
     CuratorType,
@@ -792,13 +792,105 @@ async def list_tools() -> list[Tool]:
                 "properties": {},
             },
         ),
+        # GePeTo-ported services
+        Tool(
+            name="grilo_graph_lint",
+            description="[GePeTo] Run L1-L8 epistemic lint on a collection of claims",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "claim_keys": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of claim keys to lint",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Optional session to load claims from",
+                    },
+                },
+                "required": [],
+            },
+        ),
+        Tool(
+            name="grilo_learning_path",
+            description="[GePeTo] Generate a learning path from claims and gaps for a topic",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "topic": {
+                        "type": "string",
+                        "description": "Topic to learn about",
+                    },
+                    "claim_keys": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Claim keys to include",
+                    },
+                    "gap_keys": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Gap keys to resolve",
+                    },
+                    "session_id": {
+                        "type": "string",
+                        "description": "Optional session scope",
+                    },
+                },
+                "required": ["topic"],
+            },
+        ),
+        Tool(
+            name="grilo_trusted_sources",
+            description="[GePeTo] List trusted sources (Tier 1/2/3) from the source registry",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "tier": {
+                        "type": "string",
+                        "enum": ["1", "2", "3", "all"],
+                        "default": "all",
+                        "description": "Filter by tier",
+                    },
+                },
+            },
+        ),
+        Tool(
+            name="grilo_source_propose",
+            description="[GePeTo] Propose adding a new trusted source to the registry",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "source_key": {"type": "string", "description": "Source identifier"},
+                    "name": {"type": "string", "description": "Display name"},
+                    "url": {"type": "string", "description": "Source URL"},
+                    "domains": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Domains covered",
+                    },
+                    "tier": {
+                        "type": "string",
+                        "enum": ["tier_1", "tier_2"],
+                        "description": "Proposed tier",
+                    },
+                    "curator_id": {"type": "integer", "description": "Curator proposing"},
+                    "curator_score": {"type": "number", "description": "Curator accountability score"},
+                },
+                "required": ["source_key", "name", "url", "tier", "curator_id", "curator_score"],
+            },
+        ),
     ]
 
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     """Handle tool calls."""
-    await init_pool()
+    db_error = None
+    try:
+        await init_pool()
+    except (OSError, ConnectionError) as e:
+        db_error = str(e)
 
     try:
         if name == "grilo_status":
@@ -1997,6 +2089,143 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                 TextContent(
                     type="text",
                     text=json.dumps(result),
+                )
+            ]
+
+        elif name == "grilo_graph_lint":
+            from grilo_falante.backend.services.graph_lint import GraphLinter
+
+            claim_keys = arguments.get("claim_keys", [])
+            session_id = arguments.get("session_id")
+
+            claims = []
+            if claim_keys:
+                repo = ClaimRepository()
+                for key in claim_keys:
+                    claim = await repo.get_by_key(key)
+                    if claim:
+                        claims.append(claim)
+            elif session_id:
+                repo = ClaimRepository()
+                claims = await repo.get_by_session(session_id)
+
+            if not claims:
+                return [
+                    TextContent(
+                        type="text",
+                        text=json.dumps({
+                            "error": "No claims found",
+                            "passed": True,
+                            "issues": [],
+                            "summary": "No claims to lint",
+                        }),
+                    )
+                ]
+
+            linter = GraphLinter()
+            result = linter.run_all_checks(claims)
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(linter.to_dict(result)),
+                )
+            ]
+
+        elif name == "grilo_learning_path":
+            from grilo_falante.backend.services.learning_path import LearningPathGenerator
+
+            topic = arguments["topic"]
+            claim_keys = arguments.get("claim_keys", [])
+            gap_keys = arguments.get("gap_keys", [])
+            session_id = arguments.get("session_id")
+
+            claims = []
+            gaps = []
+
+            repo_claim = ClaimRepository()
+            repo_gap = GapRepository()
+
+            if claim_keys:
+                for key in claim_keys:
+                    claim = await repo_claim.get_by_key(key)
+                    if claim:
+                        claims.append(claim)
+            elif session_id:
+                claims = await repo_claim.get_by_session(session_id)
+
+            if gap_keys:
+                for key in gap_keys:
+                    gap = await repo_gap.get_by_key(key)
+                    if gap:
+                        gaps.append(gap)
+            elif session_id:
+                gaps = await repo_gap.get_by_session(session_id)
+
+            gen = LearningPathGenerator()
+            path = await gen.generate(
+                topic=topic,
+                existing_claims=claims,
+                identified_gaps=gaps,
+                session_id=session_id,
+            )
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(gen.to_json(path)),
+                )
+            ]
+
+        elif name == "grilo_trusted_sources":
+            from grilo_falante.backend.services.source_registry import (
+                TrustedSourceRegistry as _SourceReg,
+                TIER_3_REJECTED as _T3,
+            )
+
+            registry = _SourceReg()
+            tier = arguments.get("tier", "all")
+
+            if tier == "1":
+                data = {"tier1": [{"source_key": s.source_key, "name": s.name, "url": s.url, "domains": s.domains, "status": s.status} for s in registry.list_tier1()]}
+            elif tier == "2":
+                data = {"tier2": [{"source_key": s.source_key, "name": s.name, "url": s.url, "domains": s.domains, "status": s.status} for s in registry.list_tier2()]}
+            elif tier == "3":
+                data = {"tier3_rejected": [{"label": l} for l in _T3]}
+            else:
+                data = registry.to_dict()
+
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps(data),
+                )
+            ]
+
+        elif name == "grilo_source_propose":
+            from grilo_falante.backend.services.source_registry import TrustedSourceRegistry, SourceTier
+
+            registry = TrustedSourceRegistry()
+            tier_str = arguments["tier"]
+            tier = SourceTier.TIER_1 if tier_str == "tier_1" else SourceTier.TIER_2
+
+            proposal = await registry.propose_addition(
+                source_key=arguments["source_key"],
+                name=arguments["name"],
+                url=arguments["url"],
+                domains=arguments.get("domains", []),
+                tier=tier,
+                proposer_curator_id=arguments["curator_id"],
+                curator_score=arguments["curator_score"],
+                notes=arguments.get("notes", ""),
+            )
+            return [
+                TextContent(
+                    type="text",
+                    text=json.dumps({
+                        "proposal_id": proposal.id,
+                        "source_key": proposal.source_key,
+                        "action": proposal.proposed_action,
+                        "status": proposal.status,
+                    }),
                 )
             ]
 
