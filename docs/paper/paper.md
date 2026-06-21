@@ -68,7 +68,7 @@ None of these provide epistemic protocols for individual agents — they focus o
 
 ### 2.3 The Aggressive Engineering System (AES)
 
-AES (Matos, 2025) is a software engineering methodology that structures development through kanban, tickets, phases (plan → build → verify → review → learn), and automated quality gates (lint, test, format). AES addresses a similar problem at a different level: it governs the **engineering process**, not the **epistemic state**.
+AES (Matos, 2025b) is a software engineering methodology that structures development through kanban, tickets, phases (plan → build → verify → review → learn), and automated quality gates (lint, test, format). AES addresses a similar problem at a different level: it governs the **engineering process**, not the **epistemic state**.
 
 The relationship between GF and AES is complementary:
 
@@ -377,7 +377,7 @@ The core thesis — that AI agents need formal protocols to distinguish what the
 
 ## Acknowledgments
 
-The author thanks the AES framework for providing the engineering methodology that made structured development possible, and the original Grilo Falante corpus (Ambrosio, 2025) for the protocol template that this work implements.
+The original Grilo Falante corpus, developed under the working name Ambrosio (2025a), defines the protocol template that this work implements. The AES framework (Matos, 2025b) provides the engineering methodology for structured development.
 
 ---
 
@@ -387,7 +387,9 @@ Alasuntari, P., & Qadir, A. (2014). Epistemic governance: An approach to the pol
 
 Bai, Y., et al. (2022). Constitutional AI: Harmlessness from AI Feedback. *arXiv preprint arXiv:2212.08073*.
 
-Ambrosio. (2025). Grilo Falante: Sistema de Governança Epistêmica. v1.6.4–v2.3.0.
+Matos, R. (2025a). Grilo Falante: Sistema de Governança Epistêmica (Ambrosio phase, v1.6.4–v2.3.0). GitHub Repository.
+
+Matos, R. (2025b). AES: Aggressive Engineering System. GitHub Repository.
 
 Ji, Z., et al. (2023). Survey of Hallucination in Natural Language Generation. *ACM Computing Surveys*, 55(12), 1-38.
 
