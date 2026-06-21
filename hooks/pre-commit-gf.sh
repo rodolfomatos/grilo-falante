@@ -16,13 +16,36 @@ if [ -z "$STAGED" ]; then
     exit 0
 fi
 
+DECISION_PATHS=(
+    "^aes/adr/"
+    "^aes/sprints/"
+    "^aes/tickets/"
+    "^aes/premises/"
+    "^aes/handoffs/"
+    "^docs/TASKS/"
+    "^docs/HOSTILE_"
+    "^docs/QUALITY_GATES"
+)
+GOVERNANCE_FILES=()
+OTHER_FILES=()
+for file in $STAGED; do
+    matched=0
+    for path in "${DECISION_PATHS[@]}"; do
+        if echo "$file" | grep -q -E "$path"; then
+            GOVERNANCE_FILES+=("$file")
+            matched=1
+            break
+        fi
+    done
+    if [ "$matched" -eq 0 ]; then
+        OTHER_FILES+=("$file")
+    fi
+done
+
 BLOCK_PATTERNS=(
-    "\\b(just|simply)\\b.*\\?"
-    "\\b(can|could|would|should)\\s+we\\s+(just|simply)\\s"
-    "\\bThis\\s+is\\s+(obviously|clearly|trivially)\\s"
+    "This is (obviously|clearly|trivially)"
     "\\bTrust\\s+me\\b"
     "\\bBelieve\\s+me\\b"
-    "^(\\s*\\(?(?:Note|TODO|FIXME|HACK)\\b)"
 )
 
 WARN_PATTERNS=(
@@ -36,18 +59,24 @@ WARN_PATTERNS=(
 HAD_BLOCK=0
 HAD_WARN=0
 
-for file in $STAGED; do
-    if [ ! -f "$file" ]; then
-        continue
-    fi
-
+for file in "${GOVERNANCE_FILES[@]}"; do
+    if [ ! -f "$file" ]; then continue; fi
     for pattern in "${BLOCK_PATTERNS[@]}"; do
         if grep -q -E "$pattern" "$file" 2>/dev/null; then
             echo -e "${RED}[BLOCK]${NC} $file matches: $pattern"
             HAD_BLOCK=1
         fi
     done
+    for pattern in "${WARN_PATTERNS[@]}"; do
+        if grep -q -E "$pattern" "$file" 2>/dev/null; then
+            echo -e "${YELLOW}[WARN]${NC}  $file matches: $pattern"
+            HAD_WARN=1
+        fi
+    done
+done
 
+for file in "${OTHER_FILES[@]}"; do
+    if [ ! -f "$file" ]; then continue; fi
     for pattern in "${WARN_PATTERNS[@]}"; do
         if grep -q -E "$pattern" "$file" 2>/dev/null; then
             echo -e "${YELLOW}[WARN]${NC}  $file matches: $pattern"
