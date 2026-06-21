@@ -16,10 +16,9 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
-from .state import StateMachine, CycleState
 from .ledger import Ledger, LedgerEntryType
+from .state import StateMachine
 
 logger = logging.getLogger(__name__)
 
@@ -30,27 +29,27 @@ class GitContext:
     commit_hash: str = ""
     commit_message: str = ""
     dirty: bool = False
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
 class IslandContext:
     active_count: int = 0
     dormant_count: int = 0
-    bundle: Optional[dict] = None
-    error: Optional[str] = None
+    bundle: dict | None = None
+    error: str | None = None
 
 
 @dataclass
 class AcordarResult:
     success: bool
     message: str
-    temporal_anchor: Optional[str] = None
-    intention_declared: Optional[str] = None
+    temporal_anchor: str | None = None
+    intention_declared: str | None = None
     source: str = ""
-    verified_timestamp: Optional[str] = None
-    git: Optional[dict] = None
-    islands: Optional[dict] = None
+    verified_timestamp: str | None = None
+    git: dict | None = None
+    islands: dict | None = None
     anchor_mismatch: bool = False
     warnings: list[str] = field(default_factory=list)
 
@@ -60,7 +59,7 @@ def _get_system_time() -> str:
     return datetime.now().isoformat()
 
 
-def _get_git_context(path: Optional[str] = None) -> GitContext:
+def _get_git_context(path: str | None = None) -> GitContext:
     """Get git context from current or specified repo."""
     ctx = GitContext()
     try:
@@ -131,14 +130,14 @@ class Acordar:
     Without all three, the cycle has no epistemic anchor.
     """
 
-    def __init__(self, state_machine: StateMachine, ledger: Optional[Ledger] = None):
+    def __init__(self, state_machine: StateMachine, ledger: Ledger | None = None):
         self.state_machine = state_machine
         self.ledger = ledger
 
     def execute(
         self,
         intention: str,
-        temporal_anchor: Optional[str] = None,
+        temporal_anchor: str | None = None,
         mode: str = "exploratory",
         use_external_time: bool = True,
         session_id: str = "mcp",
@@ -218,7 +217,10 @@ class Acordar:
         if self.ledger:
             self.ledger.add_entry(
                 entry_type=LedgerEntryType.REGIME_EVENT,
-                content=f"ACORDAR executed: anchor={verified_anchor}, intention={intention}, mode={mode}",
+                content=(
+                    f"ACORDAR executed: anchor={verified_anchor}, "
+                    f"intention={intention}, mode={mode}"
+                ),
                 metadata={
                     "temporal_anchor": verified_anchor,
                     "intention": intention,
@@ -260,7 +262,7 @@ class Acordar:
     async def vai_dormir_async(
         self,
         session_id: str = "mcp",
-        handoff_dir: Optional[str] = None,
+        handoff_dir: str | None = None,
         collect_interactions: bool = True,
     ) -> dict:
         """
@@ -326,7 +328,8 @@ class Acordar:
             f"Claims: {ctx.claims_count}",
             f"NCAs Pending: {ctx.nca_pending}",
             f"Mode: {'exploratory' if ctx.is_exploratory else 'committed'}",
-            f"Git: {cycle_summary.get('git_branch', 'N/A')} @ {cycle_summary.get('git_commit', 'N/A')}",
+            f"Git: {cycle_summary.get('git_branch', 'N/A')}"
+            f" @ {cycle_summary.get('git_commit', 'N/A')}",
             "",
             "## Open Items",
             "_(populate with decisions taken, pending items, what does not carry over)_",
@@ -394,7 +397,7 @@ class Acordar:
 
         return relatório
 
-    def vai_dormir(self, handoff_dir: Optional[str] = None) -> dict:
+    def vai_dormir(self, handoff_dir: str | None = None) -> dict:
         """
         VAI_DORMIR sync - Write handoff and hibernate.
 
@@ -435,7 +438,10 @@ class Acordar:
 
         return {
             "success": True,
-            "message": f"Regime hibernated. Handoff saved to {handoff_path}. Use vai_dormir_async() for full sleep cycle.",
+            "message": (
+                "Regime hibernated. Handoff saved to"
+                f" {handoff_path}. Use vai_dormir_async() for full sleep cycle."
+            ),
             "handoff_path": handoff_path,
         }
 
@@ -449,7 +455,7 @@ class Acordar:
         """
         return []
 
-    def resume(self, handoff_dir: Optional[str] = None) -> dict:
+    def resume(self, handoff_dir: str | None = None) -> dict:
         """
         Resume from hibernation, optionally reading latest handoff.
 

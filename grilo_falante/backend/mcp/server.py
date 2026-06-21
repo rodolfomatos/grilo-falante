@@ -4,55 +4,51 @@ MCP Server for Grilo Falante v3.0
 Provides tools for epistemic governance via MCP protocol.
 """
 
+import hashlib
 import json
-import sys
 from datetime import datetime
 from typing import Any
 
 from mcp.server import Server
-from mcp.types import Tool, TextContent
-from pydantic import AnyUrl
+from mcp.types import TextContent, Tool
 
-from grilo_falante.backend.db.connection import init_pool, close_pool, check_health
+from grilo_falante.backend.db.connection import check_health, close_pool, init_pool
 from grilo_falante.backend.db.repositories import (
     ClaimRepository,
-    GapRepository,
     CuratorRepository,
-    SourceRepository,
-    SessionPreferencesRepository,
+    GapRepository,
     GovernanceRepository,
-    generate_key,
+    SessionPreferencesRepository,
+    SourceRepository,
     generate_gfid,
+    generate_key,
 )
 from grilo_falante.backend.services import (
+    CuratorScoringService,
+    FeynmanLevel,
+    FeynmanService,
     GFIDService,
     GMIFClassifier,
-    FeynmanService,
-    GapDetectionService,
-    CuratorScoringService,
     QueryPipeline,
     SchoolModeService,
 )
 from grilo_falante.models import (
-    GovernedClaim,
-    Gap,
     Curator,
-    GovernedSource,
-    SessionPreferences,
-    GMIFLevel,
-    GapStatus,
-    GapType,
     CuratorType,
+    GapStatus,
+    GMIFLevel,
+    GovernanceRecord,
+    GovernedClaim,
+    GovernedSource,
+    LegitimacyState,
+    SessionPreferences,
     SourceTier,
     ValidationState,
-    LegitimacyState,
 )
 from grilo_falante.regime import (
-    Loader,
     Acordar,
     Ledger,
-    LedgerEntryType,
-    StateMachine,
+    Loader,
     PINAProtocol,
     TransitionValidator,
 )
@@ -94,9 +90,9 @@ def _load_chat_shell():
 
 def get_chat_shell(session_id: str) -> "_ChatShellStub":
     """Get or create a chat shell session."""
-    ChatShellCls = _load_chat_shell()
+    chat_shell_cls = _load_chat_shell()
     if session_id not in _chat_sessions:
-        instance = ChatShellCls(session_id=session_id)
+        instance = chat_shell_cls(session_id=session_id)
         if isinstance(instance, _ChatShellStub):
             instance.session_id = session_id
         _chat_sessions[session_id] = instance
@@ -133,7 +129,7 @@ async def list_tools() -> list[Tool]:
         ),
         Tool(
             name="grilo_acordar",
-            description="Execute ACORDAR wake-up ritual with external time verification, island restoration, and git context",
+            description="Execute ACORDAR wake-up ritual with external time verification, island restoration, and git context",  # noqa: E501
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -143,7 +139,7 @@ async def list_tools() -> list[Tool]:
                     },
                     "temporal_anchor": {
                         "type": "string",
-                        "description": "Optional human-supplied anchor for cross-reference (system clock is always used)",
+                        "description": "Optional human-supplied anchor for cross-reference (system clock is always used)",  # noqa: E501
                     },
                     "mode": {
                         "type": "string",
@@ -166,8 +162,8 @@ async def list_tools() -> list[Tool]:
                 "type": "object",
                 "properties": {
                     "session_id": {"type": "string", "description": "Session ID", "default": "mcp"},
-                    "handoff_dir": {"type": "string", "description": "Handoff output directory", "default": "aes/handoffs"},
-                    "collect_interactions": {"type": "boolean", "description": "Collect interactions for island processing", "default": True},
+                    "handoff_dir": {"type": "string", "description": "Handoff output directory", "default": "aes/handoffs"},  # noqa: E501
+                    "collect_interactions": {"type": "boolean", "description": "Collect interactions for island processing", "default": True},  # noqa: E501
                 },
             },
         ),
@@ -177,7 +173,7 @@ async def list_tools() -> list[Tool]:
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "handoff_dir": {"type": "string", "description": "Handoff directory to read context from", "default": "aes/handoffs"},
+                    "handoff_dir": {"type": "string", "description": "Handoff directory to read context from", "default": "aes/handoffs"},  # noqa: E501
                 },
             },
         ),
@@ -245,7 +241,7 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "text": {"type": "string", "description": "Text to scan for normative content"},
                     "source_document": {"type": "string", "description": "Source reference"},
-                    "auto_propose": {"type": "boolean", "default": True, "description": "Auto-propose detected norms as NCA candidates"},
+                    "auto_propose": {"type": "boolean", "default": True, "description": "Auto-propose detected norms as NCA candidates"},  # noqa: E501
                 },
                 "required": ["text", "source_document"],
             },
@@ -259,7 +255,7 @@ async def list_tools() -> list[Tool]:
                     "mode": {
                         "type": "string",
                         "enum": ["auto", "confirm", "disabled"],
-                        "description": "auto=auto-incorporate trivial norms, confirm=always ask human, disabled=no PINA",
+                        "description": "auto=auto-incorporate trivial norms, confirm=always ask human, disabled=no PINA",  # noqa: E501
                     },
                 },
                 "required": ["mode"],
@@ -1003,7 +999,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             if new_mode not in ("auto", "confirm", "disabled"):
                 return [TextContent(
                     type="text",
-                    text=json.dumps({"error": f"Invalid mode: {new_mode}. Must be auto, confirm, or disabled"})
+                    text=json.dumps({"error": f"Invalid mode: {new_mode}. Must be auto, confirm, or disabled"})  # noqa: E501
                 )]
             _pina_mode = new_mode
             return [TextContent(
@@ -1043,6 +1039,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
         elif name == "grilo_stamp_capsule":
             from pathlib import Path
+
             from grilo_falante.regime import stamp_capsule
 
             capsule_path = Path(arguments["capsule_path"])
@@ -1065,11 +1062,11 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             ]
 
         elif name == "grilo_run_auditoria_hostil":
+
             from grilo_falante.cognitive import AuditoriaHostil
-            import asyncio
 
             content = arguments["content"]
-            lines = [l.strip() for l in content.split("\n") if l.strip()]
+            lines = [ln.strip() for ln in content.split("\n") if ln.strip()]
 
             claims = []
             for i, line in enumerate(lines):
@@ -1302,8 +1299,8 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             ]
 
         elif name == "gepeto_sair_da_escola":
-            from grilo_falante.regime.state import StateMachine, CycleState
             from grilo_falante.regime import Ledger
+            from grilo_falante.regime.state import CycleState, StateMachine
 
             sm = StateMachine()
             ledger = Ledger()
@@ -1337,7 +1334,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                         text=json.dumps(
                             {
                                 "success": False,
-                                "message": f"Could not transition to GOVERNING from current state",
+                                "message": "Could not transition to GOVERNING from current state",
                                 "current_state": sm.current_cycle.state.value
                                 if sm.current_cycle
                                 else "NONE",
@@ -1608,10 +1605,10 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
 
         elif name == "grilo_semantic_search":
             from grilo_falante.backend.memory import (
-                MemPalaceCache,
+                MEMPALACE_AVAILABLE,
                 AutoMemAdapter,
                 DualCacheRetriever,
-                MEMPALACE_AVAILABLE,
+                MemPalaceCache,
             )
             from grilo_falante.config import settings
 
@@ -1783,9 +1780,9 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
                     )
                 ]
 
-            ChatShellCls = _load_chat_shell()
+            chat_shell_cls = _load_chat_shell()
 
-            shell = ChatShellCls()
+            shell = chat_shell_cls()
             result = shell.import_session(session_script)
 
             if not result.get("success"):
@@ -2010,11 +2007,7 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         await close_pool()
 
 
-import hashlib
-
-
 if __name__ == "__main__":
-    import asyncio
 
     async def main():
         """Run the MCP server."""
